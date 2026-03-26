@@ -1,0 +1,102 @@
+<?xml version="1.0"?>
+
+<robot name="bh_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:property name="PI" value="3.14159265359"/>
+    <xacro:property name="table_width" value="0.8" />
+    <xacro:property name="table_height" value="0.83" />
+
+
+    <!-- include the lbr iiwa macro -->
+    <xacro:include filename="$(find lbr_description)/urdf/iiwa7/iiwa7_description.xacro" />
+
+    <!-- include gripper -->
+    <xacro:include filename="$(find dual_arm_description)/urdf/gripper/robotiq_hande_gripper.xacro" />
+    <!-- <xacro:my_gripper parent_link="left_arm_link_ee" gripper_name="left_gripper" /> -->
+
+    <!-- include table and torso macro -->
+    <xacro:include filename="$(find dual_arm_description)/urdf/torso.xacro" />
+    <xacro:include filename="$(find dual_arm_description)/urdf/table.xacro" />
+
+    <!-- add an arguent to allow for mock / hardware / gazebo -->
+    <xacro:arg name="mode" default="mock" />
+
+    <xacro:arg name="robot_name" default="bh_robot"/>
+
+
+     <xacro:property name="use_mock_gripper_hardware" value="${'$(arg mode)' == 'mock'}" />
+
+    <!-- add robot 1 via macro, note that different lbr_one_system_config.yaml are used (to configure port id) -->
+    <xacro:iiwa7
+        robot_name="left_arm"
+        mode="$(arg mode)"
+        system_config_path="$(find dual_arm_description)/ros2_control/left_arm_system_config.yaml" />
+
+    <!-- add robot 2 via macro -->
+    <xacro:iiwa7
+        robot_name="right_arm"
+        mode="$(arg mode)"
+        system_config_path="$(find dual_arm_description)/ros2_control/right_arm_system_config.yaml" />
+
+    <!-- KDL requires a link without inertia -->
+    <link name="$(arg robot_name)_base" />
+
+
+    <!-- Insert triangular mount -->
+    <xacro:steel_torso parent="$(arg robot_name)_base">
+        <origin xyz="0 0 0" rpy="0 0 ${PI}"/>
+    </xacro:steel_torso>
+
+    <!-- Summon the table -->
+    <xacro:table parent="steel_torso_base">
+        <origin xyz="0.186 ${table_width/2} -${table_height}" rpy="0 0 ${PI}"/>
+    </xacro:table>
+
+    <!-- Insert left and right arm into the corresponding position -->
+    <joint name="left_arm_base" type="fixed">
+        <origin xyz="0 0.0 0" rpy="0 0 0"/>
+        <parent link="steel_torso_left"/>
+        <child link="left_arm_link_0"/>
+    </joint>
+
+    <joint name="right_arm_base" type="fixed">
+        <origin xyz="0 0.0 0" rpy="0 0 0"/>
+        <parent link="steel_torso_right"/>
+        <child link="right_arm_link_0"/>
+    </joint>
+
+
+    <!-- Summon the left gripper -->
+    <xacro:robotiq_hande_gripper
+        name="hande_left_gripper"
+        prefix="left_hande_"
+        parent="left_arm_link_ee"
+        grip_pos_min="0.0"
+        grip_pos_max="0.025"
+        tty="/dev/ttymunin"
+        baudrate="115200"
+        parity="N"
+        data_bits="8"
+        stop_bit="1"
+        slave_id="9"
+        use_fake_hardware="false"
+    />
+
+
+    <!-- Summon the right gripper -->
+    <xacro:robotiq_hande_gripper
+        name="hande_right_gripper"
+        prefix="right_hande_"
+        parent="right_arm_link_ee"
+        grip_pos_min="0.0"
+        grip_pos_max="0.025"
+        tty="/dev/ttyhugin"
+        baudrate="115200"
+        parity="N"
+        data_bits="8"
+        stop_bit="1"
+        slave_id="9"
+        use_fake_hardware="false"
+    />
+
+</robot>
