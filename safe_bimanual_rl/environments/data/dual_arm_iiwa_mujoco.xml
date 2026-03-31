@@ -38,7 +38,7 @@
 
   <worldbody>
     <body name="bh_robot_base" pos="0.00000000 0.00000000 0.83000000" quat="1 0 0 0" childclass="robot">
-      <freejoint name="floating_base" />
+      <!--<freejoint name="floating_base" />-->
       <body name="steel_torso_base" pos="0 0 0" quat="-1.0341155355510722e-13 -0.0 0.0 1.0">
         <inertial pos="0 0 0" quat="1.0 0.0 0.0 0.0" mass="17.097" diaginertia="0.231426028862462 0.352096317978007 0.231751030960783" />
         <geom name="steel_torso_base_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="grey" type="mesh" mesh="steel_torso.stl" class="visual" />
