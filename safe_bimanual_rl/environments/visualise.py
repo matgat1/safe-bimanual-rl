@@ -1,6 +1,6 @@
+import os
 import mujoco
 import mujoco.viewer
-import os
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 xml_path = os.path.join(BASE_DIR, "data", "dual_arm_iiwa_mujoco.xml")

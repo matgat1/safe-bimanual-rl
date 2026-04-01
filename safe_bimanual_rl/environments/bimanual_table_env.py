@@ -1,12 +1,11 @@
-import os
-
-import mujoco
-import numpy as np
-
 from mushroom_rl.environments.mujoco import MuJoCo, ObservationType, MujocoViewer
 
 
 class BimanualTableEnv(MuJoCo):
+    """
+    A bimanual table environment for mujoco simulation.
+    Using mushroom_rl's MuJoCo environment as a base class
+    """
 
     def __init__(self, xml_path, gamma, horizon, n_substeps, collision_groups=None):
         """
@@ -106,17 +105,16 @@ class BimanualTableEnv(MuJoCo):
                 ObservationType.JOINT_VEL,
             ),
         ]
-        
+
         # TODO: Add collision
-        
+
         # TODO: keyframe ?
-        
+
         viewer_params = {}
         viewer_params.setdefault(
             "camera_params", MujocoViewer.get_default_camera_params()
         )
-        
-        
+
         super().__init__(
             xml_path,
             gamma=gamma,
