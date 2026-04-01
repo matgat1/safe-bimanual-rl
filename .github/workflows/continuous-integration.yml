@@ -16,7 +16,7 @@ jobs:
       matrix:
         python-version: ["3.12"]  # optionnel, plusieurs versions Python
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v3
@@ -37,7 +37,7 @@ jobs:
     - name: Analyse the code with Pylint
       run: |
         pylint $(git ls-files '*.py') --disable=E0401,C0114
-        
+
     - name: Test with pytest
       run: |
         pytest
