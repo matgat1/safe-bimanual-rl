@@ -1,2 +1,0 @@
-left_arm == MUNIN
-right_arm == HUGIN
