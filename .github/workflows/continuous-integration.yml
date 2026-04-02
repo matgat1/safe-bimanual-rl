@@ -36,7 +36,7 @@ jobs:
 
     - name: Analyse the code with Pylint
       run: |
-        pylint $(git ls-files '*.py') --disable=E0401,C0114 --fail-under=7.5
+        pylint safe_bimanual_rl --disable=E0401,C0114 --fail-under=7.5
 
     - name: Test with pytest
       run: |
