@@ -1,3 +1,4 @@
+[![CI - Python Lint & Tests](https://github.com/matgat1/safe-bimanual-rl/actions/workflows/continuous-integration.yml/badge.svg)](https://github.com/matgat1/safe-bimanual-rl/actions/workflows/continuous-integration.yml)
 # safe-bimanual-rl
 Safe Reinforcement learning for tray pickup with Safety Filters
 
