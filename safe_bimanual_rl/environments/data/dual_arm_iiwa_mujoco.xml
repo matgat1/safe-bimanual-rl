@@ -14,26 +14,26 @@
     </default>
   </default>
 
-  <compiler angle="radian" />
+  <compiler angle="radian" meshdir="meshes" />
 
   <asset>
     <material name="Orange" rgba="1.0 0.423529411765 0.0392156862745 1.0" />
     <material name="grey" rgba="0.8667 0.86667 0.8902 1" />
     <material name="default_material" rgba="0.7 0.7 0.7 1" />
     <material name="collision_material" rgba="1.0 0.28 0.1 0.9" />
-    <mesh name="steel_torso.stl" file="meshes/steel_torso.stl" />
-    <mesh name="link_0.stl" file="meshes/link_0.stl" />
-    <mesh name="link_1.stl" file="meshes/link_1.stl" />
-    <mesh name="link_2.stl" file="meshes/link_2.stl" />
-    <mesh name="link_3.stl" file="meshes/link_3.stl" />
-    <mesh name="link_4.stl" file="meshes/link_4.stl" />
-    <mesh name="link_5.stl" file="meshes/link_5.stl" />
-    <mesh name="link_6.stl" file="meshes/link_6.stl" />
-    <mesh name="link_7.stl" file="meshes/link_7.stl" />
-    <mesh name="io_coupler.stl" file="meshes/io_coupler.stl" />
-    <mesh name="hande.stl" file="meshes/hande.stl" />
-    <mesh name="finger_collision.stl" file="meshes/finger_collision.stl" />
-    <mesh name="finger.stl" file="meshes/finger.stl" />
+    <mesh name="steel_torso.stl" file="steel_torso.stl" />
+    <mesh name="link_0.stl" file="link_0.stl" />
+    <mesh name="link_1.stl" file="link_1.stl" />
+    <mesh name="link_2.stl" file="link_2.stl" />
+    <mesh name="link_3.stl" file="link_3.stl" />
+    <mesh name="link_4.stl" file="link_4.stl" />
+    <mesh name="link_5.stl" file="link_5.stl" />
+    <mesh name="link_6.stl" file="link_6.stl" />
+    <mesh name="link_7.stl" file="link_7.stl" />
+    <mesh name="io_coupler.stl" file="io_coupler.stl" />
+    <mesh name="hande.stl" file="hande.stl" />
+    <mesh name="finger_collision.stl" file="finger_collision.stl" />
+    <mesh name="finger.stl" file="finger.stl" />
   </asset>
 
   <worldbody>
