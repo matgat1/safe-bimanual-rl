@@ -11,4 +11,4 @@ format:
 	
 check_lint:
 	flake8 --max-line-length=100 safe_bimanual_rl
-	pylint --disable=E0401 safe_bimanual_rl
+	pylint --disable=E0401,C0114 safe_bimanual_rl
