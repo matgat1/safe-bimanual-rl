@@ -1,3 +1,4 @@
+# pylint: disable=no-member
 import os
 import mujoco
 import mujoco.viewer
