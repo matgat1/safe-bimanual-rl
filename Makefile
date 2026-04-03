@@ -11,4 +11,10 @@ format:
 	
 check_lint:
 	flake8 --max-line-length=100 safe_bimanual_rl
-	pylint --disable=E0401,C0114 safe_bimanual_rl
+	pylint --disable=E0401,C0114,C0103 safe_bimanual_rl
+
+visualise:
+	python3 safe_bimanual_rl/environments/visualise.py
+
+visualise_controller:
+	python3 safe_bimanual_rl/utils/sinusoidal_controller.py
