@@ -1,9 +1,14 @@
 <mujoco model="bh_robot">
   <default>
     <default class="robot">
-      <default class="motor">
-        <joint />
-        <motor />
+      <default class="arm_actuator">
+      <intvelocity forcerange="-87 87" forcelimited="true" inheritrange="1.0" kp="350" kv="10" />
+      </default>
+      <default class="finger_actuator">
+      <intvelocity forcerange="-5 5" forcelimited="true" inheritrange="1.0" kp="50" kv="14"/>
+      </default>
+      <default class="last_arm_actuator">
+      <intvelocity forcerange="-87 87" forcelimited="true" inheritrange="1.0" kp="2" kv="0.01"/>
       </default>
       <default class="visual">
         <geom material="visualgeom" contype="0" conaffinity="0" group="2" />
@@ -14,26 +19,26 @@
     </default>
   </default>
 
-  <compiler angle="radian" />
+  <compiler angle="radian" meshdir="meshes" />
 
   <asset>
-    <material name="Orange" rgba="1.0 0.423529411765 0.0392156862745 1.0" />
+    <material name="wood" rgba="0.6 0.4 0.2 1.0" />
     <material name="grey" rgba="0.8667 0.86667 0.8902 1" />
     <material name="default_material" rgba="0.7 0.7 0.7 1" />
     <material name="collision_material" rgba="1.0 0.28 0.1 0.9" />
-    <mesh name="steel_torso.stl" file="meshes/steel_torso.stl" />
-    <mesh name="link_0.stl" file="meshes/link_0.stl" />
-    <mesh name="link_1.stl" file="meshes/link_1.stl" />
-    <mesh name="link_2.stl" file="meshes/link_2.stl" />
-    <mesh name="link_3.stl" file="meshes/link_3.stl" />
-    <mesh name="link_4.stl" file="meshes/link_4.stl" />
-    <mesh name="link_5.stl" file="meshes/link_5.stl" />
-    <mesh name="link_6.stl" file="meshes/link_6.stl" />
-    <mesh name="link_7.stl" file="meshes/link_7.stl" />
-    <mesh name="io_coupler.stl" file="meshes/io_coupler.stl" />
-    <mesh name="hande.stl" file="meshes/hande.stl" />
-    <mesh name="finger_collision.stl" file="meshes/finger_collision.stl" />
-    <mesh name="finger.stl" file="meshes/finger.stl" />
+    <mesh name="steel_torso.stl" file="steel_torso.stl" />
+    <mesh name="link_0.stl" file="link_0.stl" />
+    <mesh name="link_1.stl" file="link_1.stl" />
+    <mesh name="link_2.stl" file="link_2.stl" />
+    <mesh name="link_3.stl" file="link_3.stl" />
+    <mesh name="link_4.stl" file="link_4.stl" />
+    <mesh name="link_5.stl" file="link_5.stl" />
+    <mesh name="link_6.stl" file="link_6.stl" />
+    <mesh name="link_7.stl" file="link_7.stl" />
+    <mesh name="io_coupler.stl" file="io_coupler.stl" />
+    <mesh name="hande.stl" file="hande.stl" />
+    <mesh name="finger_collision.stl" file="finger_collision.stl" />
+    <mesh name="finger.stl" file="finger.stl" />
   </asset>
 
   <worldbody>
@@ -48,37 +53,37 @@
             <geom name="left_arm_link_0_collision" pos="0 0 0" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_0.stl" class="collision" />
             <geom name="left_arm_link_0_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_0.stl" class="visual" />
             <body name="left_arm_link_1" pos="0.0 0.0 0.1475" quat="1.0 0.0 0.0 0.0">
-              <joint name="left_arm_A1" type="hinge" ref="0.0" class="motor" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
+              <joint name="left_arm_A1" type="hinge" ref="0.0" class="robot" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
               <inertial pos="0.0 -0.034819 0.123299" quat="1.0 0.0 0.0 0.0" mass="3.394011" diaginertia="0.021383 0.020403 0.007563" />
               <geom name="left_arm_link_1_collision" pos="0.0 0.0 -0.1475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_1.stl" class="collision" />
               <geom name="left_arm_link_1_visual" pos="0.0 0.0 -0.1475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_1.stl" class="visual" />
               <body name="left_arm_link_2" pos="0.0 -0.0105 0.1925" quat="1.0 0.0 0.0 0.0">
-                <joint name="left_arm_A2" type="hinge" ref="0.0" class="motor" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
+                <joint name="left_arm_A2" type="hinge" ref="0.0" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
                 <inertial pos="0.0 0.039793 0.086944" quat="1.0 0.0 0.0 0.0" mass="4.031991" diaginertia="0.031697 0.03008 0.009666" />
                 <geom name="left_arm_link_2_collision" pos="0.0 0.0105 -0.34" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_2.stl" class="collision" />
                 <geom name="left_arm_link_2_visual" pos="0.0 0.0105 -0.34" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_2.stl" class="visual" />
                 <body name="left_arm_link_3" pos="0.0 0.0105 0.2075" quat="1.0 0.0 0.0 0.0">
-                  <joint name="left_arm_A3" type="hinge" ref="0.0" class="motor" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
+                  <joint name="left_arm_A3" type="hinge" ref="0.0" class="robot" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
                   <inertial pos="0.0 0.034819 0.123299" quat="1.0 0.0 0.0 0.0" mass="3.394011" diaginertia="0.021383 0.020403 0.007563" />
                   <geom name="left_arm_link_3_collision" pos="0.0 0.0 -0.5475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_3.stl" class="collision" />
                   <geom name="left_arm_link_3_visual" pos="0.0 0.0 -0.5475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_3.stl" class="visual" />
                   <body name="left_arm_link_4" pos="0.0 0.0105 0.1925" quat="1.0 0.0 0.0 0.0">
-                    <joint name="left_arm_A4" type="hinge" ref="0.0" class="motor" range="-2.007128639793479 2.007128639793479" axis="0.0 -1.0 0.0" />
+                    <joint name="left_arm_A4" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 -1.0 0.0" />
                     <inertial pos="0.0 -0.039793 0.086944" quat="1.0 0.0 0.0 0.0" mass="4.031989" diaginertia="0.031695 0.030079 0.009665" />
                     <geom name="left_arm_link_4_collision" pos="0.0 -0.0105 -0.74" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_4.stl" class="collision" />
                     <geom name="left_arm_link_4_visual" pos="0.0 -0.0105 -0.74" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_4.stl" class="visual" />
                     <body name="left_arm_link_5" pos="0.0 -0.0105 0.2075" quat="1.0 0.0 0.0 0.0">
-                      <joint name="left_arm_A5" type="hinge" ref="0.0" class="motor" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
+                      <joint name="left_arm_A5" type="hinge" ref="0.0" class="robot" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
                       <inertial pos="0.0 -0.029824 0.076267" quat="1.0 0.0 0.0 0.0" mass="1.529239" diaginertia="0.008485 0.007136 0.003848" />
                       <geom name="left_arm_link_5_collision" pos="0.0 0.0 -0.9475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_5.stl" class="collision" />
                       <geom name="left_arm_link_5_visual" pos="0.0 0.0 -0.9475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_5.stl" class="visual" />
                       <body name="left_arm_link_6" pos="0.0 -0.0707 0.1925" quat="1.0 0.0 0.0 0.0">
-                        <joint name="left_arm_A6" type="hinge" ref="0.0" class="motor" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
+                        <joint name="left_arm_A6" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
                         <inertial pos="0.0 0.07102 0.00495" quat="1.0 0.0 0.0 0.0" mass="2.403626" diaginertia="0.007067 0.006804 0.004629" />
                         <geom name="left_arm_link_6_collision" pos="0.0 0.0707 -1.14" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_6.stl" class="collision" />
                         <geom name="left_arm_link_6_visual" pos="0.0 0.0707 -1.14" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_6.stl" class="visual" />
                         <body name="left_arm_link_7" pos="0.0 0.0707 0.091" quat="1.0 0.0 0.0 0.0">
-                          <joint name="left_arm_A7" type="hinge" ref="0.0" class="motor" range="-2.9146998508305306 2.9146998508305306" axis="0.0 0.0 1.0" />
+                          <joint name="left_arm_A7" type="hinge" ref="0.0" class="robot" range="-2.9146998508305306 2.9146998508305306" axis="0.0 0.0 1.0" />
                           <inertial pos="3.0000e-06 -2.0000e-06 1.3782e-02" quat="1.0 0.0 0.0 0.0" mass="0.259474" diaginertia="0.000171 0.000171 0.000299" />
                           <geom name="left_arm_link_7_collision" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_7.stl" class="collision" />
                           <geom name="left_arm_link_7_visual" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_7.stl" class="visual" />
@@ -92,13 +97,13 @@
                                 <geom name="left_hande_robotiq_hande_link_collision" pos="0 0 0.053450000000000004" quat="1.0 0.0 0.0 0.0" type="cylinder" size="0.0385 0.053450000000000004" class="collision" />
                                 <geom name="left_hande_robotiq_hande_link_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="hande.stl"  class="visual" />
                                 <body name="left_hande_robotiq_hande_left_finger" pos="0 0 0.099" quat="1.0 0.0 0.0 0.0">
-                                  <joint name="left_hande_robotiq_hande_left_finger_joint" type="slide" ref="0.0" class="motor" range="0.0 0.025" axis="1 0 0" />
+                                  <joint name="left_hande_robotiq_hande_left_finger_joint" type="slide" ref="0.0" class="robot" range="0.0 0.025" axis="1 0 0" />
                                   <inertial pos="0 0 0" quat="1.0 0.0 0.0 0.0" mass="0.03804" diaginertia="1e-09 1e-09 1e-09" />
                                   <geom name="left_hande_robotiq_hande_left_finger_collision" pos="0 0 0" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="finger_collision.stl" class="collision" />
                                   <geom name="left_hande_robotiq_hande_left_finger_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="finger.stl" class="visual" />
                                 </body>
                                 <body name="left_hande_robotiq_hande_right_finger" pos="0 0 0.099" quat="1.0 0.0 0.0 0.0">
-                                  <joint name="left_hande_robotiq_hande_right_finger_joint" type="slide" ref="0.0" class="motor" range="0.0 0.025" axis="-1 0 0" />
+                                  <joint name="left_hande_robotiq_hande_right_finger_joint" type="slide" ref="0.0" class="robot" range="0.0 0.025" axis="-1 0 0" />
                                   <inertial pos="0 0 0" quat="1.0 0.0 0.0 0.0" mass="0.03804" diaginertia="1e-09 1e-09 1e-09" />
                                   <geom name="left_hande_robotiq_hande_right_finger_collision" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" type="mesh" mesh="finger_collision.stl"  class="collision" />
                                   <geom name="left_hande_robotiq_hande_right_finger_visual" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" material="default_material" type="mesh" mesh="finger.stl"  class="visual" />
@@ -122,37 +127,37 @@
             <geom name="right_arm_link_0_collision" pos="0 0 0" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_0.stl" class="collision" />
             <geom name="right_arm_link_0_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_0.stl" class="visual" />
             <body name="right_arm_link_1" pos="0.0 0.0 0.1475" quat="1.0 0.0 0.0 0.0">
-              <joint name="right_arm_A1" type="hinge" ref="0.0" class="motor" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
+              <joint name="right_arm_A1" type="hinge" ref="0.0" class="robot" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
               <inertial pos="0.0 -0.034819 0.123299" quat="1.0 0.0 0.0 0.0" mass="3.394011" diaginertia="0.021383 0.020403 0.007563" />
               <geom name="right_arm_link_1_collision" pos="0.0 0.0 -0.1475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_1.stl" class="collision" />
               <geom name="right_arm_link_1_visual" pos="0.0 0.0 -0.1475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_1.stl" class="visual" />
               <body name="right_arm_link_2" pos="0.0 -0.0105 0.1925" quat="1.0 0.0 0.0 0.0">
-                <joint name="right_arm_A2" type="hinge" ref="0.0" class="motor" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
+                <joint name="right_arm_A2" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
                 <inertial pos="0.0 0.039793 0.086944" quat="1.0 0.0 0.0 0.0" mass="4.031991" diaginertia="0.031697 0.03008 0.009666" />
                 <geom name="right_arm_link_2_collision" pos="0.0 0.0105 -0.34" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_2.stl" class="collision" />
                 <geom name="right_arm_link_2_visual" pos="0.0 0.0105 -0.34" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_2.stl" class="visual" />
                 <body name="right_arm_link_3" pos="0.0 0.0105 0.2075" quat="1.0 0.0 0.0 0.0">
-                  <joint name="right_arm_A3" type="hinge" ref="0.0" class="motor" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
+                  <joint name="right_arm_A3" type="hinge" ref="0.0" class="robot" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
                   <inertial pos="0.0 0.034819 0.123299" quat="1.0 0.0 0.0 0.0" mass="3.394011" diaginertia="0.021383 0.020403 0.007563" />
                   <geom name="right_arm_link_3_collision" pos="0.0 0.0 -0.5475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_3.stl" class="collision" />
                   <geom name="right_arm_link_3_visual" pos="0.0 0.0 -0.5475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_3.stl" class="visual" />
                   <body name="right_arm_link_4" pos="0.0 0.0105 0.1925" quat="1.0 0.0 0.0 0.0">
-                    <joint name="right_arm_A4" type="hinge" ref="0.0" class="motor" range="-2.007128639793479 2.007128639793479" axis="0.0 -1.0 0.0" />
+                    <joint name="right_arm_A4" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 -1.0 0.0" />
                     <inertial pos="0.0 -0.039793 0.086944" quat="1.0 0.0 0.0 0.0" mass="4.031989" diaginertia="0.031695 0.030079 0.009665" />
                     <geom name="right_arm_link_4_collision" pos="0.0 -0.0105 -0.74" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_4.stl" class="collision" />
                     <geom name="right_arm_link_4_visual" pos="0.0 -0.0105 -0.74" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_4.stl" class="visual" />
                     <body name="right_arm_link_5" pos="0.0 -0.0105 0.2075" quat="1.0 0.0 0.0 0.0">
-                      <joint name="right_arm_A5" type="hinge" ref="0.0" class="motor" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
+                      <joint name="right_arm_A5" type="hinge" ref="0.0" class="robot" range="-2.8797932657906435 2.8797932657906435" axis="0.0 0.0 1.0" />
                       <inertial pos="0.0 -0.029824 0.076267" quat="1.0 0.0 0.0 0.0" mass="1.529239" diaginertia="0.008485 0.007136 0.003848" />
                       <geom name="right_arm_link_5_collision" pos="0.0 0.0 -0.9475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_5.stl" class="collision" />
                       <geom name="right_arm_link_5_visual" pos="0.0 0.0 -0.9475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_5.stl" class="visual" />
                       <body name="right_arm_link_6" pos="0.0 -0.0707 0.1925" quat="1.0 0.0 0.0 0.0">
-                        <joint name="right_arm_A6" type="hinge" ref="0.0" class="motor" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
+                        <joint name="right_arm_A6" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
                         <inertial pos="0.0 0.07102 0.00495" quat="1.0 0.0 0.0 0.0" mass="2.403626" diaginertia="0.007067 0.006804 0.004629" />
                         <geom name="right_arm_link_6_collision" pos="0.0 0.0707 -1.14" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_6.stl" class="collision" />
                         <geom name="right_arm_link_6_visual" pos="0.0 0.0707 -1.14" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_6.stl" class="visual" />
                         <body name="right_arm_link_7" pos="0.0 0.0707 0.091" quat="1.0 0.0 0.0 0.0">
-                          <joint name="right_arm_A7" type="hinge" ref="0.0" class="motor" range="-2.9146998508305306 2.9146998508305306" axis="0.0 0.0 1.0" />
+                          <joint name="right_arm_A7" type="hinge" ref="0.0" class="robot" range="-2.9146998508305306 2.9146998508305306" axis="0.0 0.0 1.0" />
                           <inertial pos="3.0000e-06 -2.0000e-06 1.3782e-02" quat="1.0 0.0 0.0 0.0" mass="0.259474" diaginertia="0.000171 0.000171 0.000299" />
                           <geom name="right_arm_link_7_collision" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_7.stl" class="collision" />
                           <geom name="right_arm_link_7_visual" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_7.stl" class="visual" />
@@ -166,13 +171,13 @@
                                 <geom name="right_hande_robotiq_hande_link_collision" pos="0 0 0.053450000000000004" quat="1.0 0.0 0.0 0.0" type="cylinder" size="0.0385 0.053450000000000004" class="collision" />
                                 <geom name="right_hande_robotiq_hande_link_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="hande.stl"  class="visual" />
                                 <body name="right_hande_robotiq_hande_left_finger" pos="0 0 0.099" quat="1.0 0.0 0.0 0.0">
-                                  <joint name="right_hande_robotiq_hande_left_finger_joint" type="slide" ref="0.0" class="motor" range="0.0 0.025" axis="1 0 0" />
+                                  <joint name="right_hande_robotiq_hande_left_finger_joint" type="slide" ref="0.0" class="robot" range="0.0 0.025" axis="1 0 0" />
                                   <inertial pos="0 0 0" quat="1.0 0.0 0.0 0.0" mass="0.03804" diaginertia="1e-09 1e-09 1e-09" />
                                   <geom name="right_hande_robotiq_hande_left_finger_collision" pos="0 0 0" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="finger_collision.stl"  class="collision" />
                                   <geom name="right_hande_robotiq_hande_left_finger_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="finger.stl"  class="visual" />
                                 </body>
                                 <body name="right_hande_robotiq_hande_right_finger" pos="0 0 0.099" quat="1.0 0.0 0.0 0.0">
-                                  <joint name="right_hande_robotiq_hande_right_finger_joint" type="slide" ref="0.0" class="motor" range="0.0 0.025" axis="-1 0 0" />
+                                  <joint name="right_hande_robotiq_hande_right_finger_joint" type="slide" ref="0.0" class="robot" range="0.0 0.025" axis="-1 0 0" />
                                   <inertial pos="0 0 0" quat="1.0 0.0 0.0 0.0" mass="0.03804" diaginertia="1e-09 1e-09 1e-09" />
                                   <geom name="right_hande_robotiq_hande_right_finger_collision" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" type="mesh" mesh="finger_collision.stl"  class="collision" />
                                   <geom name="right_hande_robotiq_hande_right_finger_visual" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" material="default_material" type="mesh" mesh="finger.stl"  class="visual" />
@@ -194,38 +199,39 @@
         <body name="table_base_link" pos="0.186 0.4 -0.83" quat="-1.0341155355510722e-13 -0.0 0.0 1.0">
           <inertial pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" mass="100.0" diaginertia="11.074162237 27.074155837000003 26.666656000000007" />
           <geom name="table_base_link_collision" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" type="box" size="0.8 0.4 0.415" class="collision" />
-          <geom name="table_base_link_visual" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" material="Orange" type="box" size="0.8 0.4 0.415" class="visual" />
+          <geom name="table_base_link_visual" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" material="wood" type="box" size="0.8 0.4 0.415" class="visual" />
           <body name="table_origin" pos="0 0 0.83" quat="1.0 0.0 0.0 0.0">
             <body name="plate_1_inner" pos="1.4500000000000002 0.194 0.02" quat="-1.0341155355510722e-13 -0.0 0.0 1.0" />
             <body name="plate_2_inner" pos="1.4500000000000002 0.6060000000000001 0.02" quat="-1.0341155355510722e-13 -0.0 0.0 1.0" />
           </body>
         </body>
-      </body>
+      </body> 
       <site name="bh_robot_base_site" pos="0 0 0" quat="1 0 0 0" />
       <camera name="front_camera" mode="track" fovy="90.0" quat="4.329780281177467e-17 4.329780281177466e-17 0.7071067811865475 0.7071067811865476" pos="0.0 2.0 0.5" />
       <camera name="side_camera" mode="track" fovy="90.0" quat="-0.5 -0.4999999999999999 0.5 0.5000000000000001" pos="-2.0 0.0 0.5" />
+      
     </body>
   </worldbody>
 
   <actuator>
-    <motor name="left_arm_A1_ctrl" joint="left_arm_A1" class="motor" />
-    <motor name="left_arm_A2_ctrl" joint="left_arm_A2" class="motor" />
-    <motor name="left_arm_A3_ctrl" joint="left_arm_A3" class="motor" />
-    <motor name="left_arm_A4_ctrl" joint="left_arm_A4" class="motor" />
-    <motor name="left_arm_A5_ctrl" joint="left_arm_A5" class="motor" />
-    <motor name="left_arm_A6_ctrl" joint="left_arm_A6" class="motor" />
-    <motor name="left_arm_A7_ctrl" joint="left_arm_A7" class="motor" />
-    <motor name="left_hande_robotiq_hande_left_finger_joint_ctrl" joint="left_hande_robotiq_hande_left_finger_joint" class="motor" />
-    <motor name="left_hande_robotiq_hande_right_finger_joint_ctrl" joint="left_hande_robotiq_hande_right_finger_joint" class="motor" />
-    <motor name="right_arm_A1_ctrl" joint="right_arm_A1" class="motor" />
-    <motor name="right_arm_A2_ctrl" joint="right_arm_A2" class="motor" />
-    <motor name="right_arm_A3_ctrl" joint="right_arm_A3" class="motor" />
-    <motor name="right_arm_A4_ctrl" joint="right_arm_A4" class="motor" />
-    <motor name="right_arm_A5_ctrl" joint="right_arm_A5" class="motor" />
-    <motor name="right_arm_A6_ctrl" joint="right_arm_A6" class="motor" />
-    <motor name="right_arm_A7_ctrl" joint="right_arm_A7" class="motor" />
-    <motor name="right_hande_robotiq_hande_left_finger_joint_ctrl" joint="right_hande_robotiq_hande_left_finger_joint" class="motor" />
-    <motor name="right_hande_robotiq_hande_right_finger_joint_ctrl" joint="right_hande_robotiq_hande_right_finger_joint" class="motor" />
+    <intvelocity name="left_arm_A1_ctrl" joint="left_arm_A1" class="arm_actuator" />
+    <intvelocity name="left_arm_A2_ctrl" joint="left_arm_A2" class="arm_actuator" />
+    <intvelocity name="left_arm_A3_ctrl" joint="left_arm_A3" class="arm_actuator" />
+    <intvelocity name="left_arm_A4_ctrl" joint="left_arm_A4" class="arm_actuator" />
+    <intvelocity name="left_arm_A5_ctrl" joint="left_arm_A5" class="arm_actuator" />
+    <intvelocity name="left_arm_A6_ctrl" joint="left_arm_A6" class="arm_actuator" />
+    <intvelocity name="left_arm_A7_ctrl" joint="left_arm_A7" class="last_arm_actuator" />
+    <intvelocity name="left_hande_robotiq_hande_left_finger_joint_ctrl" joint="left_hande_robotiq_hande_left_finger_joint" class="finger_actuator"   />
+    <intvelocity name="left_hande_robotiq_hande_right_finger_joint_ctrl" joint="left_hande_robotiq_hande_right_finger_joint" class="finger_actuator"  />
+    <intvelocity name="right_arm_A1_ctrl" joint="right_arm_A1" class="arm_actuator" />
+    <intvelocity name="right_arm_A2_ctrl" joint="right_arm_A2" class="arm_actuator" />
+    <intvelocity name="right_arm_A3_ctrl" joint="right_arm_A3" class="arm_actuator" />
+    <intvelocity name="right_arm_A4_ctrl" joint="right_arm_A4" class="arm_actuator" />
+    <intvelocity name="right_arm_A5_ctrl" joint="right_arm_A5" class="arm_actuator" />
+    <intvelocity name="right_arm_A6_ctrl" joint="right_arm_A6" class="arm_actuator" />
+    <intvelocity name="right_arm_A7_ctrl" joint="right_arm_A7" class="last_arm_actuator"/>
+    <intvelocity name="right_hande_robotiq_hande_left_finger_joint_ctrl" joint="right_hande_robotiq_hande_left_finger_joint" class="finger_actuator"  />
+    <intvelocity name="right_hande_robotiq_hande_right_finger_joint_ctrl" joint="right_hande_robotiq_hande_right_finger_joint" class="finger_actuator" />
   </actuator>
 
   <contact>
