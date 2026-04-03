@@ -21,6 +21,7 @@
 
   <worldbody>
     <light pos="0 0 2.5" dir="0 0 -1" directional="true"/>
+    <camera name="fixed_cam" pos="-3.832 -0.636 3.848" xyaxes="0.164 -0.987 -0.000 0.624 0.104 0.774"/>
   </worldbody>
 
 </mujoco>
