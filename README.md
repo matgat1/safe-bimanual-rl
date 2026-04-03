@@ -3,7 +3,7 @@
 Safe Reinforcement learning for tray pickup with Safety Filters
 
 
-[Sinusoidal-Controller](figs/sinusoidal_controller.gif)
+![Sinusoidal-Controller](figs/sinusoidal_controller.gif)
 
 ## Project Structure
 
