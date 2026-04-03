@@ -1,8 +1,8 @@
+# pylint: disable=too-few-public-methods,E1101
 import numpy as np
 import mujoco
 
 
-# pylint: disable=too-few-public-methods
 class SinusoidalController:
     """
     A controller that generates mirrored sinusoidal references for both arms of a
@@ -63,15 +63,16 @@ if __name__ == "__main__":
     scene_data = mujoco.MjData(scene_model)
 
     controller = SinusoidalController(scene_model)
-    
+
     cam_id = mujoco.mj_name2id(scene_model, mujoco.mjtObj.mjOBJ_CAMERA, "my_cam")
 
     with mujoco.viewer.launch_passive(scene_model, scene_data) as viewer:
         viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
-        viewer.cam.fixedcamid = mujoco.mj_name2id(scene_model, mujoco.mjtObj.mjOBJ_CAMERA, "fixed_cam")
+        viewer.cam.fixedcamid = mujoco.mj_name2id(
+            scene_model, mujoco.mjtObj.mjOBJ_CAMERA, "fixed_cam"
+        )
 
         while viewer.is_running():
             controller.step(scene_data)
             mujoco.mj_step(scene_model, scene_data)
             viewer.sync()
-
