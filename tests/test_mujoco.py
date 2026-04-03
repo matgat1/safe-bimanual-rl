@@ -22,8 +22,7 @@ def test_mujoco_import_model():
     bodies = model.nbody
     joints = model.njnt
     actuators = model.nu
-    
+
     assert bodies == 38, f"The model should have 38 bodies, but found {bodies}"
     assert joints == 18, f"The model should have 18 joints, but found {joints}"
     assert actuators == 18, f"The model should have 18 actuators, but found {actuators}"
-
