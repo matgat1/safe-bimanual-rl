@@ -1,4 +1,5 @@
-from mushroom_rl.environments.mujoco import MuJoCo, ObservationType, MujocoViewer
+import os
+from mushroom_rl.environments.mujoco import MuJoCo, ObservationType
 
 
 class BimanualTableEnv(MuJoCo):
@@ -7,12 +8,19 @@ class BimanualTableEnv(MuJoCo):
     Using mushroom_rl's MuJoCo environment as a base class
     """
 
-    def __init__(self, xml_path, gamma, horizon, n_substeps, collision_groups=None):
+    def __init__(self, gamma=1, horizon=1000, n_substeps=1):
+        """
+        Initialize the bimanual table environment.
+
+        Args:
+            gamma (float): The discounting factor of the environment.
+            horizon (int): The maximum horizon for the environment
+            n_substeps (int): The number of substeps to use by the MuJoCo simulator.
         """
 
-        Returns:
-            _type_: _description_
-        """
+        scene_xml = os.path.join(
+            os.path.dirname(__file__), "data", "dual_arm_iiwa_mujoco.xml"
+        )
 
         action_spec = [
             "right_arm_A1_ctrl",
@@ -106,21 +114,29 @@ class BimanualTableEnv(MuJoCo):
             ),
         ]
 
-        # TODO: Add collision
-
-        # TODO: keyframe ?
-
-        viewer_params = {}
-        viewer_params.setdefault(
-            "camera_params", MujocoViewer.get_default_camera_params()
-        )
-
         super().__init__(
-            xml_path,
-            gamma=gamma,
-            horizon=horizon,
+            xml_file=scene_xml,
             actuation_spec=action_spec,
             observation_spec=observation_spec,
-            collision_groups=collision_groups,
+            gamma=gamma,
+            horizon=horizon,
             n_substeps=n_substeps,
         )
+
+    def is_absorbing(self, obs):
+        return False
+
+    def reward(self, obs, action, next_obs, absorbing):
+        return 0
+
+
+if __name__ == "__main__":
+    import numpy as np
+
+    env = BimanualTableEnv()
+    env.reset()
+    env.render()
+    while True:
+        action = np.zeros((18,))
+        env.step(action)
+        env.render()
