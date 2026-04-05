@@ -22,10 +22,10 @@
   <compiler angle="radian" meshdir="meshes" />
 
   <asset>
-    <material name="wood" rgba="0.6 0.4 0.2 1.0" />
-    <material name="grey" rgba="0.8667 0.86667 0.8902 1" />
-    <material name="default_material" rgba="0.7 0.7 0.7 1" />
-    <material name="collision_material" rgba="1.0 0.28 0.1 0.9" />
+    <material name="dark_blue" rgba="0.05 0.1 0.3 1.0" />
+    <material name="grey" rgba="0.55 0.5 0.5 1" />
+    <material name="default_material" rgba="0.35 0.3 0.3 1"/>
+    <material name="collision_material" rgba="1.0 0.28 0.1 0.0" />
     <mesh name="steel_torso.stl" file="steel_torso.stl" />
     <mesh name="link_0.stl" file="link_0.stl" />
     <mesh name="link_1.stl" file="link_1.stl" />
@@ -199,7 +199,7 @@
         <body name="table_base_link" pos="0.186 0.4 -0.83" quat="-1.0341155355510722e-13 -0.0 0.0 1.0">
           <inertial pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" mass="100.0" diaginertia="11.074162237 27.074155837000003 26.666656000000007" />
           <geom name="table_base_link_collision" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" type="box" size="0.8 0.4 0.415" class="collision" />
-          <geom name="table_base_link_visual" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" material="wood" type="box" size="0.8 0.4 0.415" class="visual" />
+          <geom name="table_base_link_visual" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" material="dark_blue" type="box" size="0.8 0.4 0.415" class="visual" />
           <body name="table_origin" pos="0 0 0.83" quat="1.0 0.0 0.0 0.0">
             <body name="plate_1_inner" pos="1.4500000000000002 0.194 0.02" quat="-1.0341155355510722e-13 -0.0 0.0 1.0" />
             <body name="plate_2_inner" pos="1.4500000000000002 0.6060000000000001 0.02" quat="-1.0341155355510722e-13 -0.0 0.0 1.0" />
