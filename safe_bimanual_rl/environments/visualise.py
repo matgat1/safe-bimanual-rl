@@ -4,7 +4,7 @@ import mujoco
 import mujoco.viewer
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-xml_path = os.path.join(BASE_DIR, "data", "scene.xml")
+xml_path = os.path.join(BASE_DIR, "data", "arms_tray_scene.xml")
 
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
