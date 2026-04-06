@@ -37,10 +37,8 @@ class ReachEnv(BimanualTableEnv):
             "left_arm_A7_ctrl",
         ]
 
-        additional_data_spec = [
-            ("cube_pos", "cube", ObservationType.BODY_POS)
-        ]
-        
+        additional_data_spec = [("cube_pos", "cube", ObservationType.BODY_POS)]
+
         scene_xml = os.path.join(
             os.path.dirname(__file__), "data", "arms_tray_scene.xml"
         )
@@ -53,32 +51,34 @@ class ReachEnv(BimanualTableEnv):
             additional_data_spec=additional_data_spec,
             actuation_spec=actuation_spec,
         )
-        
+
     def _modify_mdp_info(self, mdp_info):
         mdp_info = super()._modify_mdp_info(mdp_info)
         self.obs_helper.add_obs("rel_cube_pos_right_arm", 3)
         self.obs_helper.add_obs("rel_cube_pos_left_arm", 3)
-        
+
         # Update dimensions of the observation space to include the cube position
         mdp_info.observation_space = Box(*self.obs_helper.get_obs_limits())
-        
+
         return mdp_info
-    
+
     def _create_observation(self, obs):
         obs = super()._create_observation(obs)
-        
+
         cube_pos = self._read_data("cube_pos")
-        
-        right_arm_pos = self._read_data("right_hande_robotiq_hande_left_finger_joint_pos")
+
+        right_arm_pos = self._read_data(
+            "right_hande_robotiq_hande_left_finger_joint_pos"
+        )
         left_arm_pos = self._read_data("left_hande_robotiq_hande_left_finger_joint_pos")
-        
+
         rel_cube_pos_right_arm = cube_pos - right_arm_pos
         rel_cube_pos_left_arm = cube_pos - left_arm_pos
-        
+
         obs = np.concatenate([obs, rel_cube_pos_right_arm, rel_cube_pos_left_arm])
-        
+
         return obs
-        
+
     def reward(self, obs, action, next_obs, absorbing):
         """
         Compute the reward for the reach environment.
@@ -90,16 +90,19 @@ class ReachEnv(BimanualTableEnv):
             reward (float): The reward for the current state and action.
         """
 
-        rel_cube_pos_right = self.obs_helper.get_from_obs(next_obs, "rel_cube_pos_right_arm")
-        rel_cube_pos_left = self.obs_helper.get_from_obs(next_obs, "rel_cube_pos_left_arm")
-        
+        rel_cube_pos_right = self.obs_helper.get_from_obs(
+            next_obs, "rel_cube_pos_right_arm"
+        )
+        rel_cube_pos_left = self.obs_helper.get_from_obs(
+            next_obs, "rel_cube_pos_left_arm"
+        )
+
         right_arm_distance = np.linalg.norm(rel_cube_pos_right)
         left_arm_distance = np.linalg.norm(rel_cube_pos_left)
-        
-        reward = -(right_arm_distance + left_arm_distance)
-    
-        return reward
 
+        reward = -(right_arm_distance + left_arm_distance)
+
+        return reward
 
     def is_absorbing(self, obs):
         """

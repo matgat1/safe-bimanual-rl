@@ -7,7 +7,15 @@ class BimanualTableEnv(MuJoCo):
     Using mushroom_rl's MuJoCo environment as a base class
     """
 
-    def __init__(self, scene_xml, gamma, horizon, n_substeps, actuation_spec=None, additional_data_spec=None):
+    def __init__(
+        self,
+        scene_xml,
+        gamma,
+        horizon,
+        n_substeps,
+        actuation_spec=None,
+        additional_data_spec=None,
+    ):
         """
         Initialize the bimanual table environment.
 
@@ -111,7 +119,7 @@ class BimanualTableEnv(MuJoCo):
                 ObservationType.JOINT_VEL,
             ),
         ]
-        
+
         additional_data_spec = additional_data_spec or []
 
         super().__init__(
