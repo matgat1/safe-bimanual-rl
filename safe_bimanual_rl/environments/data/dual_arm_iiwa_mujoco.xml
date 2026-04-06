@@ -22,9 +22,10 @@
   <compiler angle="radian" meshdir="meshes" />
 
   <asset>
-    <material name="dark_blue" rgba="0.05 0.1 0.3 1.0" />
+    <material name="wood" rgba="0.502 0.29 0.016 1" />
     <material name="grey" rgba="0.55 0.5 0.5 1" />
-    <material name="default_material" rgba="0.35 0.3 0.3 1"/>
+    <material name="gripper" rgba="0.25 0.2 0.2 1"/>
+    <material name="default_material" rgba="0.51 0.5 0.5 1"/>
     <material name="collision_material" rgba="1.0 0.28 0.1 0.0" />
     <mesh name="steel_torso.stl" file="steel_torso.stl" />
     <mesh name="link_0.stl" file="link_0.stl" />
@@ -91,22 +92,22 @@
                             <body name="left_hande_robotiq_hande_coupler" pos="0 0 0" quat="1.0 0.0 0.0 0.0">
                               <inertial pos="0 0 0.005449999999999999" quat="1.0 0.0 0.0 0.0" mass="0.119" diaginertia="4.4668218799372e-05 4.4668218799372e-05 8.367187499999999e-05" />
                               <geom name="left_hande_robotiq_hande_coupler_collision" pos="0 0 0.005449999999999999" quat="1.0 0.0 0.0 0.0" type="cylinder" size="0.0385 0.00845" class="collision" />
-                              <geom name="left_hande_robotiq_hande_coupler_visual" pos="0 0 0" quat="1 0 0 0" material="default_material" type="mesh" mesh="io_coupler.stl" class="visual" />
+                              <geom name="left_hande_robotiq_hande_coupler_visual" pos="0 0 0" quat="1 0 0 0" material="gripper" type="mesh" mesh="io_coupler.stl" class="visual" />
                               <body name="left_hande_robotiq_hande_link" pos="0 0 0.011" quat="1.0 0.0 0.0 0.0">
                                 <inertial pos="0 0 0.0495" quat="1.0 0.0 0.0 0.0" mass="0.86387" diaginertia="0.0010092697156669523 0.0010092697156669523 0.00060740859375" />
                                 <geom name="left_hande_robotiq_hande_link_collision" pos="0 0 0.053450000000000004" quat="1.0 0.0 0.0 0.0" type="cylinder" size="0.0385 0.053450000000000004" class="collision" />
-                                <geom name="left_hande_robotiq_hande_link_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="hande.stl"  class="visual" />
+                                <geom name="left_hande_robotiq_hande_link_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="gripper" type="mesh" mesh="hande.stl"  class="visual" />
                                 <body name="left_hande_robotiq_hande_left_finger" pos="0 0 0.099" quat="1.0 0.0 0.0 0.0">
                                   <joint name="left_hande_robotiq_hande_left_finger_joint" type="slide" ref="0.0" class="robot" range="0.0 0.025" axis="1 0 0" />
                                   <inertial pos="0 0 0" quat="1.0 0.0 0.0 0.0" mass="0.03804" diaginertia="1e-09 1e-09 1e-09" />
                                   <geom name="left_hande_robotiq_hande_left_finger_collision" pos="0 0 0" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="finger_collision.stl" class="collision" />
-                                  <geom name="left_hande_robotiq_hande_left_finger_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="finger.stl" class="visual" />
+                                  <geom name="left_hande_robotiq_hande_left_finger_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="gripper" type="mesh" mesh="finger.stl" class="visual" />
                                 </body>
                                 <body name="left_hande_robotiq_hande_right_finger" pos="0 0 0.099" quat="1.0 0.0 0.0 0.0">
                                   <joint name="left_hande_robotiq_hande_right_finger_joint" type="slide" ref="0.0" class="robot" range="0.0 0.025" axis="-1 0 0" />
                                   <inertial pos="0 0 0" quat="1.0 0.0 0.0 0.0" mass="0.03804" diaginertia="1e-09 1e-09 1e-09" />
                                   <geom name="left_hande_robotiq_hande_right_finger_collision" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" type="mesh" mesh="finger_collision.stl"  class="collision" />
-                                  <geom name="left_hande_robotiq_hande_right_finger_visual" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" material="default_material" type="mesh" mesh="finger.stl"  class="visual" />
+                                  <geom name="left_hande_robotiq_hande_right_finger_visual" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" material="gripper" type="mesh" mesh="finger.stl"  class="visual" />
                                 </body>
                                 <body name="left_hande_robotiq_hande_end" pos="0 0 0.14550000000000002" quat="1.0 0.0 0.0 0.0" />
                               </body>
@@ -165,22 +166,22 @@
                             <body name="right_hande_robotiq_hande_coupler" pos="0 0 0" quat="1.0 0.0 0.0 0.0">
                               <inertial pos="0 0 0.005449999999999999" quat="1.0 0.0 0.0 0.0" mass="0.119" diaginertia="4.4668218799372e-05 4.4668218799372e-05 8.367187499999999e-05" />
                               <geom name="right_hande_robotiq_hande_coupler_collision" pos="0 0 0.005449999999999999" quat="1.0 0.0 0.0 0.0" type="cylinder" size="0.0385 0.00845" class="collision" />
-                              <geom name="right_hande_robotiq_hande_coupler_visual" pos="0 0 0" quat="1 0 0 0" material="default_material" type="mesh" mesh="io_coupler.stl" class="visual" />
+                              <geom name="right_hande_robotiq_hande_coupler_visual" pos="0 0 0" quat="1 0 0 0" material="gripper" type="mesh" mesh="io_coupler.stl" class="visual" />
                               <body name="right_hande_robotiq_hande_link" pos="0 0 0.011" quat="1.0 0.0 0.0 0.0">
                                 <inertial pos="0 0 0.0495" quat="1.0 0.0 0.0 0.0" mass="0.86387" diaginertia="0.0010092697156669523 0.0010092697156669523 0.00060740859375" />
                                 <geom name="right_hande_robotiq_hande_link_collision" pos="0 0 0.053450000000000004" quat="1.0 0.0 0.0 0.0" type="cylinder" size="0.0385 0.053450000000000004" class="collision" />
-                                <geom name="right_hande_robotiq_hande_link_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="hande.stl"  class="visual" />
+                                <geom name="right_hande_robotiq_hande_link_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="gripper" type="mesh" mesh="hande.stl"  class="visual" />
                                 <body name="right_hande_robotiq_hande_left_finger" pos="0 0 0.099" quat="1.0 0.0 0.0 0.0">
                                   <joint name="right_hande_robotiq_hande_left_finger_joint" type="slide" ref="0.0" class="robot" range="0.0 0.025" axis="1 0 0" />
                                   <inertial pos="0 0 0" quat="1.0 0.0 0.0 0.0" mass="0.03804" diaginertia="1e-09 1e-09 1e-09" />
                                   <geom name="right_hande_robotiq_hande_left_finger_collision" pos="0 0 0" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="finger_collision.stl"  class="collision" />
-                                  <geom name="right_hande_robotiq_hande_left_finger_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="finger.stl"  class="visual" />
+                                  <geom name="right_hande_robotiq_hande_left_finger_visual" pos="0 0 0" quat="1.0 0.0 0.0 0.0" material="gripper" type="mesh" mesh="finger.stl"  class="visual" />
                                 </body>
                                 <body name="right_hande_robotiq_hande_right_finger" pos="0 0 0.099" quat="1.0 0.0 0.0 0.0">
                                   <joint name="right_hande_robotiq_hande_right_finger_joint" type="slide" ref="0.0" class="robot" range="0.0 0.025" axis="-1 0 0" />
                                   <inertial pos="0 0 0" quat="1.0 0.0 0.0 0.0" mass="0.03804" diaginertia="1e-09 1e-09 1e-09" />
                                   <geom name="right_hande_robotiq_hande_right_finger_collision" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" type="mesh" mesh="finger_collision.stl"  class="collision" />
-                                  <geom name="right_hande_robotiq_hande_right_finger_visual" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" material="default_material" type="mesh" mesh="finger.stl"  class="visual" />
+                                  <geom name="right_hande_robotiq_hande_right_finger_visual" pos="0 0 0" quat="6.123233995736766e-17 0.0 0.0 1.0" material="gripper" type="mesh" mesh="finger.stl"  class="visual" />
                                 </body>
                                 <body name="right_hande_robotiq_hande_end" pos="0 0 0.14550000000000002" quat="1.0 0.0 0.0 0.0" />
                               </body>
@@ -199,7 +200,7 @@
         <body name="table_base_link" pos="0.186 0.4 -0.83" quat="-1.0341155355510722e-13 -0.0 0.0 1.0">
           <inertial pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" mass="100.0" diaginertia="11.074162237 27.074155837000003 26.666656000000007" />
           <geom name="table_base_link_collision" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" type="box" size="0.8 0.4 0.415" class="collision" />
-          <geom name="table_base_link_visual" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" material="dark_blue" type="box" size="0.8 0.4 0.415" class="visual" />
+          <geom name="table_base_link_visual" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" material="wood" type="box" size="0.8 0.4 0.415" class="visual" />
           <body name="table_origin" pos="0 0 0.83" quat="1.0 0.0 0.0 0.0">
             <body name="plate_1_inner" pos="1.4500000000000002 0.194 0.02" quat="-1.0341155355510722e-13 -0.0 0.0 1.0" />
             <body name="plate_2_inner" pos="1.4500000000000002 0.6060000000000001 0.02" quat="-1.0341155355510722e-13 -0.0 0.0 1.0" />
