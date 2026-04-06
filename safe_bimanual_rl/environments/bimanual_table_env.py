@@ -1,4 +1,3 @@
-import os
 from mushroom_rl.environments.mujoco import MuJoCo, ObservationType
 
 
@@ -8,21 +7,20 @@ class BimanualTableEnv(MuJoCo):
     Using mushroom_rl's MuJoCo environment as a base class
     """
 
-    def __init__(self, gamma=1, horizon=1000, n_substeps=1):
+    def __init__(self, scene_xml, gamma, horizon, n_substeps, actuation_spec=None, additional_data_spec=None):
         """
         Initialize the bimanual table environment.
 
         Args:
+            scene_xml (str): The path to the MuJoCo scene XML file.
             gamma (float): The discounting factor of the environment.
             horizon (int): The maximum horizon for the environment
             n_substeps (int): The number of substeps to use by the MuJoCo simulator.
+            actuation_spec (list): The list of actuation variables for the environment.
+            observation_spec (list): The list of observation variables for the environment.
         """
 
-        scene_xml = os.path.join(
-            os.path.dirname(__file__), "data", "dual_arm_iiwa_mujoco.xml"
-        )
-
-        action_spec = [
+        action_spec = actuation_spec or [
             "right_arm_A1_ctrl",
             "right_arm_A2_ctrl",
             "right_arm_A3_ctrl",
@@ -113,30 +111,15 @@ class BimanualTableEnv(MuJoCo):
                 ObservationType.JOINT_VEL,
             ),
         ]
+        
+        additional_data_spec = additional_data_spec or []
 
         super().__init__(
             xml_file=scene_xml,
             actuation_spec=action_spec,
             observation_spec=observation_spec,
+            additional_data_spec=additional_data_spec,
             gamma=gamma,
             horizon=horizon,
             n_substeps=n_substeps,
         )
-
-    def is_absorbing(self, obs):
-        return False
-
-    def reward(self, obs, action, next_obs, absorbing):
-        return 0
-
-
-if __name__ == "__main__":
-    import numpy as np
-
-    env = BimanualTableEnv()
-    env.reset()
-    env.render()
-    while True:
-        action = np.zeros((18,))
-        env.step(action)
-        env.render()
