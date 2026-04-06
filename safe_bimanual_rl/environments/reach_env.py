@@ -37,7 +37,19 @@ class ReachEnv(BimanualTableEnv):
             "left_arm_A7_ctrl",
         ]
 
-        additional_data_spec = [("cube_pos", "cube", ObservationType.BODY_POS)]
+        additional_data_spec = [
+            ("cube_pos", "cube", ObservationType.BODY_POS),
+            (
+                "right_hande_robotiq_hande_left_finger_joint_pos",
+                "right_hande_robotiq_hande_left_finger_joint",
+                ObservationType.JOINT_POS,
+            ),
+            (
+                "left_hande_robotiq_hande_left_finger_joint_pos",
+                "left_hande_robotiq_hande_left_finger_joint",
+                ObservationType.JOINT_POS,
+            ),
+        ]
 
         scene_xml = os.path.join(
             os.path.dirname(__file__), "data", "arms_tray_scene.xml"
