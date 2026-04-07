@@ -40,14 +40,14 @@ class ReachEnv(BimanualTableEnv):
         additional_data_spec = [
             ("cube_pos", "cube", ObservationType.BODY_POS),
             (
-                "right_hande_robotiq_hande_left_finger_joint_pos",
-                "right_hande_robotiq_hande_left_finger_joint",
-                ObservationType.JOINT_POS,
+                "right_hande_robotiq_hande_end_pos",
+                "right_hande_robotiq_hande_end",
+                ObservationType.BODY_POS,
             ),
             (
-                "left_hande_robotiq_hande_left_finger_joint_pos",
-                "left_hande_robotiq_hande_left_finger_joint",
-                ObservationType.JOINT_POS,
+                "left_hande_robotiq_hande_end_pos",
+                "left_hande_robotiq_hande_end",
+                ObservationType.BODY_POS,
             ),
         ]
 
@@ -80,9 +80,9 @@ class ReachEnv(BimanualTableEnv):
         cube_pos = self._read_data("cube_pos")
 
         right_arm_pos = self._read_data(
-            "right_hande_robotiq_hande_left_finger_joint_pos"
+            "right_hande_robotiq_hande_end_pos"
         )
-        left_arm_pos = self._read_data("left_hande_robotiq_hande_left_finger_joint_pos")
+        left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
 
         rel_cube_pos_right_arm = cube_pos - right_arm_pos
         rel_cube_pos_left_arm = cube_pos - left_arm_pos
@@ -112,7 +112,10 @@ class ReachEnv(BimanualTableEnv):
         right_arm_distance = np.linalg.norm(rel_cube_pos_right)
         left_arm_distance = np.linalg.norm(rel_cube_pos_left)
 
-        reward = -(right_arm_distance + left_arm_distance)
+        right_reward = 1 - np.tanh(right_arm_distance / 0.5)
+        left_reward = 1 - np.tanh(left_arm_distance / 0.5)
+
+        reward = 0.5 * right_reward + 0.5 * left_reward
 
         return reward
 
@@ -135,5 +138,6 @@ if __name__ == "__main__":
     env.render()
     while True:
         action = np.zeros((14,))
+        #action = np.random.uniform(-2.0, 2.0, size=(14,))
         env.step(action)
         env.render()
