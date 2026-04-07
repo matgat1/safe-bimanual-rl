@@ -118,6 +118,16 @@ class BimanualTableEnv(MuJoCo):
                 "right_hande_robotiq_hande_right_finger_joint",
                 ObservationType.JOINT_VEL,
             ),
+            (
+                "right_hande_robotiq_hande_end_pos",
+                "right_hande_robotiq_hande_end",
+                ObservationType.BODY_POS,
+            ),
+            (
+                "left_hande_robotiq_hande_end_pos",
+                "left_hande_robotiq_hande_end",
+                ObservationType.BODY_POS,
+            ),
         ]
 
         additional_data_spec = additional_data_spec or []
