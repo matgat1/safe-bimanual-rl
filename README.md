@@ -3,7 +3,7 @@
 Safe Reinforcement learning for tray pickup with Safety Filters
 
 
-![](figs/reach_cube_attempt0.mp4)
+![](figs/reach_cube_attempt0.gif)
 Reach Cube experiment trained for 12 epochs with 4000 steps per epoch (γ=0.99, horizon=200, n_substeps=4), using a replay buffer of 5,000–200,000 samples, batch size 256, 128 hidden features, 10,000 warm-up transitions, τ=0.001, and α learning rate of 3×10⁻⁴.
 
 
