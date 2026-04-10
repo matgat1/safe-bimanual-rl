@@ -21,9 +21,9 @@ class CriticNetwork(nn.Module):
         self._h2 = nn.Linear(n_features, n_features)
         self._h3 = nn.Linear(n_features, n_output)
 
-        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain('relu'))
-        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain('relu'))
-        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain('linear'))
+        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain("relu"))
+        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain("relu"))
+        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain("linear"))
 
     def forward(self, state, action):
         state_action = torch.cat((state.float(), action.float()), dim=1)
@@ -42,9 +42,9 @@ class ActorNetwork(nn.Module):
         self._h2 = nn.Linear(n_features, n_features)
         self._h3 = nn.Linear(n_features, n_output)
 
-        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain('relu'))
-        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain('relu'))
-        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain('linear'))
+        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain("relu"))
+        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain("relu"))
+        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain("linear"))
 
     def forward(self, state):
         features1 = F.relu(self._h1(torch.squeeze(state, 1).float()))
@@ -57,7 +57,7 @@ def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
 
     logger = Logger(SAC.__name__, results_dir=None)
     logger.strong_line()
-    logger.info('Experiment Algorithm: SAC - ReachEnv')
+    logger.info("Experiment Algorithm: SAC - ReachEnv")
 
     # Load Environment
     mdp = ReachEnv(gamma=0.99, horizon=200, n_substeps=4)
@@ -85,13 +85,13 @@ def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
         input_shape=actor_input_shape,
         output_shape=mdp.info.action_space.shape,
     )
-    actor_optimizer = {'class': optim.Adam, 'params': {'lr': 5e-4}}
+    actor_optimizer = {"class": optim.Adam, "params": {"lr": 5e-4}}
 
     # Critic
     critic_input_shape = (actor_input_shape[0] + mdp.info.action_space.shape[0],)
     critic_params = dict(
         network=CriticNetwork,
-        optimizer={'class': optim.Adam, 'params': {'lr': 5e-4}},
+        optimizer={"class": optim.Adam, "params": {"lr": 5e-4}},
         loss=F.mse_loss,
         n_features=n_features,
         input_shape=critic_input_shape,
@@ -101,14 +101,20 @@ def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
     # Action space normalization to [-1, 1]
     mdp.info.action_space.low[:] = -1.0
     mdp.info.action_space.high[:] = 1.0
-    
+
     # Agent
     agent = SAC(
         mdp.info,
-        actor_mu_params, actor_sigma_params,
-        actor_optimizer, critic_params,
-        batch_size, initial_replay_size, max_replay_size,
-        warmup_transitions, tau, lr_alpha,
+        actor_mu_params,
+        actor_sigma_params,
+        actor_optimizer,
+        critic_params,
+        batch_size,
+        initial_replay_size,
+        max_replay_size,
+        warmup_transitions,
+        tau,
+        lr_alpha,
         critic_fit_params=None,
     )
 
@@ -121,7 +127,9 @@ def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
     logger.epoch_info(0, J=J, R=R)
 
     # Replay initialisation
-    core.learn(n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size, quiet=True)
+    core.learn(
+        n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size, quiet=True
+    )
 
     # Training loop
     for n in trange(n_epochs, leave=False):
@@ -133,11 +141,10 @@ def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
         logger.epoch_info(n + 1, J=J, R=R)
 
     # Final visualization
-    logger.info('Press a button to visualize')
+    logger.info("Press a button to visualize")
     input()
     core.evaluate(n_episodes=5, render=True, record=True)
 
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     experiment(n_epochs=12, n_steps=4000, n_steps_test=3000)

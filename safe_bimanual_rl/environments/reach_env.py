@@ -78,10 +78,8 @@ class ReachEnv(BimanualTableEnv):
         obs = super()._create_observation(obs)
 
         cube_pos = self._read_data("cube_pos")
-        cube_pos = np.array([0.7,0.1,0.86499277])
-        right_arm_pos = self._read_data(
-            "right_hande_robotiq_hande_end_pos"
-        )
+        cube_pos = np.array([0.7, 0.1, 0.86499277])
+        right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
         left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
 
         rel_cube_pos_right_arm = cube_pos - right_arm_pos
@@ -112,7 +110,7 @@ class ReachEnv(BimanualTableEnv):
         right_arm_distance = np.linalg.norm(rel_cube_pos_right)
         left_arm_distance = np.linalg.norm(rel_cube_pos_left)
 
-        reward = - (right_arm_distance + left_arm_distance)
+        reward = -(right_arm_distance + left_arm_distance)
 
         return reward
 
@@ -135,6 +133,6 @@ if __name__ == "__main__":
     env.render()
     while True:
         action = np.zeros((14,))
-        #action = np.random.uniform(-2.0, 2.0, size=(14,))
+        # action = np.random.uniform(-2.0, 2.0, size=(14,))
         env.step(action)
         env.render()
