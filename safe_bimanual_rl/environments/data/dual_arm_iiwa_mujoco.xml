@@ -2,19 +2,19 @@
   <default>
     <default class="robot">
       <default class="arm_actuator">
-      <intvelocity forcerange="-87 87" forcelimited="true" inheritrange="1.0" kp="350" kv="10" />
+      <intvelocity forcerange="-200 200" forcelimited="true" inheritrange="1.0" kp="350" kv="10" />
       </default>
       <default class="finger_actuator">
-      <intvelocity forcerange="-5 5" forcelimited="true" inheritrange="1.0" kp="50" kv="14"/>
+      <intvelocity forcerange="-130 130" forcelimited="true" inheritrange="1.0" kp="50" kv="14"/>
       </default>
       <default class="last_arm_actuator">
-      <intvelocity forcerange="-87 87" forcelimited="true" inheritrange="1.0" kp="2" kv="0.01"/>
+      <intvelocity forcerange="-200 200" forcelimited="true" inheritrange="1.0" kp="2" kv="0.01"/>
       </default>
       <default class="visual">
         <geom material="visualgeom" contype="0" conaffinity="0" group="2" />
       </default>
       <default class="collision">
-        <geom material="collision_material" condim="3" contype="0" conaffinity="1" priority="1" group="1" solref="0.005 1" solimp="0.99 0.999 1e-05" friction="1 0.01 0.01" />
+        <geom material="collision_material" condim="3" conaffinity="1" priority="1" group="1" solref="0.005 1" solimp="0.99 0.999 1e-05" friction="1 0.01 0.01" />
       </default>
     </default>
   </default>
@@ -113,7 +113,7 @@
                               </body>
                             </body>
                           </body>
-                        </body>
+                        </body> 
                       </body>
                     </body>
                   </body>
@@ -215,24 +215,24 @@
   </worldbody>
 
   <actuator>
-    <intvelocity name="left_arm_A1_ctrl" joint="left_arm_A1" class="arm_actuator" />
-    <intvelocity name="left_arm_A2_ctrl" joint="left_arm_A2" class="arm_actuator" />
-    <intvelocity name="left_arm_A3_ctrl" joint="left_arm_A3" class="arm_actuator" />
-    <intvelocity name="left_arm_A4_ctrl" joint="left_arm_A4" class="arm_actuator" />
-    <intvelocity name="left_arm_A5_ctrl" joint="left_arm_A5" class="arm_actuator" />
-    <intvelocity name="left_arm_A6_ctrl" joint="left_arm_A6" class="arm_actuator" />
+    <intvelocity name="left_arm_A1_ctrl" joint="left_arm_A1" class="arm_actuator" ctrlrange="-1.0 1.0"/>
+    <intvelocity name="left_arm_A2_ctrl" joint="left_arm_A2" class="arm_actuator" ctrlrange="-1.0 1.0"/>
+    <intvelocity name="left_arm_A3_ctrl" joint="left_arm_A3" class="arm_actuator" ctrlrange="-1.0 1.0"/>
+    <intvelocity name="left_arm_A4_ctrl" joint="left_arm_A4" class="arm_actuator" ctrlrange="-1.0 1.0"/>
+    <intvelocity name="left_arm_A5_ctrl" joint="left_arm_A5" class="arm_actuator" ctrlrange="-1.0 1.0"/>
+    <intvelocity name="left_arm_A6_ctrl" joint="left_arm_A6" class="arm_actuator" ctrlrange="-1.0 1.0"/>
     <intvelocity name="left_arm_A7_ctrl" joint="left_arm_A7" class="last_arm_actuator" />
-    <intvelocity name="left_hande_robotiq_hande_left_finger_joint_ctrl" joint="left_hande_robotiq_hande_left_finger_joint" class="finger_actuator"   />
-    <intvelocity name="left_hande_robotiq_hande_right_finger_joint_ctrl" joint="left_hande_robotiq_hande_right_finger_joint" class="finger_actuator"  />
-    <intvelocity name="right_arm_A1_ctrl" joint="right_arm_A1" class="arm_actuator" />
-    <intvelocity name="right_arm_A2_ctrl" joint="right_arm_A2" class="arm_actuator" />
-    <intvelocity name="right_arm_A3_ctrl" joint="right_arm_A3" class="arm_actuator" />
-    <intvelocity name="right_arm_A4_ctrl" joint="right_arm_A4" class="arm_actuator" />
-    <intvelocity name="right_arm_A5_ctrl" joint="right_arm_A5" class="arm_actuator" />
-    <intvelocity name="right_arm_A6_ctrl" joint="right_arm_A6" class="arm_actuator" />
-    <intvelocity name="right_arm_A7_ctrl" joint="right_arm_A7" class="last_arm_actuator"/>
-    <intvelocity name="right_hande_robotiq_hande_left_finger_joint_ctrl" joint="right_hande_robotiq_hande_left_finger_joint" class="finger_actuator"  />
-    <intvelocity name="right_hande_robotiq_hande_right_finger_joint_ctrl" joint="right_hande_robotiq_hande_right_finger_joint" class="finger_actuator" />
+    <intvelocity name="left_hande_robotiq_hande_left_finger_joint_ctrl" joint="left_hande_robotiq_hande_left_finger_joint" class="finger_actuator"    ctrlrange="-0.5 0.5"/>
+    <intvelocity name="left_hande_robotiq_hande_right_finger_joint_ctrl" joint="left_hande_robotiq_hande_right_finger_joint" class="finger_actuator"   ctrlrange="-0.5 0.5"/>
+    <intvelocity name="right_arm_A1_ctrl" joint="right_arm_A1" class="arm_actuator"  ctrlrange="-1.0 1.0"/>
+    <intvelocity name="right_arm_A2_ctrl" joint="right_arm_A2" class="arm_actuator"  ctrlrange="-1.0 1.0"/>
+    <intvelocity name="right_arm_A3_ctrl" joint="right_arm_A3" class="arm_actuator"  ctrlrange="-1.0 1.0"/>
+    <intvelocity name="right_arm_A4_ctrl" joint="right_arm_A4" class="arm_actuator"  ctrlrange="-1.0 1.0"/>
+    <intvelocity name="right_arm_A5_ctrl" joint="right_arm_A5" class="arm_actuator"  ctrlrange="-1.0 1.0"/>
+    <intvelocity name="right_arm_A6_ctrl" joint="right_arm_A6" class="arm_actuator"  ctrlrange="-1.0 1.0"/>
+    <intvelocity name="right_arm_A7_ctrl" joint="right_arm_A7" class="last_arm_actuator" ctrlrange="-1.0 1.0"/>
+    <intvelocity name="right_hande_robotiq_hande_left_finger_joint_ctrl" joint="right_hande_robotiq_hande_left_finger_joint" class="finger_actuator"   ctrlrange="-0.5 0.5"/>
+    <intvelocity name="right_hande_robotiq_hande_right_finger_joint_ctrl" joint="right_hande_robotiq_hande_right_finger_joint" class="finger_actuator"  ctrlrange="-0.5 0.5"/>
   </actuator>
 
   <contact>
