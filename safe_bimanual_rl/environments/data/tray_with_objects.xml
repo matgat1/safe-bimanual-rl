@@ -1,7 +1,7 @@
 <mujoco model="tray">
   <worldbody>
 
-    <body name="tray" pos="0.7 0.1 0.83">
+    <body name="tray" pos="-0.92 0.0 0.83">
       <freejoint/>
       <geom type="box" size="0.2 0.15 0.005"
             rgba="0.3 0.3 0.3 1"
@@ -20,7 +20,7 @@
       <geom type="box" size="0.005 0.15 0.02" pos="-0.2 0 0.015"
             rgba="0.3 0.3 0.3 1" contype="1" conaffinity="1"/>
     </body>
-    <body name="cube" pos="0.7 0.1 0.9">
+    <body name="cube" pos="-0.92 0.0 0.9">
         <freejoint/>
         <geom type="box" size="0.025 0.025 0.025" rgba="0.063 0.529 0.318 1" mass="0.1"
             contype="1" conaffinity="1"

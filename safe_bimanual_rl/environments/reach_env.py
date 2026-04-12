@@ -50,6 +50,11 @@ class ReachEnv(BimanualTableEnv):
                 ObservationType.BODY_POS,
             ),
         ]
+        
+        collision_groups = [
+            ("cube", ["cube"]),
+            ("table", ["table"]),
+        ]
 
         scene_xml = os.path.join(
             os.path.dirname(__file__), "data", "arms_tray_scene.xml"
@@ -61,9 +66,17 @@ class ReachEnv(BimanualTableEnv):
             horizon=horizon,
             n_substeps=n_substeps,
             additional_data_spec=additional_data_spec,
+            collision_groups=collision_groups,
             actuation_spec=actuation_spec,
         )
 
+    #TODO Create function is cube touched (use it in reward)
+    
+    #TODO Create function get_contact_force (use it in absorption) and determine threshold
+    
+    #TODO Add contact force between table and robot in the observation space
+    
+    
     def _modify_mdp_info(self, mdp_info):
         mdp_info = super()._modify_mdp_info(mdp_info)
         self.obs_helper.add_obs("rel_cube_pos_right_arm", 3)
@@ -78,7 +91,7 @@ class ReachEnv(BimanualTableEnv):
         obs = super()._create_observation(obs)
 
         cube_pos = self._read_data("cube_pos")
-        cube_pos = np.array([0.7, 0.1, 0.86499277])
+        cube_pos = np.array([-0.92, 0.0, 0.86499277])
         right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
         left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
 

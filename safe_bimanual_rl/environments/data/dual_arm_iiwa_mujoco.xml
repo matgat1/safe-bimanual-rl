@@ -197,7 +197,7 @@
           </body>
         </body>
         <body name="steel_torso_back" pos="-0.13 0 0.10074" quat="0.7094064794999899 0.2867882177818136 -0.4095760232984316 -0.496731764762436" />
-        <body name="table_base_link" pos="0.186 0.4 -0.83" quat="-1.0341155355510722e-13 -0.0 0.0 1.0">
+        <body name="table_base_link" pos="1.4 0.4 -0.83" quat="-1.0341155355510722e-13 -0.0 0.0 1.0">
           <inertial pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" mass="100.0" diaginertia="11.074162237 27.074155837000003 26.666656000000007" />
           <geom name="table_base_link_collision" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" type="box" size="0.8 0.4 0.415" class="collision" />
           <geom name="table_base_link_visual" pos="0.8 0.4 0.415" quat="1.0 0.0 0.0 0.0" material="wood" type="box" size="0.8 0.4 0.415" class="visual" />
