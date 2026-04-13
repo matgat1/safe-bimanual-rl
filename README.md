@@ -49,8 +49,6 @@ conda env update -f environment.yml --prune
 python3 safe_bimanual_rl/environments/visualise.py
 ```
 
----
-
 ### Run environments
 
 #### MushroomRL bimanual environment
