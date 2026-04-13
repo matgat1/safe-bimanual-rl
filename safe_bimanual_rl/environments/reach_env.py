@@ -11,7 +11,17 @@ class ReachEnv(BimanualTableEnv):
     A reach environment for two arms, where the goal is to reach the cube on the table.
     """
 
-    def __init__(self, gamma: float = 0.99, horizon: int = 1000, n_substeps: int = 5):
+    def __init__(
+        self,
+        gamma: float = 0.99,
+        horizon: int = 1000,
+        n_substeps: int = 5,
+        contact_force_range: tuple[float, float] = (-1.0, 1.0),
+        contact_cost_weight: float = -0.1,
+        cube_distance_weight: float = 1.0,
+        cube_touched_reward: float = 10.0,
+        contact_threshold: float = 100,
+    ):
         """
         Initialize the reach environment.
 
@@ -19,6 +29,11 @@ class ReachEnv(BimanualTableEnv):
             gamma (float): The discounting factor of the environment.
             horizon (int): The maximum horizon for the environment
             n_substeps (int): The number of substeps to use by the MuJoCo simulator.
+            contact_force_range (tuple[float, float]): The range of contact forces to consider.
+            contact_cost_weight (float): The weight for the contact cost.
+            cube_distance_weight (float): The weight for the cube distance cost.
+            cube_touched_reward (float): The reward for touching the cube.
+            contact_threshold (float): The threshold for considering a contact as significant.
         """
         actuation_spec = [
             "right_arm_A1_ctrl",
@@ -51,9 +66,20 @@ class ReachEnv(BimanualTableEnv):
             ),
         ]
 
+        collision_groups = [
+            ("cube", ["cube"]),
+            ("table", ["table_base_link_collision"]),
+        ]
+
         scene_xml = os.path.join(
             os.path.dirname(__file__), "data", "arms_tray_scene.xml"
         )
+
+        self._contact_cost_weight = contact_cost_weight
+        self._cube_distance_weight = cube_distance_weight
+        self._contact_force_range = contact_force_range
+        self._contact_threshold = contact_threshold
+        self._cube_touched_reward = cube_touched_reward
 
         super().__init__(
             scene_xml=scene_xml,
@@ -61,15 +87,19 @@ class ReachEnv(BimanualTableEnv):
             horizon=horizon,
             n_substeps=n_substeps,
             additional_data_spec=additional_data_spec,
+            collision_groups=collision_groups,
             actuation_spec=actuation_spec,
         )
+
+    # TODO Create function is cube touched (use it in reward and absorbing state)
 
     def _modify_mdp_info(self, mdp_info):
         mdp_info = super()._modify_mdp_info(mdp_info)
         self.obs_helper.add_obs("rel_cube_pos_right_arm", 3)
         self.obs_helper.add_obs("rel_cube_pos_left_arm", 3)
+        self.obs_helper.add_obs("contact_force", 1)
 
-        # Update dimensions of the observation space to include the cube position
+        # Update dimensions of the observation space
         mdp_info.observation_space = Box(*self.obs_helper.get_obs_limits())
 
         return mdp_info
@@ -78,16 +108,69 @@ class ReachEnv(BimanualTableEnv):
         obs = super()._create_observation(obs)
 
         cube_pos = self._read_data("cube_pos")
-        cube_pos = np.array([0.7, 0.1, 0.86499277])
+        # cube_pos = np.array([-0.92, 0.0, 0.86499277])
         right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
         left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
 
         rel_cube_pos_right_arm = cube_pos - right_arm_pos
         rel_cube_pos_left_arm = cube_pos - left_arm_pos
 
-        obs = np.concatenate([obs, rel_cube_pos_right_arm, rel_cube_pos_left_arm])
+        contact_force = self._get_contact_force(
+            "robot", "table", self._contact_force_range
+        ) + self._get_contact_force("hand", "table", self._contact_force_range)
+
+        obs = np.concatenate(
+            [obs, rel_cube_pos_right_arm, rel_cube_pos_left_arm, contact_force]
+        )
 
         return obs
+
+    def _is_cube_touched(self):
+        """
+        Check if the cube is touched by either of the arms.
+
+        Args:
+            obs: The observation of the environment.
+        Returns:
+            is_touched: True if the cube is touched, False otherwise.
+        """
+        is_touched = self._check_collision("cube", "hand")
+        return is_touched
+
+    def _get_contact_cost(self, obs):
+        """
+        Compute the cost based on the contact force.
+
+        Args:
+            obs: The observation of the environment.
+
+        Returns:
+            cost: The computed cost based on the contact force.
+        """
+
+        contact_force = self.obs_helper.get_from_obs(obs, "contact_force")
+        return self._contact_cost_weight * contact_force
+
+    def _get_cube_distance_cost(self, obs):
+        """
+        Compute the cost based on the distance between the cube and the end effectors.
+
+        Args:
+            obs: The observation of the environment.
+
+        Returns:
+            cost: The computed cost based on the distance between the cube and the end effectors.
+        """
+
+        rel_cube_pos_right = self.obs_helper.get_from_obs(obs, "rel_cube_pos_right_arm")
+        rel_cube_pos_left = self.obs_helper.get_from_obs(obs, "rel_cube_pos_left_arm")
+
+        right_arm_distance = np.linalg.norm(rel_cube_pos_right)
+        left_arm_distance = np.linalg.norm(rel_cube_pos_left)
+
+        cost = -(right_arm_distance + left_arm_distance)
+
+        return self._cube_distance_weight * cost
 
     def reward(self, obs, action, next_obs, absorbing):
         """
@@ -100,17 +183,13 @@ class ReachEnv(BimanualTableEnv):
             reward (float): The reward for the current state and action.
         """
 
-        rel_cube_pos_right = self.obs_helper.get_from_obs(
-            next_obs, "rel_cube_pos_right_arm"
+        cube_hand_distance_reward = self._get_cube_distance_cost(next_obs)
+        cube_touched_reward = (
+            self._cube_touched_reward if self._is_cube_touched() else 0.0
         )
-        rel_cube_pos_left = self.obs_helper.get_from_obs(
-            next_obs, "rel_cube_pos_left_arm"
-        )
+        contact_table_cost = self._get_contact_cost(next_obs)[0]
 
-        right_arm_distance = np.linalg.norm(rel_cube_pos_right)
-        left_arm_distance = np.linalg.norm(rel_cube_pos_left)
-
-        reward = -(right_arm_distance + left_arm_distance)
+        reward = cube_hand_distance_reward + cube_touched_reward + contact_table_cost
 
         return reward
 
@@ -123,8 +202,13 @@ class ReachEnv(BimanualTableEnv):
         Returns:
             is_absorbing (bool): True if the current state is absorbing, False otherwise.
         """
-        is_absorbing = False
-        return is_absorbing
+
+        contact_force = self.obs_helper.get_from_obs(obs, "contact_force")
+        cube_touched = self._is_cube_touched()
+        if (contact_force > self._contact_threshold) or cube_touched:
+            return True
+
+        return False
 
 
 if __name__ == "__main__":

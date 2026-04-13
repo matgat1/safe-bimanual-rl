@@ -1,6 +1,5 @@
 import os
 import mujoco
-import mujoco.viewer
 
 
 def test_mujoco_import_model():
