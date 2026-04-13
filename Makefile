@@ -14,7 +14,10 @@ check_lint:
 	pylint --disable=E0401,C0114,C0103 safe_bimanual_rl
 
 visualise:
-	python3 safe_bimanual_rl/environments/visualise.py
+	python safe_bimanual_rl/environments/visualise.py
 
 visualise_controller:
-	python3 safe_bimanual_rl/utils/sinusoidal_controller.py
+	python safe_bimanual_rl/utils/sinusoidal_controller.py
+
+test:
+	python -m pytest 
