@@ -1,5 +1,7 @@
 from mushroom_rl.environments.mujoco import MuJoCo, ObservationType
 
+import numpy as np
+
 
 class BimanualTableEnv(MuJoCo):
     """
@@ -14,6 +16,7 @@ class BimanualTableEnv(MuJoCo):
         horizon,
         n_substeps,
         actuation_spec=None,
+        collision_groups=None,
         additional_data_spec=None,
     ):
         """
@@ -132,12 +135,64 @@ class BimanualTableEnv(MuJoCo):
 
         additional_data_spec = additional_data_spec or []
 
+        collision_groups = collision_groups or []
+
+        collision_groups += [
+            (
+                "robot",
+                [
+                    "left_arm_link_0_collision",
+                    "left_arm_link_1_collision",
+                    "left_arm_link_2_collision",
+                    "left_arm_link_3_collision",
+                    "left_arm_link_4_collision",
+                    "left_arm_link_5_collision",
+                    "left_arm_link_6_collision",
+                    "left_arm_link_7_collision",
+                    "left_hande_robotiq_hande_coupler_collision",
+                    "right_arm_link_0_collision",
+                    "right_arm_link_1_collision",
+                    "right_arm_link_2_collision",
+                    "right_arm_link_3_collision",
+                    "right_arm_link_4_collision",
+                    "right_arm_link_5_collision",
+                    "right_arm_link_6_collision",
+                    "right_arm_link_7_collision",
+                    "right_hande_robotiq_hande_coupler_collision",
+                ],
+            ),
+            (
+                "hand",
+                [
+                    "left_hande_robotiq_hande_link_collision",
+                    "left_hande_robotiq_hande_left_finger_collision",
+                    "left_hande_robotiq_hande_right_finger_collision",
+                    "right_hande_robotiq_hande_link_collision",
+                    "right_hande_robotiq_hande_left_finger_collision",
+                    "right_hande_robotiq_hande_right_finger_collision",
+                ],
+            ),
+        ]
+
         super().__init__(
             xml_file=scene_xml,
             actuation_spec=action_spec,
             observation_spec=observation_spec,
             additional_data_spec=additional_data_spec,
+            collision_groups=collision_groups,
             gamma=gamma,
             horizon=horizon,
             n_substeps=n_substeps,
         )
+
+    def _get_contact_force(self, group1, group2, contact_force_range):
+        """
+        Get the contact force between two collision groups.
+        Clip the contact force to the specified range.
+        Return the sum of the squared contact forces.
+        """
+
+        collision_force = self._get_collision_force(group1, group2)
+        contact_force = np.clip(collision_force, *contact_force_range)
+        contact_force = np.sum(np.square(contact_force), keepdims=True)
+        return contact_force
