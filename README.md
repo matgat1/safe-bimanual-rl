@@ -63,7 +63,6 @@ python3 safe_bimanual_rl/environments/bimanual_table_env.py
 python3 safe_bimanual_rl/environments/reach_env.py
 ```
 
----
 
 ### Simple controller demo
 
@@ -71,7 +70,6 @@ python3 safe_bimanual_rl/environments/reach_env.py
 python3 safe_bimanual_rl/utils/sinusoidal_controller.py
 ```
 
----
 
 ## Training
 
