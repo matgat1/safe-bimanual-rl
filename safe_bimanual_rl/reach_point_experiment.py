@@ -73,18 +73,18 @@ def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
 
     # Actor
     actor_input_shape = mdp.info.observation_space.shape
-    actor_mu_params = dict(
-        network=ActorNetwork,
-        n_features=n_features,
-        input_shape=actor_input_shape,
-        output_shape=mdp.info.action_space.shape,
-    )
-    actor_sigma_params = dict(
-        network=ActorNetwork,
-        n_features=n_features,
-        input_shape=actor_input_shape,
-        output_shape=mdp.info.action_space.shape,
-    )
+    actor_mu_params = {
+        "network": ActorNetwork,
+        "n_features": n_features,
+        "input_shape": actor_input_shape,
+        "output_shape": mdp.info.action_space.shape,
+    }
+    actor_sigma_params = {
+        "network": ActorNetwork,
+        "n_features": n_features,
+        "input_shape": actor_input_shape,
+        "output_shape": mdp.info.action_space.shape,
+    }
     actor_optimizer = {"class": optim.Adam, "params": {"lr": 5e-4}}
 
     # Critic
