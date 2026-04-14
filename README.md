@@ -82,3 +82,12 @@ python -m safe_bimanual_rl.reach_point_experiment \
     --model_name "reach_cube"
 ```
 
+## Evaluate models
+
+To evaluate and display a model :
+
+```bash
+python -m safe_bimanual_rl.utils.evaluate_model --model_path "models/test.msh"
+```
+
+You can use the parameters : ```--record``` and ```--n_episodes```
