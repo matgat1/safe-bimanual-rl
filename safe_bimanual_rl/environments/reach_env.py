@@ -20,7 +20,7 @@ class ReachEnv(BimanualTableEnv):
         contact_cost_weight: float = -0.1,
         cube_distance_weight: float = 1.0,
         cube_touched_reward: float = 10.0,
-        contact_threshold: float = 100,
+        contact_threshold: float = 20.0,
     ):
         """
         Initialize the reach environment.
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     env.reset()
     env.render()
     while True:
-        action = np.zeros((14,))
-        # action = np.random.uniform(-2.0, 2.0, size=(14,))
+        # action = np.zeros((14,))
+        action = np.random.uniform(-2.0, 2.0, size=(14,))
         env.step(action)
         env.render()
