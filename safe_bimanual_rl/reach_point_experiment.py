@@ -7,6 +7,7 @@ import torch.nn.functional as F
 from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core, Logger
 from tqdm import trange
+import argparse
 
 from safe_bimanual_rl.environments.reach_env import ReachEnv
 
@@ -52,7 +53,14 @@ class ActorNetwork(nn.Module):
         return self._h3(features2)
 
 
-def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
+def experiment(
+    n_epochs=100,
+    n_steps=4000,
+    n_steps_test=2000,
+    use_cluster=False,
+    save_model=False,
+    model_name: str = "sac_agent",
+):
     np.random.seed()
 
     logger = Logger(SAC.__name__, results_dir=None)
@@ -140,11 +148,53 @@ def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
         R = np.mean(dataset.undiscounted_return)
         logger.epoch_info(n + 1, J=J, R=R)
 
-    # Final visualization
-    logger.info("Press a button to visualize")
-    input()
-    core.evaluate(n_episodes=5, render=True, record=True)
+    if not use_cluster:
+        # Final visualization
+        logger.info("Press a button to visualize")
+        input()
+        core.evaluate(n_episodes=5, render=True)
+    else:
+        core.evaluate(n_episodes=5, render=False)
+        logger.info("Experiment finished.")
+
+    if save_model:
+        import os
+
+        save_dir = "models"
+        os.makedirs(save_dir, exist_ok=True)
+
+        file_name = f"{model_name}.msh"
+        agent.save(os.path.join(save_dir, file_name))
+
+        logger.info(f"Model saved : {save_dir}/{file_name}")
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--use_cluster", action="store_true", default=False)
+    parser.add_argument("--save_model", action="store_true", default=False)
+    parser.add_argument("--n_epochs", type=int, default=100)
+    parser.add_argument("--n_steps", type=int, default=4000)
+    parser.add_argument("--nsteps_tests", type=int, default=2000)
+    parser.add_argument("--model_name", type=str, default="sac_agent")
+
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    experiment(n_epochs=12, n_steps=4000, n_steps_test=3000)
+    args = parse_args()
+
+    print("Running experiment with the following parameters:")
+    print(
+        f"use_cluster={args.use_cluster}, save_model={args.save_model}, "
+        f"n_epochs={args.n_epochs}, n_steps={args.n_steps}, nsteps_tests={args.nsteps_tests}"
+    )
+    experiment(
+        n_epochs=args.n_epochs,
+        n_steps=args.n_steps,
+        n_steps_test=args.nsteps_tests,
+        use_cluster=args.use_cluster,
+        save_model=args.save_model,
+        model_name=args.model_name,
+    )
