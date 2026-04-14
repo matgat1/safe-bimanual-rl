@@ -76,6 +76,9 @@ python3 safe_bimanual_rl/utils/sinusoidal_controller.py
 To train the RL agent on the reach task:
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment
+python -m safe_bimanual_rl.reach_point_experiment \
+    --n_epochs 4 \
+    --save_model \
+    --model_name "reach_cube"
 ```
 
