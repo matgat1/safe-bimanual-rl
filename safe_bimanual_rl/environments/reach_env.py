@@ -21,6 +21,7 @@ class ReachEnv(BimanualTableEnv):
         cube_distance_weight: float = 1.0,
         cube_touched_reward: float = 10.0,
         contact_threshold: float = 20.0,
+        **viewer_params,
     ):
         """
         Initialize the reach environment.
@@ -89,9 +90,8 @@ class ReachEnv(BimanualTableEnv):
             additional_data_spec=additional_data_spec,
             collision_groups=collision_groups,
             actuation_spec=actuation_spec,
+            **viewer_params,
         )
-
-    # TODO Create function is cube touched (use it in reward and absorbing state)
 
     def _modify_mdp_info(self, mdp_info):
         mdp_info = super()._modify_mdp_info(mdp_info)
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     env.reset()
     env.render()
     while True:
-        # action = np.zeros((14,))
-        action = np.random.uniform(-2.0, 2.0, size=(14,))
+        action = np.zeros((14,))
+        # action = np.random.uniform(-2.0, 2.0, size=(14,))
         env.step(action)
         env.render()
