@@ -108,7 +108,7 @@ class ReachEnv(BimanualTableEnv):
         obs = super()._create_observation(obs)
 
         cube_pos = self._read_data("cube_pos")
-        # cube_pos = np.array([-0.92, 0.0, 0.86499277])
+        
         right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
         left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
 
@@ -183,13 +183,13 @@ class ReachEnv(BimanualTableEnv):
             reward (float): The reward for the current state and action.
         """
 
-        cube_hand_distance_reward = self._get_cube_distance_cost(next_obs)
+        cube_hand_distance_cost = self._get_cube_distance_cost(next_obs)
         cube_touched_reward = (
             self._cube_touched_reward if self._is_cube_touched() else 0.0
         )
         contact_table_cost = self._get_contact_cost(next_obs)[0]
 
-        reward = cube_hand_distance_reward + cube_touched_reward + contact_table_cost
+        reward = cube_hand_distance_cost + cube_touched_reward + contact_table_cost
 
         return reward
 
