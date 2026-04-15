@@ -174,8 +174,7 @@ class BimanualTableEnv(MuJoCo):
                 ],
             ),
         ]
-        
-        
+
         viewer_params = viewer_params or {}
         viewer_params.setdefault(
             "camera_params", MujocoViewer.get_default_camera_params()

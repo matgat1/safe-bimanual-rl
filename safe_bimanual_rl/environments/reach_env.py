@@ -82,7 +82,7 @@ class ReachEnv(BimanualTableEnv):
         self._contact_force_range = contact_force_range
         self._contact_threshold = contact_threshold
         self._cube_touched_reward = cube_touched_reward
-        self._control_cost_weight = control_cost_weight  
+        self._control_cost_weight = control_cost_weight
 
         super().__init__(
             scene_xml=scene_xml,
@@ -110,7 +110,7 @@ class ReachEnv(BimanualTableEnv):
         obs = super()._create_observation(obs)
 
         cube_pos = self._read_data("cube_pos")
-        
+
         right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
         left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
 
@@ -180,7 +180,7 @@ class ReachEnv(BimanualTableEnv):
     def _get_ctrl_cost(self, action):
         ctrl_cost = np.sum(np.square(action))
         return self._control_cost_weight * ctrl_cost
-    
+
     def reward(self, obs, action, next_obs, absorbing):
         """
         Compute the reward for the reach environment.
@@ -199,7 +199,12 @@ class ReachEnv(BimanualTableEnv):
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
 
-        reward = cube_hand_distance_reward + cube_touched_reward + contact_table_cost + ctrl_cost
+        reward = (
+            cube_hand_distance_reward
+            + cube_touched_reward
+            + contact_table_cost
+            + ctrl_cost
+        )
 
         return reward
 
