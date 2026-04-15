@@ -4,10 +4,12 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
+import hydra
+from omegaconf import DictConfig
+
 from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core, Logger
 from tqdm import trange
-import argparse
 
 from safe_bimanual_rl.environments.reach_env import ReachEnv
 
@@ -60,6 +62,10 @@ def experiment(
     use_cluster=False,
     save_model=False,
     model_name: str = "sac_agent",
+    contact_cost_weight: float = -0.1,
+    cube_distance_weight: float = 1.0,
+    cube_touched_reward: float = 10.0,
+    contact_threshold: float = 4.0,
 ):
     np.random.seed()
 
@@ -68,7 +74,15 @@ def experiment(
     logger.info("Experiment Algorithm: SAC - ReachEnv")
 
     # Load Environment
-    mdp = ReachEnv(gamma=0.99, horizon=200, n_substeps=4)
+    mdp = ReachEnv(
+        gamma=0.99,
+        horizon=200,
+        n_substeps=4,
+        contact_cost_weight=contact_cost_weight,
+        cube_distance_weight=cube_distance_weight,
+        cube_touched_reward=cube_touched_reward,
+        contact_threshold=contact_threshold,
+    )
 
     # Hyperparameters
     initial_replay_size = 5000
@@ -159,42 +173,31 @@ def experiment(
 
     if save_model:
         import os
+        from hydra.core.hydra_config import HydraConfig
 
-        save_dir = "models"
-        os.makedirs(save_dir, exist_ok=True)
-
+        save_dir = HydraConfig.get().runtime.output_dir
         file_name = f"{model_name}.msh"
         agent.save(os.path.join(save_dir, file_name))
 
         logger.info(f"Model saved : {save_dir}/{file_name}")
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("--use_cluster", action="store_true", default=False)
-    parser.add_argument("--save_model", action="store_true", default=False)
-    parser.add_argument("--n_epochs", type=int, default=100)
-    parser.add_argument("--n_steps", type=int, default=4000)
-    parser.add_argument("--nsteps_tests", type=int, default=2000)
-    parser.add_argument("--model_name", type=str, default="sac_agent")
-
-    return parser.parse_args()
+@hydra.main(version_base=None, config_path="configs", config_name="reach_cube_sac")
+def main(cfg: DictConfig):
+    print(f"Running with config:\n{cfg}")
+    experiment(
+        n_epochs=cfg.n_epochs,
+        n_steps=cfg.n_steps,
+        n_steps_test=cfg.n_steps_test,
+        use_cluster=cfg.use_cluster,
+        save_model=cfg.save_model,
+        model_name=cfg.model_name,
+        contact_cost_weight=cfg.contact_cost_weight,
+        cube_distance_weight=cfg.cube_distance_weight,
+        cube_touched_reward=cfg.cube_touched_reward,
+        contact_threshold=cfg.contact_threshold,
+    )
 
 
 if __name__ == "__main__":
-    args = parse_args()
-
-    print("Running experiment with the following parameters:")
-    print(
-        f"use_cluster={args.use_cluster}, save_model={args.save_model}, "
-        f"n_epochs={args.n_epochs}, n_steps={args.n_steps}, nsteps_tests={args.nsteps_tests}"
-    )
-    experiment(
-        n_epochs=args.n_epochs,
-        n_steps=args.n_steps,
-        n_steps_test=args.nsteps_tests,
-        use_cluster=args.use_cluster,
-        save_model=args.save_model,
-        model_name=args.model_name,
-    )
+    main()
