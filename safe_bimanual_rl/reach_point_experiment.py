@@ -59,6 +59,7 @@ def experiment(
     n_epochs=100,
     n_steps=4000,
     n_steps_test=2000,
+    initial_replay_size=5000,
     use_cluster=False,
     save_model=False,
     model_name: str = "sac_agent",
@@ -87,7 +88,7 @@ def experiment(
     )
 
     # Hyperparameters
-    initial_replay_size = 5000
+    initial_replay_size = initial_replay_size
     max_replay_size = 200000
     batch_size = 256
     n_features = 128
