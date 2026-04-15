@@ -1,7 +1,7 @@
 from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core
 from safe_bimanual_rl.environments.reach_env import ReachEnv
-from safe_bimanual_rl.reach_point_experiment import (  # noqa: F401
+from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (  # noqa: F401
     ActorNetwork,
     CriticNetwork,
 )
