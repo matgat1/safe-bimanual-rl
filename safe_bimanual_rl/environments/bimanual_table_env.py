@@ -1,4 +1,4 @@
-from mushroom_rl.environments.mujoco import MuJoCo, ObservationType
+from mushroom_rl.environments.mujoco import MuJoCo, ObservationType, MujocoViewer
 
 import numpy as np
 
@@ -18,6 +18,7 @@ class BimanualTableEnv(MuJoCo):
         actuation_spec=None,
         collision_groups=None,
         additional_data_spec=None,
+        **viewer_params,
     ):
         """
         Initialize the bimanual table environment.
@@ -174,6 +175,20 @@ class BimanualTableEnv(MuJoCo):
             ),
         ]
 
+        viewer_params = viewer_params or {}
+        viewer_params.setdefault(
+            "camera_params", MujocoViewer.get_default_camera_params()
+        )
+
+        viewer_params["camera_params"]["static"].update(
+            {
+                "distance": 4,
+                "elevation": -50.0,
+                "azimuth": 70.0,
+                "lookat": np.array([-0.92, 0.0, 0.9]),
+            }
+        )
+
         super().__init__(
             xml_file=scene_xml,
             actuation_spec=action_spec,
@@ -183,6 +198,7 @@ class BimanualTableEnv(MuJoCo):
             gamma=gamma,
             horizon=horizon,
             n_substeps=n_substeps,
+            **viewer_params,
         )
 
     def _get_contact_force(self, group1, group2, contact_force_range):

@@ -2,9 +2,13 @@
 # safe-bimanual-rl
 Safe Reinforcement learning for tray pickup with Safety Filters
 
+This project focuses on training reinforcement learning agents for **two-arm robotic manipulation tasks** in simulation, with an emphasis on **safety constraints, stable learning, and reproducibility**.
+
+We use **MuJoCo-based environments** and the **MushroomRL** library to design tasks such as object reaching and tray-pickup manipulation, while integrating safety-aware design choices into the learning pipeline.
+
 
 ![](figs/reach_cube_attempt0.gif)
-Reach Cube experiment trained for 12 epochs with 4000 steps per epoch (γ=0.99, horizon=200, n_substeps=4), using a replay buffer of 5,000–200,000 samples, batch size 256, 128 hidden features, 10,000 warm-up transitions, τ=0.001, and α learning rate of 3×10⁻⁴.
+***Reach Cube experiment*** trained for 12 epochs with 4000 steps per epoch (γ=0.99, horizon=200, n_substeps=4), using a replay buffer of 5,000–200,000 samples, batch size 256, 128 hidden features, 10,000 warm-up transitions, τ=0.001, and α learning rate of 3×10⁻⁴.
 
 
 ## Project Structure
@@ -20,22 +24,90 @@ Reach Cube experiment trained for 12 epochs with 4000 steps per epoch (γ=0.99, 
 └── README.md                     # Project description and documentation
 ```
 
+## Setup 
+
+It is recommended to use the Conda environment.
+
+Create and activate the environment:
+
+```bash
+conda env create -f environment.yml
+conda activate safe_bimanual_rl
+```
+
+Or update it if already created:
+
+```bash
+conda env update -f environment.yml --prune
+```
+
 ## How to use
 
-### Visualize the Mujoco setup :
+### Visualize MuJoCo setup
 
 ```bash
 python3 safe_bimanual_rl/environments/visualise.py
 ```
 
-You can also use a simple sinusoidal controller :
+### Run environments
+
+#### MushroomRL bimanual environment
+
+```bash
+python3 safe_bimanual_rl/environments/bimanual_table_env.py
+```
+
+####  Reach environment
+
+```bash
+python3 safe_bimanual_rl/environments/reach_env.py
+```
+
+
+### Simple controller demo
 
 ```bash
 python3 safe_bimanual_rl/utils/sinusoidal_controller.py
 ```
 
-### Visualize the MushroomRL mujoco environment :
+
+## Training
+
+To train the RL agent on the reach task:
 
 ```bash
-python3 safe_bimanual_rl/environments/bimanual_table_env.py
+python -m safe_bimanual_rl.reach_point_experiment
 ```
+
+The default configuration is in `configs/reach_cube_sac.yaml`. You can override any parameter directly from the command line:
+
+```bash
+python -m safe_bimanual_rl.reach_point_experiment \
+    n_epochs=100 \
+    model_name="test" \
+    contact_threshold=1.0
+```
+
+To run multiple experiments with different parameters:
+
+```bash
+python -m safe_bimanual_rl.reach_point_experiment --multirun \
+    contact_threshold=1.0,5.0,20.0
+```
+
+To use on the cluster 
+
+```bash
+python -m safe_bimanual_rl.reach_point_experiment --multirun \
+  hydra/launcher=cosmos \
+  contact_threshold=1.0,2.0,3.0
+```
+## Evaluate models
+
+To evaluate and display a model :
+
+```bash
+python -m safe_bimanual_rl.utils.evaluate_model --model_path "models/test.msh"
+```
+
+You can use the parameters : ```--record``` and ```--n_episodes```

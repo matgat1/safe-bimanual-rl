@@ -1,0 +1,19 @@
+# Usage: python -m safe_bimanual_rl.reach_point_experiment --multirun hydra/launcher=cosmos ...
+
+_target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+
+# --- Time (#SBATCH -t) ---
+timeout_min: 120
+
+# --- Job name (#SBATCH -J) ---
+name: reachCube
+
+# --- Log files per run in slurm_logs/ ---
+# ${hydra.job.override_dirname} = sweep parameters, e.g. contact_cost_weight=-0.1,cube_distance_weight=2.0
+submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+
+# --- Environment setup ---
+setup:
+  - "module load Anaconda3"
+  - "source config_conda.sh"
+  - "conda activate safe_bimanual_rl"

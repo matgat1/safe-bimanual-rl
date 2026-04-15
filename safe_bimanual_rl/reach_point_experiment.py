@@ -4,6 +4,9 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 
+import hydra
+from omegaconf import DictConfig
+
 from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core, Logger
 from tqdm import trange
@@ -52,7 +55,20 @@ class ActorNetwork(nn.Module):
         return self._h3(features2)
 
 
-def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
+def experiment(
+    n_epochs=100,
+    n_steps=4000,
+    n_steps_test=2000,
+    initial_replay_size=5000,
+    use_cluster=False,
+    save_model=False,
+    model_name: str = "sac_agent",
+    contact_cost_weight: float = -0.1,
+    cube_distance_weight: float = 1.0,
+    cube_touched_reward: float = 10.0,
+    contact_threshold: float = 4.0,
+    control_cost_weight: float = -0.1,
+):
     np.random.seed()
 
     logger = Logger(SAC.__name__, results_dir=None)
@@ -60,10 +76,19 @@ def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
     logger.info("Experiment Algorithm: SAC - ReachEnv")
 
     # Load Environment
-    mdp = ReachEnv(gamma=0.99, horizon=200, n_substeps=4)
+    mdp = ReachEnv(
+        gamma=0.99,
+        horizon=200,
+        n_substeps=4,
+        contact_cost_weight=contact_cost_weight,
+        cube_distance_weight=cube_distance_weight,
+        cube_touched_reward=cube_touched_reward,
+        contact_threshold=contact_threshold,
+        control_cost_weight=control_cost_weight,
+    )
 
     # Hyperparameters
-    initial_replay_size = 5000
+    initial_replay_size = initial_replay_size
     max_replay_size = 200000
     batch_size = 256
     n_features = 128
@@ -140,11 +165,43 @@ def experiment(n_epochs=200, n_steps=4000, n_steps_test=2000):
         R = np.mean(dataset.undiscounted_return)
         logger.epoch_info(n + 1, J=J, R=R)
 
-    # Final visualization
-    logger.info("Press a button to visualize")
-    input()
-    core.evaluate(n_episodes=5, render=True, record=True)
+    if not use_cluster:
+        # Final visualization
+        logger.info("Press a button to visualize")
+        input()
+        core.evaluate(n_episodes=5, render=True)
+    else:
+        core.evaluate(n_episodes=5, render=False)
+        logger.info("Experiment finished.")
+
+    if save_model:
+        import os
+        from hydra.core.hydra_config import HydraConfig
+
+        save_dir = HydraConfig.get().runtime.output_dir
+        file_name = f"{model_name}.msh"
+        agent.save(os.path.join(save_dir, file_name))
+
+        logger.info(f"Model saved : {save_dir}/{file_name}")
+
+
+@hydra.main(version_base=None, config_path="configs", config_name="reach_cube_sac")
+def main(cfg: DictConfig):
+    print(f"Running with config:\n{cfg}")
+    experiment(
+        n_epochs=cfg.n_epochs,
+        n_steps=cfg.n_steps,
+        n_steps_test=cfg.n_steps_test,
+        use_cluster=cfg.use_cluster,
+        save_model=cfg.save_model,
+        model_name=cfg.model_name,
+        contact_cost_weight=cfg.contact_cost_weight,
+        cube_distance_weight=cfg.cube_distance_weight,
+        cube_touched_reward=cfg.cube_touched_reward,
+        contact_threshold=cfg.contact_threshold,
+        control_cost_weight=cfg.control_cost_weight,
+    )
 
 
 if __name__ == "__main__":
-    experiment(n_epochs=12, n_steps=4000, n_steps_test=3000)
+    main()
