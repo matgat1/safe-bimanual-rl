@@ -99,10 +99,8 @@ To use on the cluster
 
 ```bash
 python -m safe_bimanual_rl.reach_point_experiment --multirun \
-  +hydra/launcher=cosmos \
-  contact_cost_weight=-0.01,-0.1 \
-  cube_distance_weight=1.0,2.0
-
+  hydra/launcher=cosmos \
+  contact_threshold=1.0,2.0,3.0
 ```
 ## Evaluate models
 
