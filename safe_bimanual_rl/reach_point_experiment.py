@@ -66,6 +66,7 @@ def experiment(
     cube_distance_weight: float = 1.0,
     cube_touched_reward: float = 10.0,
     contact_threshold: float = 4.0,
+    control_cost_weight: float = -0.1,
 ):
     np.random.seed()
 
@@ -82,6 +83,7 @@ def experiment(
         cube_distance_weight=cube_distance_weight,
         cube_touched_reward=cube_touched_reward,
         contact_threshold=contact_threshold,
+        control_cost_weight=control_cost_weight,
     )
 
     # Hyperparameters
@@ -196,6 +198,7 @@ def main(cfg: DictConfig):
         cube_distance_weight=cfg.cube_distance_weight,
         cube_touched_reward=cfg.cube_touched_reward,
         contact_threshold=cfg.contact_threshold,
+        control_cost_weight=cfg.control_cost_weight,
     )
 
 
