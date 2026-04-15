@@ -76,12 +76,34 @@ python3 safe_bimanual_rl/utils/sinusoidal_controller.py
 To train the RL agent on the reach task:
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment \
-    --n_epochs 4 \
-    --save_model \
-    --model_name "reach_cube"
+python -m safe_bimanual_rl.reach_point_experiment
 ```
 
+The default configuration is in `configs/reach_cube_sac.yaml`. You can override any parameter directly from the command line:
+
+```bash
+python -m safe_bimanual_rl.reach_point_experiment \
+    n_epochs=100 \
+    model_name="test" \
+    contact_threshold=1.0
+```
+
+To run multiple experiments with different parameters:
+
+```bash
+python -m safe_bimanual_rl.reach_point_experiment --multirun \
+    contact_threshold=1.0,5.0,20.0
+```
+
+To use on the cluster 
+
+```bash
+python -m safe_bimanual_rl.reach_point_experiment --multirun \
+  +hydra/launcher=cosmos \
+  contact_cost_weight=-0.01,-0.1 \
+  cube_distance_weight=1.0,2.0
+
+```
 ## Evaluate models
 
 To evaluate and display a model :
