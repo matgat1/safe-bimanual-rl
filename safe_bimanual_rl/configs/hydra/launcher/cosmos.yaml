@@ -10,7 +10,7 @@ name: reachCube
 
 # --- Log files per run in slurm_logs/ ---
 # ${hydra.job.override_dirname} = sweep parameters, e.g. contact_cost_weight=-0.1,cube_distance_weight=2.0
-submitit_folder: slurm_logs/${hydra.job.override_dirname}
+submitit_folder: slurm_logs/${hydra.job.override_dirname}/${hydra.job.num}
 
 # --- Environment setup ---
 setup:
