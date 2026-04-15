@@ -162,7 +162,7 @@ class ReachEnv(BimanualTableEnv):
             obs: The observation of the environment.
 
         Returns:
-            reward: The computed reward based on the distance between the cube and the end effectors.
+            reward: The computed reward based on the distance between the cube and the end effectors
         """
 
         rel_cube_pos_right = self.obs_helper.get_from_obs(obs, "rel_cube_pos_right_arm")
@@ -218,7 +218,7 @@ class ReachEnv(BimanualTableEnv):
             is_absorbing (bool): True if the current state is absorbing, False otherwise.
         """
 
-        contact_force = self.obs_helper.get_from_obs(obs, "contact_force")
+        contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         cube_touched = self._is_cube_touched()
         if (contact_force > self._contact_threshold) or cube_touched:
             return True
