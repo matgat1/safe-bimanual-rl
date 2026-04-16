@@ -16,16 +16,17 @@ from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import ActorNetwork, Cr
 def experiment(
     n_epochs=100,
     n_steps=4000,
-    n_steps_test=2000,
-    initial_replay_size=5000,
+    n_steps_test=6000,
+    initial_replay_size=10000,
     use_cluster=False,
     save_model=False,
     model_name: str = "sac_agent",
-    contact_cost_weight: float = -0.1,
+    contact_cost_weight: float = -1e-4,
     cube_distance_weight: float = 1.0,
     cube_touched_reward: float = 10.0,
-    contact_threshold: float = 4.0,
-    control_cost_weight: float = -0.1,
+    contact_threshold: float = 2.0,
+    control_cost_weight: float = -1e-4,
+    reach_sharpness: float = 0.3,
 ):
     np.random.seed()
 
@@ -36,13 +37,14 @@ def experiment(
     # Load Environment
     mdp = ReachEnv(
         gamma=0.99,
-        horizon=200,
+        horizon=300,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
         cube_distance_weight=cube_distance_weight,
         cube_touched_reward=cube_touched_reward,
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
+        reach_sharpness=reach_sharpness,
     )
 
     # Hyperparameters
@@ -51,7 +53,7 @@ def experiment(
     batch_size = 256
     n_features = 128
     warmup_transitions = 10000
-    tau = 0.001
+    tau = 0.002
     lr_alpha = 3e-4
 
     # Actor
@@ -84,7 +86,7 @@ def experiment(
     # Action space normalization to [-1, 1]
     mdp.info.action_space.low[:] = -1.0
     mdp.info.action_space.high[:] = 1.0
-
+    
     # Agent
     agent = SAC(
         mdp.info,
@@ -158,6 +160,7 @@ def main(cfg: DictConfig):
         cube_touched_reward=cfg.cube_touched_reward,
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
+        reach_sharpness=cfg.reach_sharpness,
     )
 
 
