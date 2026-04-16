@@ -16,7 +16,7 @@ from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import ActorNetwork, Cr
 def experiment(
     n_epochs=100,
     n_steps=4000,
-    n_steps_test=6000,
+    n_steps_test=2000,
     initial_replay_size=10000,
     use_cluster=False,
     save_model=False,

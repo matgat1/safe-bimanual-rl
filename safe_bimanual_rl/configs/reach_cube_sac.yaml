@@ -3,7 +3,7 @@
 # Training parameters
 n_epochs: 150
 n_steps: 4000
-n_steps_test: 6000
+n_steps_test: 2000
 use_cluster: true
 save_model: true
 model_name: "reach_cube_agent"
