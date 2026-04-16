@@ -27,6 +27,7 @@ def experiment(
     contact_threshold: float = 2.0,
     control_cost_weight: float = -1e-4,
     reach_sharpness: float = 0.3,
+    cube_displacement_weight: float = -1.0,
 ):
     np.random.seed()
 
@@ -45,6 +46,7 @@ def experiment(
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
         reach_sharpness=reach_sharpness,
+        cube_displacement_weight=cube_displacement_weight,
     )
 
     # Hyperparameters
@@ -53,8 +55,8 @@ def experiment(
     batch_size = 256
     n_features = 128
     warmup_transitions = 10000
-    tau = 0.002
-    lr_alpha = 3e-4
+    tau = 0.003
+    lr_alpha = 1e-4
 
     # Actor
     actor_input_shape = mdp.info.observation_space.shape
@@ -70,13 +72,13 @@ def experiment(
         "input_shape": actor_input_shape,
         "output_shape": mdp.info.action_space.shape,
     }
-    actor_optimizer = {"class": optim.Adam, "params": {"lr": 5e-4}}
+    actor_optimizer = {"class": optim.Adam, "params": {"lr": 3e-4}}
 
     # Critic
     critic_input_shape = (actor_input_shape[0] + mdp.info.action_space.shape[0],)
     critic_params = dict(
         network=CriticNetwork,
-        optimizer={"class": optim.Adam, "params": {"lr": 5e-4}},
+        optimizer={"class": optim.Adam, "params": {"lr": 3e-4}},
         loss=F.mse_loss,
         n_features=n_features,
         input_shape=critic_input_shape,
@@ -161,6 +163,7 @@ def main(cfg: DictConfig):
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
         reach_sharpness=cfg.reach_sharpness,
+        cube_displacement_weight=cfg.cube_displacement_weight,
     )
 
 
