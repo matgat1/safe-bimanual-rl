@@ -1,0 +1,14 @@
+submitit INFO (2026-04-16 08:53:04,882) - Starting with JobEnvironment(job_id=2873182, hostname=cn001, local_rank=0(1), node=0(1), global_rank=0(1))
+submitit INFO (2026-04-16 08:53:04,882) - Loading pickle: /home/matgat/safe-bimanual-rl/multirun/2026-04-16/08-53-02/.submitit/2873182/2873182_submitted.pkl
+Running with config:
+{'n_epochs': 2, 'n_steps': 4000, 'n_steps_test': 2000, 'use_cluster': True, 'save_model': True, 'model_name': 'reach_cube_agent', 'contact_cost_weight': -0.0001, 'control_cost_weight': -0.0001, 'cube_distance_weight': 1.0, 'cube_touched_reward': 10.0, 'contact_threshold': 2.0}
+16/04/2026 08:53:10 [INFO] ###################################################################################################
+16/04/2026 08:53:10 [INFO] Experiment Algorithm: SAC - ReachEnv
+16/04/2026 08:53:24 [INFO] Epoch 0 | J: -0.03317097918607628 R: -0.015302746976716925
+16/04/2026 08:53:51 [INFO] Epoch 1 | J: -0.03498508303444252 R: -0.013955374735639585
+16/04/2026 08:54:25 [INFO] Epoch 2 | J: -0.04317201844624867 R: -0.09937741727649035
+16/04/2026 08:54:25 [INFO] Experiment finished.
+submitit INFO (2026-04-16 08:54:25,934) - Job completed successfully
+[2026-04-16 08:54:25,934][submitit][INFO] - Job completed successfully
+submitit INFO (2026-04-16 08:54:25,939) - Exiting after successful completion
+[2026-04-16 08:54:25,939][submitit][INFO] - Exiting after successful completion
