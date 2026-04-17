@@ -14,5 +14,5 @@ control_cost_weight: -1e-4
 cube_distance_weight: 1.0
 cube_touched_reward: 3.0
 contact_threshold: 2.0
-reach_sharpness: 0.3
+reach_sharpness: 0.5
 cube_displacement_weight: -1.0
