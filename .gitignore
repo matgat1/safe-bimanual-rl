@@ -1,5 +1,7 @@
 
 multirun/
+mushroom_rl_recordings/
+outputs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
