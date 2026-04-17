@@ -10,7 +10,10 @@ from mushroom_rl.core import Core, Logger
 from tqdm import trange
 
 from safe_bimanual_rl.environments.reach_env import ReachEnv
-from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import ActorNetwork, CriticNetwork
+from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (
+    ActorNetwork,
+    CriticNetwork,
+)
 
 
 def experiment(
@@ -86,9 +89,9 @@ def experiment(
     )
 
     # Action space normalization to [-1, 1]
-    mdp.info.action_space.low[:] = -1.0
-    mdp.info.action_space.high[:] = 1.0
-    
+    mdp.info.action_space.low[:] = -0.5
+    mdp.info.action_space.high[:] = 0.5
+
     # Agent
     agent = SAC(
         mdp.info,
