@@ -19,10 +19,10 @@ class ReachEnv(BimanualTableEnv):
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
         cube_distance_weight: float = 1.0,
-        cube_touched_reward: float = 10.0,
+        cube_touched_reward: float = 3.0,
         contact_threshold: float = 2.0,
         control_cost_weight: float = -1e-4,
-        reach_sharpness: float = 0.3,
+        reach_sharpness: float = 0.5,
         cube_displacement_weight: float = -1.0,
         **viewer_params,
     ):
@@ -137,15 +137,15 @@ class ReachEnv(BimanualTableEnv):
 
     def _is_cube_touched(self):
         """
-        Check if the cube is touched by either of the arms.
+        Check if the cube is touched by each arm independently.
 
-        Args:
-            obs: The observation of the environment.
         Returns:
-            is_touched: True if the cube is touched, False otherwise.
+            tuple[bool, bool]: (right_touched, left_touched), each True if the
+                corresponding hand is in contact with the cube.
         """
-        is_touched = self._check_collision("cube", "hand")
-        return is_touched
+        right_touched = self._check_collision("cube", "right_hand")
+        left_touched = self._check_collision("cube", "left_hand")
+        return right_touched, left_touched
 
     def _get_contact_cost(self, obs):
         """
@@ -210,8 +210,9 @@ class ReachEnv(BimanualTableEnv):
         """
 
         cube_hand_distance_reward = self._get_cube_distance_reward(next_obs)
-        cube_touched_reward = (
-            self._cube_touched_reward if self._is_cube_touched() else 0.0
+        right_touched, left_touched = self._is_cube_touched()
+        cube_touched_reward = (self._cube_touched_reward / 2) * (
+            right_touched + left_touched
         )
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
