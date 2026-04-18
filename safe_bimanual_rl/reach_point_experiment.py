@@ -24,7 +24,7 @@ from safe_bimanual_rl.rl_utils.plotting import save_plots
 def experiment(
     n_epochs=100,
     n_steps=8000,
-    n_steps_test=1500,
+    n_episodes_test=5,
     initial_replay_size=10000,
     use_cluster=False,
     save_model=False,
@@ -36,6 +36,7 @@ def experiment(
     control_cost_weight: float = -1e-4,
     reach_sharpness: float = 0.5,
     cube_displacement_weight: float = -1.0,
+    use_wandb: bool = True,
 ):
 
     hydra_cfg = HydraConfig.get()
@@ -128,11 +129,12 @@ def experiment(
         project="safe_bimanual_rl",
         name=run_name,
         group=f"{model_name}_{date}_{time}",
+        mode="online" if use_wandb else "disabled",
         settings=wandb.Settings(silent=True),
         config={
             "n_epochs": n_epochs,
             "n_steps": n_steps,
-            "n_steps_test": n_steps_test,
+            "n_episodes_test": n_episodes_test,
             "initial_replay_size": initial_replay_size,
             "batch_size": batch_size,
             "n_features": n_features,
@@ -152,7 +154,7 @@ def experiment(
     J_values, R_values, H_values = [], [], []
 
     # Evaluation before training
-    dataset = core.evaluate(n_steps=n_steps_test, render=False)
+    dataset = core.evaluate(n_episodes=n_episodes_test, render=False)
     J = np.mean(dataset.discounted_return)
     R = np.mean(dataset.undiscounted_return)
     H = agent.policy.entropy(dataset.state).item()
@@ -171,7 +173,7 @@ def experiment(
     # Training loop
     for n in trange(n_epochs, leave=False):
         core.learn(n_steps=n_steps, n_steps_per_fit=1, quiet=True)
-        dataset = core.evaluate(n_steps=n_steps_test, render=False, quiet=True)
+        dataset = core.evaluate(n_episodes=5, render=False, quiet=True)
 
         J = np.mean(dataset.discounted_return)
         R = np.mean(dataset.undiscounted_return)
@@ -215,10 +217,11 @@ def main(cfg: DictConfig):
     experiment(
         n_epochs=cfg.n_epochs,
         n_steps=cfg.n_steps,
-        n_steps_test=cfg.n_steps_test,
+        n_episodes_test=cfg.n_episodes_test,
         use_cluster=cfg.use_cluster,
         save_model=cfg.save_model,
         model_name=cfg.model_name,
+        use_wandb=cfg.use_wandb,
         contact_cost_weight=cfg.contact_cost_weight,
         cube_distance_weight=cfg.cube_distance_weight,
         cube_touched_reward=cfg.cube_touched_reward,
