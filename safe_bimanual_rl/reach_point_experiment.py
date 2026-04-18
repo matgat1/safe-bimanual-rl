@@ -23,18 +23,18 @@ from safe_bimanual_rl.rl_utils.plotting import save_plots
 
 def experiment(
     n_epochs=100,
-    n_steps=4000,
-    n_steps_test=2000,
+    n_steps=8000,
+    n_steps_test=1500,
     initial_replay_size=10000,
     use_cluster=False,
     save_model=False,
     model_name: str = "sac_agent",
     contact_cost_weight: float = -1e-4,
     cube_distance_weight: float = 1.0,
-    cube_touched_reward: float = 10.0,
+    cube_touched_reward: float = 3.0,
     contact_threshold: float = 2.0,
     control_cost_weight: float = -1e-4,
-    reach_sharpness: float = 0.3,
+    reach_sharpness: float = 0.5,
     cube_displacement_weight: float = -1.0,
 ):
 
