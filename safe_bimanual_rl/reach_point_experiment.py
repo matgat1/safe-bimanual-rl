@@ -24,8 +24,15 @@ from safe_bimanual_rl.rl_utils.plotting import save_plots
 def experiment(
     n_epochs=100,
     n_steps=8000,
+    n_steps_per_fit=1,
     n_episodes_test=5,
     initial_replay_size=10000,
+    max_replay_size=200000,
+    batch_size=256,
+    n_features=128,
+    warmup_transitions=10000,
+    tau=0.003,
+    lr_alpha=1e-4,
     use_cluster=False,
     save_model=False,
     model_name: str = "sac_agent",
@@ -66,13 +73,6 @@ def experiment(
     )
 
     # Hyperparameters
-    initial_replay_size = initial_replay_size
-    max_replay_size = 200000
-    batch_size = 256
-    n_features = 128
-    warmup_transitions = 10000
-    tau = 0.003
-    lr_alpha = 1e-4
 
     # Actor
     actor_input_shape = mdp.info.observation_space.shape
@@ -134,8 +134,10 @@ def experiment(
         config={
             "n_epochs": n_epochs,
             "n_steps": n_steps,
+            "n_steps_per_fit": n_steps_per_fit,
             "n_episodes_test": n_episodes_test,
             "initial_replay_size": initial_replay_size,
+            "max_replay_size": max_replay_size,
             "batch_size": batch_size,
             "n_features": n_features,
             "warmup_transitions": warmup_transitions,
@@ -172,7 +174,7 @@ def experiment(
 
     # Training loop
     for n in trange(n_epochs, leave=False):
-        core.learn(n_steps=n_steps, n_steps_per_fit=1, quiet=True)
+        core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit, quiet=True)
         dataset = core.evaluate(n_episodes=5, render=False, quiet=True)
 
         J = np.mean(dataset.discounted_return)
@@ -217,7 +219,15 @@ def main(cfg: DictConfig):
     experiment(
         n_epochs=cfg.n_epochs,
         n_steps=cfg.n_steps,
+        n_steps_per_fit=cfg.n_steps_per_fit,
         n_episodes_test=cfg.n_episodes_test,
+        initial_replay_size=cfg.initial_replay_size,
+        max_replay_size=cfg.max_replay_size,
+        batch_size=cfg.batch_size,
+        n_features=cfg.n_features,
+        warmup_transitions=cfg.warmup_transitions,
+        tau=cfg.tau,
+        lr_alpha=cfg.lr_alpha,
         use_cluster=cfg.use_cluster,
         save_model=cfg.save_model,
         model_name=cfg.model_name,
