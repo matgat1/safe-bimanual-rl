@@ -53,7 +53,7 @@ def experiment(
     # Load Environment
     mdp = ReachEnv(
         gamma=0.99,
-        horizon=300,
+        horizon=200,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
         cube_distance_weight=cube_distance_weight,
@@ -149,16 +149,19 @@ def experiment(
         },
     )
 
-    J_values, R_values = [], []
+    J_values, R_values, H_values = [], [], []
 
     # Evaluation before training
     dataset = core.evaluate(n_steps=n_steps_test, render=False)
     J = np.mean(dataset.discounted_return)
     R = np.mean(dataset.undiscounted_return)
-    logger.epoch_info(0, J=J, R=R)
-    run.log({"Discounted Return (J)": J, "Undiscounted Return (R)": R, "epoch": 0})
+    H = agent.policy.entropy(dataset.state).item()
+    
+    logger.epoch_info(0, J=J, R=R, entropy=H)
+    run.log({"Discounted Return (J)": J, "Undiscounted Return (R)": R, "Entropy (H)": H, "epoch": 0})
     J_values.append(J)
     R_values.append(R)
+    H_values.append(H)
 
     # Replay initialisation
     core.learn(
@@ -172,17 +175,23 @@ def experiment(
 
         J = np.mean(dataset.discounted_return)
         R = np.mean(dataset.undiscounted_return)
-        logger.epoch_info(n + 1, J=J, R=R)
+        H = agent.policy.entropy(dataset.state).item()
+        logger.epoch_info(n + 1, J=J, R=R, entropy=H)
 
         run.log(
-            {"Discounted Return (J)": J, "Undiscounted Return (R)": R, "epoch": n + 1}
+            {"Discounted Return (J)": J, "Undiscounted Return (R)": R, "Entropy (H)": H, "epoch": n + 1}
         )
         J_values.append(J)
         R_values.append(R)
+        H_values.append(H)
 
     run.finish()
 
-    save_plots(J_values, R_values, save_dir=save_dir, run_name=run_name)
+    save_plots(
+        {"Discounted Return (J)": J_values, "Undiscounted Return (R)": R_values, "Entropy (H)": H_values},
+        save_dir=save_dir,
+        run_name=run_name,
+    )
 
     if not use_cluster:
         # Final visualization
