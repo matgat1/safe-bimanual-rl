@@ -1,0 +1,22 @@
+# Usage: python -m safe_bimanual_rl.reach_point_experiment --multirun hydra/launcher=cosmos_gpu ...
+
+_target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
+
+# --- Time (#SBATCH -t) ---
+timeout_min: 230
+
+# --- Job name (#SBATCH -J) ---
+name: reachCube
+
+# --- Log files per run in slurm_logs/ ---
+submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+
+# --- GPU partition ---
+partition: gpua100i
+gpus_per_node: 1
+
+# --- Environment setup ---
+setup:
+  - "module load Anaconda3"
+  - "source config_conda.sh"
+  - "conda activate safe_bimanual_rl"
