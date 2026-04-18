@@ -1,8 +1,6 @@
 import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
 import torch.nn.functional as F
+import torch.optim as optim
 
 import hydra
 from omegaconf import DictConfig
@@ -12,62 +10,27 @@ from mushroom_rl.core import Core, Logger
 from tqdm import trange
 
 from safe_bimanual_rl.environments.reach_env import ReachEnv
-
-
-class CriticNetwork(nn.Module):
-    def __init__(self, input_shape, output_shape, n_features, **kwargs):
-        super().__init__()
-        n_input = input_shape[-1]
-        n_output = output_shape[0]
-
-        self._h1 = nn.Linear(n_input, n_features)
-        self._h2 = nn.Linear(n_features, n_features)
-        self._h3 = nn.Linear(n_features, n_output)
-
-        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain("linear"))
-
-    def forward(self, state, action):
-        state_action = torch.cat((state.float(), action.float()), dim=1)
-        features1 = F.relu(self._h1(state_action))
-        features2 = F.relu(self._h2(features1))
-        return torch.squeeze(self._h3(features2))
-
-
-class ActorNetwork(nn.Module):
-    def __init__(self, input_shape, output_shape, n_features, **kwargs):
-        super().__init__()
-        n_input = input_shape[-1]
-        n_output = output_shape[0]
-
-        self._h1 = nn.Linear(n_input, n_features)
-        self._h2 = nn.Linear(n_features, n_features)
-        self._h3 = nn.Linear(n_features, n_output)
-
-        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain("linear"))
-
-    def forward(self, state):
-        features1 = F.relu(self._h1(torch.squeeze(state, 1).float()))
-        features2 = F.relu(self._h2(features1))
-        return self._h3(features2)
+from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (
+    ActorNetwork,
+    CriticNetwork,
+)
 
 
 def experiment(
     n_epochs=100,
     n_steps=4000,
     n_steps_test=2000,
-    initial_replay_size=5000,
+    initial_replay_size=10000,
     use_cluster=False,
     save_model=False,
     model_name: str = "sac_agent",
-    contact_cost_weight: float = -0.1,
+    contact_cost_weight: float = -1e-4,
     cube_distance_weight: float = 1.0,
     cube_touched_reward: float = 10.0,
-    contact_threshold: float = 4.0,
-    control_cost_weight: float = -0.1,
+    contact_threshold: float = 2.0,
+    control_cost_weight: float = -1e-4,
+    reach_sharpness: float = 0.3,
+    cube_displacement_weight: float = -1.0,
 ):
     np.random.seed()
 
@@ -78,13 +41,15 @@ def experiment(
     # Load Environment
     mdp = ReachEnv(
         gamma=0.99,
-        horizon=200,
+        horizon=300,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
         cube_distance_weight=cube_distance_weight,
         cube_touched_reward=cube_touched_reward,
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
+        reach_sharpness=reach_sharpness,
+        cube_displacement_weight=cube_displacement_weight,
     )
 
     # Hyperparameters
@@ -93,8 +58,8 @@ def experiment(
     batch_size = 256
     n_features = 128
     warmup_transitions = 10000
-    tau = 0.001
-    lr_alpha = 3e-4
+    tau = 0.003
+    lr_alpha = 1e-4
 
     # Actor
     actor_input_shape = mdp.info.observation_space.shape
@@ -110,13 +75,13 @@ def experiment(
         "input_shape": actor_input_shape,
         "output_shape": mdp.info.action_space.shape,
     }
-    actor_optimizer = {"class": optim.Adam, "params": {"lr": 5e-4}}
+    actor_optimizer = {"class": optim.Adam, "params": {"lr": 3e-4}}
 
     # Critic
     critic_input_shape = (actor_input_shape[0] + mdp.info.action_space.shape[0],)
     critic_params = dict(
         network=CriticNetwork,
-        optimizer={"class": optim.Adam, "params": {"lr": 5e-4}},
+        optimizer={"class": optim.Adam, "params": {"lr": 3e-4}},
         loss=F.mse_loss,
         n_features=n_features,
         input_shape=critic_input_shape,
@@ -124,8 +89,8 @@ def experiment(
     )
 
     # Action space normalization to [-1, 1]
-    mdp.info.action_space.low[:] = -1.0
-    mdp.info.action_space.high[:] = 1.0
+    mdp.info.action_space.low[:] = -0.5
+    mdp.info.action_space.high[:] = 0.5
 
     # Agent
     agent = SAC(
@@ -200,6 +165,8 @@ def main(cfg: DictConfig):
         cube_touched_reward=cfg.cube_touched_reward,
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
+        reach_sharpness=cfg.reach_sharpness,
+        cube_displacement_weight=cfg.cube_displacement_weight,
     )
 
 

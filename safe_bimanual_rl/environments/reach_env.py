@@ -22,6 +22,8 @@ class ReachEnv(BimanualTableEnv):
         cube_touched_reward: float = 10.0,
         contact_threshold: float = 2.0,
         control_cost_weight: float = -1e-4,
+        reach_sharpness: float = 0.3,
+        cube_displacement_weight: float = -1.0,
         **viewer_params,
     ):
         """
@@ -36,6 +38,9 @@ class ReachEnv(BimanualTableEnv):
             cube_distance_weight (float): The weight for the cube distance cost.
             cube_touched_reward (float): The reward for touching the cube.
             contact_threshold (float): The threshold for considering a contact as significant.
+            reach_sharpness (float): Controls how sharply the tanh reward drops off with distance.
+            cube_displacement_weight (float): Penalty weight for displacing the cube from its
+                initial position. Should be negative.
         """
         actuation_spec = [
             "right_arm_A1_ctrl",
@@ -83,6 +88,9 @@ class ReachEnv(BimanualTableEnv):
         self._contact_threshold = contact_threshold
         self._cube_touched_reward = cube_touched_reward
         self._control_cost_weight = control_cost_weight
+        self._reach_sharpness = reach_sharpness
+        self._cube_displacement_weight = cube_displacement_weight
+        self._prev_cube_pos = None
 
         super().__init__(
             scene_xml=scene_xml,
@@ -171,8 +179,8 @@ class ReachEnv(BimanualTableEnv):
         right_arm_distance = np.linalg.norm(rel_cube_pos_right)
         left_arm_distance = np.linalg.norm(rel_cube_pos_left)
 
-        reward = (1 - np.tanh(right_arm_distance / 0.1)) + (
-            1 - np.tanh(left_arm_distance / 0.1)
+        reward = (1 - np.tanh(right_arm_distance / self._reach_sharpness)) + (
+            1 - np.tanh(left_arm_distance / self._reach_sharpness)
         )
 
         return self._cube_distance_weight * reward
@@ -180,6 +188,15 @@ class ReachEnv(BimanualTableEnv):
     def _get_ctrl_cost(self, action):
         ctrl_cost = np.sum(np.square(action))
         return self._control_cost_weight * ctrl_cost
+
+    def _get_cube_push_cost(self):
+        cube_pos = self._read_data("cube_pos")
+        if self._prev_cube_pos is None:
+            self._prev_cube_pos = cube_pos.copy()
+            return 0.0
+        displacement = np.linalg.norm(cube_pos - self._prev_cube_pos)
+        self._prev_cube_pos = cube_pos.copy()
+        return self._cube_displacement_weight * displacement
 
     def reward(self, obs, action, next_obs, absorbing):
         """
@@ -198,12 +215,14 @@ class ReachEnv(BimanualTableEnv):
         )
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
+        cube_push_penalty = self._get_cube_push_cost()
 
         reward = (
             cube_hand_distance_reward
             + cube_touched_reward
             + contact_table_cost
             + ctrl_cost
+            + cube_push_penalty
         )
 
         return reward
@@ -219,10 +238,8 @@ class ReachEnv(BimanualTableEnv):
         """
 
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
-        cube_touched = self._is_cube_touched()
-        if (contact_force > self._contact_threshold) or cube_touched:
+        if contact_force > self._contact_threshold:
             return True
-
         return False
 
 
