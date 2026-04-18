@@ -1,9 +1,13 @@
+import os
 import numpy as np
 import torch.nn.functional as F
 import torch.optim as optim
 
 import hydra
+from hydra.core.hydra_config import HydraConfig
 from omegaconf import DictConfig
+
+import wandb
 
 from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core, Logger
@@ -14,6 +18,7 @@ from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (
     ActorNetwork,
     CriticNetwork,
 )
+from safe_bimanual_rl.rl_utils.plotting import save_plots
 
 
 def experiment(
@@ -32,6 +37,13 @@ def experiment(
     reach_sharpness: float = 0.3,
     cube_displacement_weight: float = -1.0,
 ):
+
+    hydra_cfg = HydraConfig.get()
+    save_dir = hydra_cfg.runtime.output_dir
+    # Extract date, time, job_num from multirun output path: .../multirun/date/time/job_num
+    date, time, job_num = save_dir.split(os.sep)[-3:]
+    run_name = f"{model_name}_{date}_{time}_{job_num}"
+
     np.random.seed()
 
     logger = Logger(SAC.__name__, results_dir=None)
@@ -110,11 +122,43 @@ def experiment(
 
     core = Core(agent, mdp)
 
+    # wandb initialization
+    run = wandb.init(
+        entity="matgat1-lth",
+        project="safe_bimanual_rl",
+        name=run_name,
+        group=f"{model_name}_{date}_{time}",
+        settings=wandb.Settings(silent=True),
+        config={
+            "n_epochs": n_epochs,
+            "n_steps": n_steps,
+            "n_steps_test": n_steps_test,
+            "initial_replay_size": initial_replay_size,
+            "batch_size": batch_size,
+            "n_features": n_features,
+            "warmup_transitions": warmup_transitions,
+            "tau": tau,
+            "lr_alpha": lr_alpha,
+            "contact_cost_weight": contact_cost_weight,
+            "cube_distance_weight": cube_distance_weight,
+            "cube_touched_reward": cube_touched_reward,
+            "contact_threshold": contact_threshold,
+            "control_cost_weight": control_cost_weight,
+            "reach_sharpness": reach_sharpness,
+            "cube_displacement_weight": cube_displacement_weight,
+        },
+    )
+
+    J_values, R_values = [], []
+
     # Evaluation before training
     dataset = core.evaluate(n_steps=n_steps_test, render=False)
     J = np.mean(dataset.discounted_return)
     R = np.mean(dataset.undiscounted_return)
     logger.epoch_info(0, J=J, R=R)
+    run.log({"Discounted Return (J)": J, "Undiscounted Return (R)": R, "epoch": 0})
+    J_values.append(J)
+    R_values.append(R)
 
     # Replay initialisation
     core.learn(
@@ -130,6 +174,16 @@ def experiment(
         R = np.mean(dataset.undiscounted_return)
         logger.epoch_info(n + 1, J=J, R=R)
 
+        run.log(
+            {"Discounted Return (J)": J, "Undiscounted Return (R)": R, "epoch": n + 1}
+        )
+        J_values.append(J)
+        R_values.append(R)
+
+    run.finish()
+
+    save_plots(J_values, R_values, save_dir=save_dir, run_name=run_name)
+
     if not use_cluster:
         # Final visualization
         logger.info("Press a button to visualize")
@@ -140,10 +194,6 @@ def experiment(
         logger.info("Experiment finished.")
 
     if save_model:
-        import os
-        from hydra.core.hydra_config import HydraConfig
-
-        save_dir = HydraConfig.get().runtime.output_dir
         file_name = f"{model_name}.msh"
         agent.save(os.path.join(save_dir, file_name))
 
