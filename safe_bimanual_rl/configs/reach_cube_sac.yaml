@@ -3,9 +3,10 @@
 # Training parameters
 n_epochs: 100
 n_steps: 8000
-n_steps_test: 1500
+n_episodes_test: 5
 use_cluster: true
 save_model: true
+use_wandb: true
 model_name: "reach_cube_agent"
 
 #Reward parameters
