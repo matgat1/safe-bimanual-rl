@@ -3,7 +3,7 @@
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 
 # --- Time (#SBATCH -t) ---
-timeout_min: 210
+timeout_min: 230
 
 # --- Job name (#SBATCH -J) ---
 name: reachCube
