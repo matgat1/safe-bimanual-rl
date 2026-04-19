@@ -160,22 +160,27 @@ def experiment(
     J = np.mean(dataset.discounted_return)
     R = np.mean(dataset.undiscounted_return)
     H = agent.policy.entropy(dataset.state).item()
-    
+
     logger.epoch_info(0, J=J, R=R, entropy=H)
-    run.log({"Discounted Return (J)": J, "Undiscounted Return (R)": R, "Entropy (H)": H, "epoch": 0})
+    run.log(
+        {
+            "Discounted Return (J)": J,
+            "Undiscounted Return (R)": R,
+            "Entropy (H)": H,
+            "epoch": 0,
+        }
+    )
     J_values.append(J)
     R_values.append(R)
     H_values.append(H)
 
     # Replay initialisation
-    core.learn(
-        n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size, quiet=True
-    )
+    core.learn(n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size)
 
     # Training loop
     for n in trange(n_epochs, leave=False):
-        core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit, quiet=True)
-        dataset = core.evaluate(n_episodes=5, render=False, quiet=True)
+        core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit)
+        dataset = core.evaluate(n_episodes=5, render=False)
 
         J = np.mean(dataset.discounted_return)
         R = np.mean(dataset.undiscounted_return)
@@ -183,7 +188,12 @@ def experiment(
         logger.epoch_info(n + 1, J=J, R=R, entropy=H)
 
         run.log(
-            {"Discounted Return (J)": J, "Undiscounted Return (R)": R, "Entropy (H)": H, "epoch": n + 1}
+            {
+                "Discounted Return (J)": J,
+                "Undiscounted Return (R)": R,
+                "Entropy (H)": H,
+                "epoch": n + 1,
+            }
         )
         J_values.append(J)
         R_values.append(R)
@@ -192,7 +202,11 @@ def experiment(
     run.finish()
 
     save_plots(
-        {"Discounted Return (J)": J_values, "Undiscounted Return (R)": R_values, "Entropy (H)": H_values},
+        {
+            "Discounted Return (J)": J_values,
+            "Undiscounted Return (R)": R_values,
+            "Entropy (H)": H_values,
+        },
         save_dir=save_dir,
         run_name=run_name,
     )

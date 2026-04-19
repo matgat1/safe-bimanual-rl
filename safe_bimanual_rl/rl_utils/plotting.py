@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 def save_plots(metrics: dict, save_dir: str, run_name: str):
     """
-    
+
 
     Args:
         metrics (dict): _description_
