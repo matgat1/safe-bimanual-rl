@@ -174,17 +174,15 @@ class BimanualTableEnv(MuJoCo):
                 ],
             ),
             (
-                "right_hand",
+                "right_hand_fingers",
                 [
-                    "right_hande_robotiq_hande_link_collision",
                     "right_hande_robotiq_hande_left_finger_collision",
                     "right_hande_robotiq_hande_right_finger_collision",
                 ],
             ),
             (
-                "left_hand",
+                "left_hand_fingers",
                 [
-                    "left_hande_robotiq_hande_link_collision",
                     "left_hande_robotiq_hande_left_finger_collision",
                     "left_hande_robotiq_hande_right_finger_collision",
                 ],
