@@ -102,8 +102,8 @@ def experiment(
     )
 
     # Action space normalization to [-1, 1]
-    mdp.info.action_space.low[:] = -0.5
-    mdp.info.action_space.high[:] = 0.5
+    mdp.info.action_space.low[:] = -0.4
+    mdp.info.action_space.high[:] = 0.4
 
     # Agent
     agent = SAC(
