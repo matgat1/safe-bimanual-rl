@@ -143,8 +143,8 @@ class ReachEnv(BimanualTableEnv):
             tuple[bool, bool]: (right_touched, left_touched), each True if the
                 corresponding hand is in contact with the cube.
         """
-        right_touched = self._check_collision("cube", "right_hand")
-        left_touched = self._check_collision("cube", "left_hand")
+        right_touched = self._check_collision("cube", "right_hand_fingers")
+        left_touched = self._check_collision("cube", "left_hand_fingers")
         return right_touched, left_touched
 
     def _get_contact_cost(self, obs):
