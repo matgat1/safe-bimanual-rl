@@ -6,7 +6,7 @@ def test_experiment_1_epoch():
     experiment(
         n_epochs=1,
         n_steps=100,
-        n_steps_test=50,
+        n_episodes_test=1,
         initial_replay_size=500,
         use_cluster=True,
         save_model=False,
