@@ -12,7 +12,7 @@ import argparse
 def evaluate(
     environment: ReachEnv,
     agent,
-    n_episodes: int = 5,
+    n_episodes: int = 3,
     record: bool = False,
 ):
     """
@@ -39,7 +39,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--model_path", type=str, default=None)
-    parser.add_argument("--n_episodes", type=int, default=5)
+    parser.add_argument("--n_episodes", type=int, default=3)
     parser.add_argument("--record", action="store_true", default=False)
 
     return parser.parse_args()
