@@ -33,6 +33,8 @@ def experiment(
     warmup_transitions=10000,
     tau=0.003,
     lr_alpha=1e-4,
+    lr_actor=3e-4,
+    lr_critic=3e-4,
     use_cluster=False,
     save_model=False,
     model_name: str = "sac_agent",
@@ -88,13 +90,13 @@ def experiment(
         "input_shape": actor_input_shape,
         "output_shape": mdp.info.action_space.shape,
     }
-    actor_optimizer = {"class": optim.Adam, "params": {"lr": 3e-4}}
+    actor_optimizer = {"class": optim.Adam, "params": {"lr": lr_actor}}
 
     # Critic
     critic_input_shape = (actor_input_shape[0] + mdp.info.action_space.shape[0],)
     critic_params = dict(
         network=CriticNetwork,
-        optimizer={"class": optim.Adam, "params": {"lr": 3e-4}},
+        optimizer={"class": optim.Adam, "params": {"lr": lr_critic}},
         loss=F.mse_loss,
         n_features=n_features,
         input_shape=critic_input_shape,
@@ -143,6 +145,8 @@ def experiment(
             "warmup_transitions": warmup_transitions,
             "tau": tau,
             "lr_alpha": lr_alpha,
+            "lr_actor": lr_actor,
+            "lr_critic": lr_critic,
             "contact_cost_weight": contact_cost_weight,
             "cube_distance_weight": cube_distance_weight,
             "cube_touched_reward": cube_touched_reward,
@@ -242,6 +246,8 @@ def main(cfg: DictConfig):
         warmup_transitions=cfg.warmup_transitions,
         tau=cfg.tau,
         lr_alpha=cfg.lr_alpha,
+        lr_actor=cfg.lr_actor,
+        lr_critic=cfg.lr_critic,
         use_cluster=cfg.use_cluster,
         save_model=cfg.save_model,
         model_name=cfg.model_name,

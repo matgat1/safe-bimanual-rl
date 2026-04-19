@@ -12,6 +12,8 @@ n_features: 256
 warmup_transitions: 10000
 tau: 0.001
 lr_alpha: 3e-4
+lr_actor: 3e-4
+lr_critic: 3e-4
 use_cluster: true
 save_model: true
 use_wandb: true
