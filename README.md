@@ -14,17 +14,22 @@ We use **MuJoCo-based environments** and the **MushroomRL** library to design ta
 ## Project Structure
 
 ```
-├── figs                          # Folder containing figures for the ReadME
-├── safe_bimanual_rl
-│   ├── environments              # Folder containing environments
-│   └── utils                     # Folder containing utils programs
-├── tests                         # Folder containing test files
-├── requirements.txt              # Python dependencies required to run the project
-├── Makefile                      # Make commands to run/test...
+├── figs/                         # Figures and GIFs used in the README
+├── safe_bimanual_rl/
+│   ├── configs/                  # Hydra config files (e.g. reach_cube_sac.yaml)
+│   ├── environments/             # MuJoCo environments (bimanual, reach)
+│   ├── rl_utils/                 # SAC networks and plotting helpers
+│   ├── utils/                    # Evaluation and controller utilities
+│   └── reach_point_experiment.py # Main training entry point
+├── tests/                        # Unit and integration tests
+├── environment.yml               # Conda environment definition
+├── Makefile                      # Shortcuts for common commands
 └── README.md                     # Project description and documentation
 ```
 
-## Setup 
+## Setup
+
+**Requirements:** Python 3.12, MuJoCo 3.6, PyTorch 2.9, CUDA 13.1, Hydra ≥1.3, WandB (see `environment.yml` for full details).
 
 It is recommended to use the Conda environment.
 
@@ -104,10 +109,23 @@ python -m safe_bimanual_rl.reach_point_experiment --multirun \
 ```
 ## Evaluate models
 
-To evaluate and display a model :
+To evaluate and display a model:
 
 ```bash
 python -m safe_bimanual_rl.utils.evaluate_model --model_path "models/test.msh"
 ```
 
-You can use the parameters : ```--record``` and ```--n_episodes```
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `--model_path` | `str` | required | Path to the saved `.msh` model file |
+| `--n_episodes` | `int` | `3` | Number of evaluation episodes |
+| `--record` | flag | `False` | Save a video recording of the evaluation |
+
+Example with all options:
+
+```bash
+python -m safe_bimanual_rl.utils.evaluate_model \
+    --model_path "models/test.msh" \
+    --n_episodes 10 \
+    --record
+```
