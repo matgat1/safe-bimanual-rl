@@ -1,4 +1,4 @@
-from safe_bimanual_rl.reach_point_experiment import experiment
+from safe_bimanual_rl.reach_point_experiment_sac import experiment
 
 
 def test_experiment_1_epoch():
