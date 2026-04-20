@@ -71,8 +71,6 @@ def experiment(
         reach_sharpness=reach_sharpness,
     )
 
-    # Hyperparameters
-
     # Actor
     actor_input_shape = mdp.info.observation_space.shape
     actor_mu_params = {

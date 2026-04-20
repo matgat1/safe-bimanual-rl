@@ -75,8 +75,6 @@ def experiment(
         cube_displacement_weight=cube_displacement_weight,
     )
 
-    # Hyperparameters
-
     # Actor
     actor_input_shape = mdp.info.observation_space.shape
     actor_mu_params = {
