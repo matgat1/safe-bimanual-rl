@@ -1,0 +1,32 @@
+<mujoco model="Reach Cube Scene">
+
+  <option cone="elliptic" timestep="0.01" integrator="implicitfast"/>
+
+  <include file="dual_arm_iiwa_mujoco.xml"/>
+
+  <statistic center="0.5 0.0 0.5" extent="1.5"/>
+
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0"/>
+    <rgba haze="0.15 0.25 0.35 1"/>
+    <global azimuth="120" elevation="-20"/>
+  </visual>
+
+  <asset>
+    <texture type="skybox" builtin="gradient"
+             rgb1="0.3 0.5 0.7" rgb2="0 0 0"
+             width="512" height="3072"/>
+  </asset>
+
+  <worldbody>
+    <light pos="0 0 2.5" dir="0 0 -1" directional="true"/>
+    <camera name="fixed_cam" pos="-3.832 -0.636 3.848" xyaxes="0.164 -0.987 -0.000 0.624 0.104 0.774"/>
+    <body name="cube" pos="-0.92 0.0 0.83">
+        <freejoint/>
+        <geom name="cube" type="box" size="0.025 0.025 0.025" rgba="0.063 0.529 0.318 1" mass="0.1"
+            contype="1" conaffinity="1"
+            solref="0.004 1" solimp="0.99 0.999 1e-5"/>
+    </body>
+  </worldbody>
+
+</mujoco>
