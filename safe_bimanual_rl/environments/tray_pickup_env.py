@@ -8,7 +8,8 @@ from mushroom_rl.rl_utils.spaces import Box
 # Reach a point environment with two arms
 class TrayPickUpEnv(BimanualTableEnv):
     """
-    A reach environment for two arms, where the goal is to reach the cube on the table.
+    A reach environment for two arms,
+    where the goal is to pick up a cube on a tray.
     """
 
     def __init__(
@@ -18,12 +19,10 @@ class TrayPickUpEnv(BimanualTableEnv):
         n_substeps: int = 5,
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
-        cube_distance_weight: float = 1.0,
-        cube_touched_reward: float = 3.0,
+        handle_distance_weight: float = 3.0,
         contact_threshold: float = 2.0,
         control_cost_weight: float = -1e-4,
         reach_sharpness: float = 0.5,
-        cube_displacement_weight: float = -1.0,
         **viewer_params,
     ):
         """
@@ -42,25 +41,11 @@ class TrayPickUpEnv(BimanualTableEnv):
             cube_displacement_weight (float): Penalty weight for displacing the cube from its
                 initial position. Should be negative.
         """
-        actuation_spec = [
-            "right_arm_A1_ctrl",
-            "right_arm_A2_ctrl",
-            "right_arm_A3_ctrl",
-            "right_arm_A4_ctrl",
-            "right_arm_A5_ctrl",
-            "right_arm_A6_ctrl",
-            "right_arm_A7_ctrl",
-            "left_arm_A1_ctrl",
-            "left_arm_A2_ctrl",
-            "left_arm_A3_ctrl",
-            "left_arm_A4_ctrl",
-            "left_arm_A5_ctrl",
-            "left_arm_A6_ctrl",
-            "left_arm_A7_ctrl",
-        ]
 
         additional_data_spec = [
-            ("cube_pos", "cube", ObservationType.BODY_POS),
+            ("tray_pos", "tray", ObservationType.BODY_POS),
+            ("right_handle_pos", "right_handle", ObservationType.BODY_POS),
+            ("left_handle_pos", "left_handle", ObservationType.BODY_POS),
             (
                 "right_hande_robotiq_hande_end_pos",
                 "right_hande_robotiq_hande_end",
@@ -83,14 +68,11 @@ class TrayPickUpEnv(BimanualTableEnv):
         )
 
         self._contact_cost_weight = contact_cost_weight
-        self._cube_distance_weight = cube_distance_weight
+        self._handle_distance_weight = handle_distance_weight
         self._contact_force_range = contact_force_range
         self._contact_threshold = contact_threshold
-        self._cube_touched_reward = cube_touched_reward
         self._control_cost_weight = control_cost_weight
         self._reach_sharpness = reach_sharpness
-        self._cube_displacement_weight = cube_displacement_weight
-        self._prev_cube_pos = None
 
         super().__init__(
             scene_xml=scene_xml,
@@ -99,14 +81,13 @@ class TrayPickUpEnv(BimanualTableEnv):
             n_substeps=n_substeps,
             additional_data_spec=additional_data_spec,
             collision_groups=collision_groups,
-            actuation_spec=actuation_spec,
             **viewer_params,
         )
 
     def _modify_mdp_info(self, mdp_info):
         mdp_info = super()._modify_mdp_info(mdp_info)
-        self.obs_helper.add_obs("rel_cube_pos_right_arm", 3)
-        self.obs_helper.add_obs("rel_cube_pos_left_arm", 3)
+        self.obs_helper.add_obs("rel_right_handle_pos", 3)
+        self.obs_helper.add_obs("rel_left_handle_pos", 3)
         self.obs_helper.add_obs("contact_force", 1)
 
         # Update dimensions of the observation space
@@ -117,35 +98,24 @@ class TrayPickUpEnv(BimanualTableEnv):
     def _create_observation(self, obs):
         obs = super()._create_observation(obs)
 
-        cube_pos = self._read_data("cube_pos")
+        right_handle_pos = self._read_data("right_handle_pos")
+        left_handle_pos = self._read_data("left_handle_pos")
 
         right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
         left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
 
-        rel_cube_pos_right_arm = cube_pos - right_arm_pos
-        rel_cube_pos_left_arm = cube_pos - left_arm_pos
+        rel_right_handle_pos = right_handle_pos - right_arm_pos
+        rel_left_handle_pos = left_handle_pos - left_arm_pos
 
         contact_force = self._get_contact_force(
             "robot", "table", self._contact_force_range
         ) + self._get_contact_force("hand", "table", self._contact_force_range)
 
         obs = np.concatenate(
-            [obs, rel_cube_pos_right_arm, rel_cube_pos_left_arm, contact_force]
+            [obs, rel_right_handle_pos, rel_left_handle_pos, contact_force]
         )
 
         return obs
-
-    def _is_cube_touched(self):
-        """
-        Check if the cube is touched by each arm independently.
-
-        Returns:
-            tuple[bool, bool]: (right_touched, left_touched), each True if the
-                corresponding hand is in contact with the cube.
-        """
-        right_touched = self._check_collision("cube", "right_hand_fingers")
-        left_touched = self._check_collision("cube", "left_hand_fingers")
-        return right_touched, left_touched
 
     def _get_contact_cost(self, obs):
         """
@@ -162,41 +132,32 @@ class TrayPickUpEnv(BimanualTableEnv):
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         return self._contact_cost_weight * contact_force
 
-    def _get_cube_distance_reward(self, obs):
+    def _get_handle_distance_reward(self, obs):
         """
-        Compute the reward based on the distance between the cube and the end effectors.
+        Compute the reward based on the distance between the handles and the end effectors.
 
         Args:
             obs: The observation of the environment.
 
         Returns:
-            reward: The computed reward based on the distance between the cube and the end effectors
+            reward: The computed reward based on the distance between the handles and the end effectors
         """
 
-        rel_cube_pos_right = self.obs_helper.get_from_obs(obs, "rel_cube_pos_right_arm")
-        rel_cube_pos_left = self.obs_helper.get_from_obs(obs, "rel_cube_pos_left_arm")
+        rel_handle_pos_right = self.obs_helper.get_from_obs(obs, "rel_right_handle_pos")
+        rel_handle_pos_left = self.obs_helper.get_from_obs(obs, "rel_left_handle_pos")
 
-        right_arm_distance = np.linalg.norm(rel_cube_pos_right)
-        left_arm_distance = np.linalg.norm(rel_cube_pos_left)
+        right_arm_distance = np.linalg.norm(rel_handle_pos_right)
+        left_arm_distance = np.linalg.norm(rel_handle_pos_left)
 
         reward = (1 - np.tanh(right_arm_distance / self._reach_sharpness)) + (
             1 - np.tanh(left_arm_distance / self._reach_sharpness)
         )
 
-        return self._cube_distance_weight * reward
+        return self._handle_distance_weight * reward
 
     def _get_ctrl_cost(self, action):
         ctrl_cost = np.sum(np.square(action))
         return self._control_cost_weight * ctrl_cost
-
-    def _get_cube_push_cost(self):
-        cube_pos = self._read_data("cube_pos")
-        if self._prev_cube_pos is None:
-            self._prev_cube_pos = cube_pos.copy()
-            return 0.0
-        displacement = np.linalg.norm(cube_pos - self._prev_cube_pos)
-        self._prev_cube_pos = cube_pos.copy()
-        return self._cube_displacement_weight * displacement
 
     def reward(self, obs, action, next_obs, absorbing):
         """
@@ -209,21 +170,14 @@ class TrayPickUpEnv(BimanualTableEnv):
             reward (float): The reward for the current state and action.
         """
 
-        cube_hand_distance_reward = self._get_cube_distance_reward(next_obs)
-        right_touched, left_touched = self._is_cube_touched()
-        cube_touched_reward = (self._cube_touched_reward / 2) * (
-            right_touched + left_touched
-        )
+        handle_distance_reward = self._get_handle_distance_reward(next_obs)
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
-        cube_push_penalty = self._get_cube_push_cost()
 
         reward = (
-            cube_hand_distance_reward
-            + cube_touched_reward
+            handle_distance_reward
             + contact_table_cost
             + ctrl_cost
-            + cube_push_penalty
         )
 
         return reward
@@ -249,7 +203,7 @@ if __name__ == "__main__":
     env.reset()
     env.render()
     while True:
-        action = np.zeros((14,))
+        action = np.zeros((18,))
         # action = np.random.uniform(-2.0, 2.0, size=(14,))
         env.step(action)
         env.render()
