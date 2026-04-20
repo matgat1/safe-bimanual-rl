@@ -173,18 +173,35 @@ class BimanualTableEnv(MuJoCo):
                     "right_hande_robotiq_hande_right_finger_collision",
                 ],
             ),
+            (
+                "right_hand_fingers",
+                [
+                    "right_hande_robotiq_hande_left_finger_collision",
+                    "right_hande_robotiq_hande_right_finger_collision",
+                ],
+            ),
+            (
+                "left_hand_fingers",
+                [
+                    "left_hande_robotiq_hande_left_finger_collision",
+                    "left_hande_robotiq_hande_right_finger_collision",
+                ],
+            ),
         ]
 
         viewer_params = viewer_params or {}
         viewer_params.setdefault(
             "camera_params", MujocoViewer.get_default_camera_params()
         )
+        viewer_params.setdefault("hide_menu_on_startup", True)
+        viewer_params.setdefault("width", 1280)
+        viewer_params.setdefault("height", 720)
 
         viewer_params["camera_params"]["static"].update(
             {
-                "distance": 4,
-                "elevation": -50.0,
-                "azimuth": 70.0,
+                "distance": 3,
+                "elevation": -30.0,
+                "azimuth": 30.0,
                 "lookat": np.array([-0.92, 0.0, 0.9]),
             }
         )

@@ -1,9 +1,8 @@
-<mujoco model="bimanual scene">
+<mujoco model="Reach Cube Scene">
 
   <option cone="elliptic" timestep="0.01" integrator="implicitfast"/>
 
   <include file="dual_arm_iiwa_mujoco.xml"/>
-  <include file="tray_with_objects.xml"/>
 
   <statistic center="0.5 0.0 0.5" extent="1.5"/>
 
@@ -22,6 +21,12 @@
   <worldbody>
     <light pos="0 0 2.5" dir="0 0 -1" directional="true"/>
     <camera name="fixed_cam" pos="-3.832 -0.636 3.848" xyaxes="0.164 -0.987 -0.000 0.624 0.104 0.774"/>
+    <body name="cube" pos="-0.92 0.0 0.83">
+        <freejoint/>
+        <geom name="cube" type="box" size="0.025 0.025 0.025" rgba="0.063 0.529 0.318 1" mass="0.1"
+            contype="1" conaffinity="1"
+            solref="0.004 1" solimp="0.99 0.999 1e-5"/>
+    </body>
   </worldbody>
 
 </mujoco>

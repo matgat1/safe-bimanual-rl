@@ -1,4 +1,4 @@
-# Usage: python -m safe_bimanual_rl.reach_point_experiment --multirun hydra/launcher=cosmos ...
+# Usage: python -m safe_bimanual_rl.reach_point_experiment --multirun hydra/launcher=cosmos_gpu ...
 
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 
@@ -10,6 +10,10 @@ name: reachCube
 
 # --- Log files per run in slurm_logs/ ---
 submitit_folder: ${hydra.sweep.dir}/.submitit/%j
+
+# --- GPU partition ---
+partition: gpua100i
+gpus_per_node: 1
 
 # --- Environment setup ---
 setup:

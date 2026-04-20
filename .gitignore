@@ -2,6 +2,8 @@
 multirun/
 mushroom_rl_recordings/
 outputs/
+wandb/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
