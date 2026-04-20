@@ -123,12 +123,14 @@ python -m safe_bimanual_rl.utils.evaluate_model --model_path "models/test.msh"
 | `--model_path` | `str` | required | Path to the saved `.msh` model file |
 | `--n_episodes` | `int` | `3` | Number of evaluation episodes |
 | `--record` | flag | `False` | Save a video recording of the evaluation |
+| `--env` | `str` | auto-detected | Environment to use (`reach_cube` or `tray_pickup`). Auto-detected from model path if not provided. |
 
 Example with all options:
 
 ```bash
 python -m safe_bimanual_rl.utils.evaluate_model \
-    --model_path "models/test.msh" \
+    --model_path "models/tray_pickup_agent.msh" \
     --n_episodes 10 \
-    --record
+    --record \
+    --env tray_pickup
 ```
