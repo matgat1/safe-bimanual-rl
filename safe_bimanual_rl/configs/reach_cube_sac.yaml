@@ -27,3 +27,4 @@ cube_touched_reward: 3.0
 contact_threshold: 2.0
 reach_sharpness: 0.5
 cube_displacement_weight: -1.0
+action_space_limit: 0.4

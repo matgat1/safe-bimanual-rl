@@ -45,6 +45,7 @@ def experiment(
     control_cost_weight: float = -1e-4,
     reach_sharpness: float = 0.5,
     cube_displacement_weight: float = -1.0,
+    action_space_limit: float = 0.4,
     use_wandb: bool = True,
 ):
 
@@ -103,9 +104,9 @@ def experiment(
         output_shape=(1,),
     )
 
-    # Action space normalization to [-1, 1]
-    mdp.info.action_space.low[:] = -0.4
-    mdp.info.action_space.high[:] = 0.4
+    # Action space normalization to [-action_space_limit, action_space_limit]
+    mdp.info.action_space.low[:] = -action_space_limit
+    mdp.info.action_space.high[:] = action_space_limit
 
     # Agent
     agent = SAC(
@@ -154,6 +155,7 @@ def experiment(
             "control_cost_weight": control_cost_weight,
             "reach_sharpness": reach_sharpness,
             "cube_displacement_weight": cube_displacement_weight,
+            "action_space_limit": action_space_limit,
         },
     )
 
@@ -259,6 +261,7 @@ def main(cfg: DictConfig):
         control_cost_weight=cfg.control_cost_weight,
         reach_sharpness=cfg.reach_sharpness,
         cube_displacement_weight=cfg.cube_displacement_weight,
+        action_space_limit=cfg.action_space_limit,
     )
 
 
