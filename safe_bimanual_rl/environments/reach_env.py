@@ -79,7 +79,7 @@ class ReachEnv(BimanualTableEnv):
         ]
 
         scene_xml = os.path.join(
-            os.path.dirname(__file__), "data", "arms_tray_scene.xml"
+            os.path.dirname(__file__), "data", "reach_cube_env.xml"
         )
 
         self._contact_cost_weight = contact_cost_weight
