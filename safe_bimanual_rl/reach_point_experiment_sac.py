@@ -37,7 +37,7 @@ def experiment(
     lr_critic=3e-4,
     use_cluster=False,
     save_model=False,
-    model_name: str = "sac_agent",
+    model_name: str = "reach_cube_agent",
     contact_cost_weight: float = -1e-4,
     cube_distance_weight: float = 3.0,
     cube_touched_reward: float = 3.0,
