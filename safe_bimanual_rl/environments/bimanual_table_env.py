@@ -193,12 +193,15 @@ class BimanualTableEnv(MuJoCo):
         viewer_params.setdefault(
             "camera_params", MujocoViewer.get_default_camera_params()
         )
+        viewer_params.setdefault("hide_menu_on_startup", True)
+        viewer_params.setdefault("width", 1280)
+        viewer_params.setdefault("height", 720)
 
         viewer_params["camera_params"]["static"].update(
             {
-                "distance": 4,
-                "elevation": -50.0,
-                "azimuth": 70.0,
+                "distance": 3,
+                "elevation": -30.0,
+                "azimuth": 30.0,
                 "lookat": np.array([-0.92, 0.0, 0.9]),
             }
         )
