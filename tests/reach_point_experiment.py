@@ -10,5 +10,5 @@ def test_experiment_1_epoch():
         initial_replay_size=500,
         use_cluster=True,
         save_model=False,
-        use_wandb=False
+        use_wandb=False,
     )

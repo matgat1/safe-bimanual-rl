@@ -140,7 +140,8 @@ class TrayPickUpEnv(BimanualTableEnv):
             obs: The observation of the environment.
 
         Returns:
-            reward: The computed reward based on the distance between the handles and the end effectors
+            reward: The computed reward based on the distance between the handles
+            and the end effectors
         """
 
         rel_handle_pos_right = self.obs_helper.get_from_obs(obs, "rel_right_handle_pos")
@@ -174,11 +175,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
 
-        reward = (
-            handle_distance_reward
-            + contact_table_cost
-            + ctrl_cost
-        )
+        reward = handle_distance_reward + contact_table_cost + ctrl_cost
 
         return reward
 
