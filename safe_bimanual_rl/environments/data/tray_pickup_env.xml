@@ -1,4 +1,4 @@
-<mujoco model="bimanual scene">
+<mujoco model="Tray Pickup Scene">
 
   <option cone="elliptic" timestep="0.01" integrator="implicitfast"/>
 
