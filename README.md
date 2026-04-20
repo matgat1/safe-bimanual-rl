@@ -6,9 +6,11 @@ This project focuses on training reinforcement learning agents for **two-arm rob
 
 We use **MuJoCo-based environments** and the **MushroomRL** library to design tasks such as object reaching and tray-pickup manipulation, while integrating safety-aware design choices into the learning pipeline.
 
+---
+***Reach Cube experiment*** trained for 250 epochs
+<img src="figs/reach_cube_agent_2026-04-19_20-21-46_52.gif" width="48%"/>
+<img src="figs/reach_cube_agent_2026-04-19_20-21-46_44.gif" width="48%"/> 
 
-![](figs/reach_cube_attempt0.gif)
-***Reach Cube experiment*** trained for 12 epochs with 4000 steps per epoch (γ=0.99, horizon=200, n_substeps=4), using a replay buffer of 5,000–200,000 samples, batch size 256, 128 hidden features, 10,000 warm-up transitions, τ=0.001, and α learning rate of 3×10⁻⁴.
 
 
 ## Project Structure
