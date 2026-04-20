@@ -1,0 +1,28 @@
+# SAC agent configuration for the tray pickup task
+
+# Training parameters
+n_epochs: 250
+n_steps: 8000
+n_steps_per_fit: 4
+n_episodes_test: 5
+initial_replay_size: 10000
+max_replay_size: 200000
+batch_size: 256
+n_features: 256
+warmup_transitions: 10000
+tau: 0.001
+lr_alpha: 3e-4
+lr_actor: 3e-4
+lr_critic: 3e-4
+use_cluster: true
+save_model: true
+use_wandb: true
+model_name: "tray_pickup_agent"
+
+# Reward parameters
+contact_cost_weight: -1e-4
+control_cost_weight: -1e-4
+handle_distance_weight: 3.0
+contact_threshold: 2.0
+reach_sharpness: 0.5
+action_space_limit: 0.4
