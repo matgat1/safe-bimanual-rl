@@ -22,9 +22,9 @@ model_name: "reach_cube_agent"
 #Reward parameters
 contact_cost_weight: -1e-4
 control_cost_weight: -1e-4
-cube_distance_weight: 1.0
+cube_distance_weight: 3.0
 cube_touched_reward: 3.0
 contact_threshold: 2.0
 reach_sharpness: 0.5
-cube_displacement_weight: -1.0
+cube_displacement_weight: -3.0
 action_space_limit: 0.4
