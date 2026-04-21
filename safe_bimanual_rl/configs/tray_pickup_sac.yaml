@@ -24,5 +24,7 @@ contact_cost_weight: -1e-4
 control_cost_weight: -1e-4
 handle_distance_weight: 3.0
 contact_threshold: 2.0
-reach_sharpness: 0.5
+reach_sharpness: 0.3
+grasp_reward: 5.0
+cube_fell_off_tray_penalty: -5.0
 action_space_limit: 0.4

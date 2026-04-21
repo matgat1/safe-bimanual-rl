@@ -42,7 +42,9 @@ def experiment(
     handle_distance_weight: float = 3.0,
     contact_threshold: float = 2.0,
     control_cost_weight: float = -1e-4,
-    reach_sharpness: float = 0.5,
+    reach_sharpness: float = 0.3,
+    grasp_reward: float = 5.0,
+    cube_fell_off_tray_penalty: float = -5.0,
     action_space_limit: float = 0.4,
     use_wandb: bool = True,
 ):
@@ -69,6 +71,8 @@ def experiment(
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
         reach_sharpness=reach_sharpness,
+        grasp_reward=grasp_reward,
+        cube_fell_off_tray_penalty=cube_fell_off_tray_penalty,
     )
 
     # Actor
@@ -147,6 +151,8 @@ def experiment(
             "contact_threshold": contact_threshold,
             "control_cost_weight": control_cost_weight,
             "reach_sharpness": reach_sharpness,
+            "grasp_reward": grasp_reward,
+            "cube_fell_off_tray_penalty": cube_fell_off_tray_penalty,
             "action_space_limit": action_space_limit,
         },
     )
@@ -251,6 +257,8 @@ def main(cfg: DictConfig):
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
         reach_sharpness=cfg.reach_sharpness,
+        grasp_reward=cfg.grasp_reward,
+        cube_fell_off_tray_penalty=cfg.cube_fell_off_tray_penalty,
         action_space_limit=cfg.action_space_limit,
     )
 
