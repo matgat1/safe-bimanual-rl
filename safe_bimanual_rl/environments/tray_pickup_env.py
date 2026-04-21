@@ -20,9 +20,11 @@ class TrayPickUpEnv(BimanualTableEnv):
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
         handle_distance_weight: float = 3.0,
+        cube_fell_off_tray_penalty: float = -5.0,
         contact_threshold: float = 2.0,
         control_cost_weight: float = -1e-4,
-        reach_sharpness: float = 0.5,
+        reach_sharpness: float = 0.3,
+        grasp_reward: float = 5.0,
         **viewer_params,
     ):
         """
@@ -60,7 +62,35 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         collision_groups = [
             ("cube", ["cube"]),
+            (
+                "tray",
+                [
+                    "tray_base",
+                    "tray_wall_front",
+                    "tray_wall_back",
+                    "tray_wall_right",
+                    "tray_wall_left",
+                ],
+            ),
             ("table", ["table_base_link_collision"]),
+            ("right_handle", ["right_handle_bar"]),
+            ("left_handle", ["left_handle_bar"]),
+            (
+                "right_hand_right_finger",
+                ["right_hande_robotiq_hande_right_finger_collision"],
+            ),
+            (
+                "right_hand_left_finger",
+                ["right_hande_robotiq_hande_left_finger_collision"],
+            ),
+            (
+                "left_hand_right_finger",
+                ["left_hande_robotiq_hande_right_finger_collision"],
+            ),
+            (
+                "left_hand_left_finger",
+                ["left_hande_robotiq_hande_left_finger_collision"],
+            ),
         ]
 
         scene_xml = os.path.join(
@@ -73,6 +103,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._contact_threshold = contact_threshold
         self._control_cost_weight = control_cost_weight
         self._reach_sharpness = reach_sharpness
+        self._grasp_reward = grasp_reward
+        self._cube_fell_off_tray_penalty = cube_fell_off_tray_penalty
 
         super().__init__(
             scene_xml=scene_xml,
@@ -117,6 +149,26 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         return obs
 
+    def _cube_on_tray(self):
+        """
+        Check if the cube is on the tray.
+
+        Returns:
+            bool: True if the cube is on the tray, False otherwise.
+        """
+        return self._check_collision("cube", "tray")
+
+    def _get_cube_fell_off_tray_cost(self):
+        """
+        Compute the penalty if the cube has fallen off the tray.
+
+        Returns:
+            float: The penalty value if the cube is not on the tray, 0 otherwise.
+        """
+        if not self._cube_on_tray():
+            return self._cube_fell_off_tray_penalty
+        return 0
+
     def _get_contact_cost(self, obs):
         """
         Compute the cost based on the contact force exceeding the threshold.
@@ -156,7 +208,44 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         return self._handle_distance_weight * reward
 
+    def _get_grasp_reward(self):
+        """
+        Compute the reward for grasping both tray handles with the correct fingers.
+
+        Returns:
+            float: Reward accumulated for each hand that has both fingers on its handle.
+        """
+        right_hand_right_finger_on_handle = self._check_collision(
+            "right_handle", "right_hand_right_finger"
+        )
+        right_hand_left_finger_on_handle = self._check_collision(
+            "right_handle", "right_hand_left_finger"
+        )
+        left_hand_right_finger_on_handle = self._check_collision(
+            "left_handle", "left_hand_right_finger"
+        )
+        left_hand_left_finger_on_handle = self._check_collision(
+            "left_handle", "left_hand_left_finger"
+        )
+
+        reward = 0
+
+        if right_hand_right_finger_on_handle and right_hand_left_finger_on_handle:
+            reward += self._grasp_reward
+        if left_hand_right_finger_on_handle and left_hand_left_finger_on_handle:
+            reward += self._grasp_reward
+        return reward
+
     def _get_ctrl_cost(self, action):
+        """
+        Compute the control cost penalizing large actions.
+
+        Args:
+            action (np.ndarray): The action taken by the agent.
+
+        Returns:
+            float: The weighted sum of squared action values.
+        """
         ctrl_cost = np.sum(np.square(action))
         return self._control_cost_weight * ctrl_cost
 
@@ -174,8 +263,15 @@ class TrayPickUpEnv(BimanualTableEnv):
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
-
-        reward = handle_distance_reward + contact_table_cost + ctrl_cost
+        # cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
+        grasp_reward = self._get_grasp_reward()
+        reward = (
+            handle_distance_reward
+            + contact_table_cost
+            + ctrl_cost
+            # + cube_fell_off_tray_cost
+            + grasp_reward
+        )
 
         return reward
 
@@ -201,6 +297,5 @@ if __name__ == "__main__":
     env.render()
     while True:
         action = np.zeros((18,))
-        # action = np.random.uniform(-2.0, 2.0, size=(14,))
         env.step(action)
         env.render()
