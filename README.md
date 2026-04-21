@@ -110,6 +110,13 @@ python -m safe_bimanual_rl.reach_point_experiment_sac --multirun \
   hydra/launcher=cosmos \
   contact_threshold=1.0,2.0,3.0
 ```
+```bash
+python -m safe_bimanual_rl.tray_pickup_experiment_sac --multirun \
+  hydra/launcher=cosmos \
+  n_epochs=200 \
+  reach_sharpness=0.3,0.5 \
+  grasp_reward=5.0,10.0
+```
 ## Evaluate models
 
 To evaluate and display a model:
