@@ -9,26 +9,26 @@
 
     <body name="tray" pos="-0.6 0.0 0.83" euler="0 0 1.57">
       <freejoint/>
-      <geom class="tray_part" type="box" size="0.2 0.15 0.005"
+      <geom name="tray_base" class="tray_part" type="box" size="0.2 0.15 0.005"
             solref="0.004 1" solimp="0.99 0.999 1e-5"/>
 
-      <geom class="tray_part" type="box" size="0.2 0.005 0.02" pos="0  0.15 0.015"/>
-      <geom class="tray_part" type="box" size="0.2 0.005 0.02" pos="0 -0.15 0.015"/>
-      <geom class="tray_part" type="box" size="0.005 0.15 0.02" pos=" 0.2 0 0.015"/>
-      <geom class="tray_part" type="box" size="0.005 0.15 0.02" pos="-0.2 0 0.015"/>
+      <geom name="tray_wall_front" class="tray_part" type="box" size="0.2 0.005 0.02" pos="0  0.15 0.015"/>
+      <geom name="tray_wall_back"  class="tray_part" type="box" size="0.2 0.005 0.02" pos="0 -0.15 0.015"/>
+      <geom name="tray_wall_right" class="tray_part" type="box" size="0.005 0.15 0.02" pos=" 0.2 0 0.015"/>
+      <geom name="tray_wall_left"  class="tray_part" type="box" size="0.005 0.15 0.02" pos="-0.2 0 0.015"/>
 
       <!-- Right handle -->
       <geom class="tray_part" type="box" size="0.007 0.007 0.025" pos=" 0.207  0.05 0.055"/>
       <geom class="tray_part" type="box" size="0.007 0.007 0.025" pos=" 0.207 -0.05 0.055"/>
       <body name="right_handle" pos=" 0.207 0 0.08">
-        <geom class="tray_part" type="cylinder" size="0.007 0.057" euler="1.57 0 0"/>
+        <geom name="right_handle_bar" class="tray_part" type="cylinder" size="0.007 0.057" euler="1.57 0 0"/>
       </body>
 
       <!-- Left handle -->
       <geom class="tray_part" type="box" size="0.007 0.007 0.025" pos="-0.207  0.05 0.055"/>
       <geom class="tray_part" type="box" size="0.007 0.007 0.025" pos="-0.207 -0.05 0.055"/>
       <body name="left_handle" pos="-0.207 0 0.08">
-        <geom class="tray_part" type="cylinder" size="0.007 0.057" euler="1.57 0 0"/>
+        <geom name="left_handle_bar" class="tray_part" type="cylinder" size="0.007 0.057" euler="1.57 0 0"/>
       </body>
     </body>
 
