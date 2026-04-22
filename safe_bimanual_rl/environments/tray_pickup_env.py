@@ -2,6 +2,7 @@ import os
 import numpy as np
 from safe_bimanual_rl.environments.bimanual_table_env import BimanualTableEnv
 from mushroom_rl.environments.mujoco import ObservationType
+from safe_bimanual_rl.utils.quaternions import quat_to_mat
 from mushroom_rl.rl_utils.spaces import Box
 
 
@@ -25,6 +26,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         control_cost_weight: float = -1e-4,
         reach_sharpness: float = 0.3,
         grasp_reward: float = 5.0,
+        rotation_reward_weight: float = 1.0,
         **viewer_params,
     ):
         """
@@ -48,6 +50,8 @@ class TrayPickUpEnv(BimanualTableEnv):
             ("tray_pos", "tray", ObservationType.BODY_POS),
             ("right_handle_pos", "right_handle", ObservationType.BODY_POS),
             ("left_handle_pos", "left_handle", ObservationType.BODY_POS),
+            ("right_handle_rot", "right_handle", ObservationType.BODY_ROT),
+            ("left_handle_rot", "left_handle", ObservationType.BODY_ROT),
             (
                 "right_hande_robotiq_hande_end_pos",
                 "right_hande_robotiq_hande_end",
@@ -57,6 +61,16 @@ class TrayPickUpEnv(BimanualTableEnv):
                 "left_hande_robotiq_hande_end_pos",
                 "left_hande_robotiq_hande_end",
                 ObservationType.BODY_POS,
+            ),
+            (
+                "right_hande_robotiq_hande_end_rot",
+                "right_hande_robotiq_hande_end",
+                ObservationType.BODY_ROT,
+            ),
+            (
+                "left_hande_robotiq_hande_end_rot",
+                "left_hande_robotiq_hande_end",
+                ObservationType.BODY_ROT,
             ),
         ]
 
@@ -105,6 +119,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._reach_sharpness = reach_sharpness
         self._grasp_reward = grasp_reward
         self._cube_fell_off_tray_penalty = cube_fell_off_tray_penalty
+        self._rotation_reward_weight = rotation_reward_weight
 
         super().__init__(
             scene_xml=scene_xml,
@@ -121,6 +136,10 @@ class TrayPickUpEnv(BimanualTableEnv):
         self.obs_helper.add_obs("rel_right_handle_pos", 3)
         self.obs_helper.add_obs("rel_left_handle_pos", 3)
         self.obs_helper.add_obs("contact_force", 1)
+        self.obs_helper.add_obs("right_gripper_rot", 4)
+        self.obs_helper.add_obs("left_gripper_rot", 4)
+        self.obs_helper.add_obs("right_handle_rot", 4)
+        self.obs_helper.add_obs("left_handle_rot", 4)
 
         # Update dimensions of the observation space
         mdp_info.observation_space = Box(*self.obs_helper.get_obs_limits())
@@ -130,6 +149,7 @@ class TrayPickUpEnv(BimanualTableEnv):
     def _create_observation(self, obs):
         obs = super()._create_observation(obs)
 
+        # Create relative positions observations of the handles with respect to the end effectors
         right_handle_pos = self._read_data("right_handle_pos")
         left_handle_pos = self._read_data("left_handle_pos")
 
@@ -139,12 +159,31 @@ class TrayPickUpEnv(BimanualTableEnv):
         rel_right_handle_pos = right_handle_pos - right_arm_pos
         rel_left_handle_pos = left_handle_pos - left_arm_pos
 
+        # Create contact force observation (robot+hand / table)
         contact_force = self._get_contact_force(
             "robot", "table", self._contact_force_range
         ) + self._get_contact_force("hand", "table", self._contact_force_range)
 
+        # Create gripper rotation observations
+        right_gripper_rot = self._read_data("right_hande_robotiq_hande_end_rot")
+        left_gripper_rot = self._read_data("left_hande_robotiq_hande_end_rot")
+        
+        # Create handle rotation observations
+        right_handle_rot = self._read_data("right_handle_rot")
+        left_handle_rot = self._read_data("left_handle_rot")
+
+        # Concatenate the new observations to the original observation
         obs = np.concatenate(
-            [obs, rel_right_handle_pos, rel_left_handle_pos, contact_force]
+            [
+                obs,
+                rel_right_handle_pos,
+                rel_left_handle_pos,
+                contact_force,
+                right_gripper_rot,
+                left_gripper_rot,
+                right_handle_rot,
+                left_handle_rot,
+            ]
         )
 
         return obs
@@ -208,6 +247,22 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         return self._handle_distance_weight * reward
 
+    def _get_gripper_rotation_reward(self, obs):
+        right_handle_mat  = quat_to_mat(self.obs_helper.get_from_obs(obs, "right_handle_rot"))
+        left_handle_mat   = quat_to_mat(self.obs_helper.get_from_obs(obs, "left_handle_rot"))
+        right_gripper_mat = quat_to_mat(self.obs_helper.get_from_obs(obs, "right_gripper_rot"))
+        left_gripper_mat  = quat_to_mat(self.obs_helper.get_from_obs(obs, "left_gripper_rot"))
+
+        right_align_y  = abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1]))
+        right_align_zx = abs(np.dot(right_gripper_mat[:, 2], right_handle_mat[:, 0]))
+        left_align_y   = abs(np.dot(left_gripper_mat[:, 1],  left_handle_mat[:, 1]))
+        left_align_zx  = abs(np.dot(left_gripper_mat[:, 2],  left_handle_mat[:, 0]))
+
+        right_reward = (right_align_y + right_align_zx) / 2
+        left_reward  = (left_align_y  + left_align_zx)  / 2
+
+        return self._rotation_reward_weight * (right_reward + left_reward)
+
     def _get_grasp_reward(self):
         """
         Compute the reward for grasping both tray handles with the correct fingers.
@@ -265,12 +320,14 @@ class TrayPickUpEnv(BimanualTableEnv):
         ctrl_cost = self._get_ctrl_cost(action)
         # cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
         grasp_reward = self._get_grasp_reward()
+        rotation_reward = self._get_gripper_rotation_reward(next_obs)
         reward = (
             handle_distance_reward
             + contact_table_cost
             + ctrl_cost
             # + cube_fell_off_tray_cost
             + grasp_reward
+            + rotation_reward
         )
 
         return reward
@@ -299,3 +356,4 @@ if __name__ == "__main__":
         action = np.zeros((18,))
         env.step(action)
         env.render()
+
