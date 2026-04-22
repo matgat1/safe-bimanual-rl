@@ -64,8 +64,7 @@ def test_cube_distance_reward_formula():
 
     def distance_reward(right_dist, left_dist):
         return weight * (
-            (1 - np.tanh(right_dist / sharpness))
-            + (1 - np.tanh(left_dist / sharpness))
+            (1 - np.tanh(right_dist / sharpness)) + (1 - np.tanh(left_dist / sharpness))
         )
 
     reward_near = distance_reward(0.0, 0.0)

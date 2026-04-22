@@ -18,12 +18,12 @@ class ReachEnv(BimanualTableEnv):
         n_substeps: int = 5,
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
-        cube_distance_weight: float = 1.0,
+        cube_distance_weight: float = 3.0,
         cube_touched_reward: float = 3.0,
         contact_threshold: float = 2.0,
         control_cost_weight: float = -1e-4,
         reach_sharpness: float = 0.5,
-        cube_displacement_weight: float = -1.0,
+        cube_displacement_weight: float = -5.0,
         **viewer_params,
     ):
         """

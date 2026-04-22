@@ -1,4 +1,4 @@
-from safe_bimanual_rl.reach_point_experiment import experiment
+from safe_bimanual_rl.reach_point_experiment_sac import experiment
 
 
 def test_experiment_1_epoch():
@@ -10,5 +10,5 @@ def test_experiment_1_epoch():
         initial_replay_size=500,
         use_cluster=True,
         save_model=False,
-        use_wandb=False
+        use_wandb=False,
     )

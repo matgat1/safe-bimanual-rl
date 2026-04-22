@@ -23,7 +23,7 @@ We use **MuJoCo-based environments** and the **MushroomRL** library to design ta
 │   ├── environments/             # MuJoCo environments (bimanual, reach)
 │   ├── rl_utils/                 # SAC networks and plotting helpers
 │   ├── utils/                    # Evaluation and controller utilities
-│   └── reach_point_experiment.py # Main training entry point
+│   └── reach_point_experiment_sac.py # Main training entry point
 ├── tests/                        # Unit and integration tests
 ├── environment.yml               # Conda environment definition
 ├── Makefile                      # Shortcuts for common commands
@@ -84,13 +84,13 @@ python3 safe_bimanual_rl/utils/sinusoidal_controller.py
 To train the RL agent on the reach task:
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment
+python -m safe_bimanual_rl.reach_point_experiment_sac
 ```
 
 The default configuration is in `configs/reach_cube_sac.yaml`. You can override any parameter directly from the command line:
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment \
+python -m safe_bimanual_rl.reach_point_experiment_sac \
     n_epochs=100 \
     model_name="test" \
     contact_threshold=1.0
@@ -99,16 +99,23 @@ python -m safe_bimanual_rl.reach_point_experiment \
 To run multiple experiments with different parameters:
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment --multirun \
+python -m safe_bimanual_rl.reach_point_experiment_sac --multirun \
     contact_threshold=1.0,5.0,20.0
 ```
 
 To use on the cluster 
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment --multirun \
+python -m safe_bimanual_rl.reach_point_experiment_sac --multirun \
   hydra/launcher=cosmos \
   contact_threshold=1.0,2.0,3.0
+```
+```bash
+python -m safe_bimanual_rl.tray_pickup_experiment_sac --multirun \
+  hydra/launcher=cosmos \
+  n_epochs=200 \
+  reach_sharpness=0.3,0.5 \
+  grasp_reward=5.0,10.0
 ```
 ## Evaluate models
 
@@ -123,12 +130,14 @@ python -m safe_bimanual_rl.utils.evaluate_model --model_path "models/test.msh"
 | `--model_path` | `str` | required | Path to the saved `.msh` model file |
 | `--n_episodes` | `int` | `3` | Number of evaluation episodes |
 | `--record` | flag | `False` | Save a video recording of the evaluation |
+| `--env` | `str` | auto-detected | Environment to use (`reach_cube` or `tray_pickup`). Auto-detected from model path if not provided. |
 
 Example with all options:
 
 ```bash
 python -m safe_bimanual_rl.utils.evaluate_model \
-    --model_path "models/test.msh" \
+    --model_path "models/tray_pickup_agent.msh" \
     --n_episodes 10 \
-    --record
+    --record \
+    --env tray_pickup
 ```

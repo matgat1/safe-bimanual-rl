@@ -12,4 +12,4 @@ conda activate safe_bimanual_rl
 cd ~/safe-bimanual-rl
 
 # Lancer l'expérience
-python3 -m safe_bimanual_rl.reach_point_experiment
+python3 -m safe_bimanual_rl.reach_point_experiment_sac
