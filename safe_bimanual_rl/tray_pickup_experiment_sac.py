@@ -45,6 +45,7 @@ def experiment(
     reach_sharpness: float = 0.3,
     grasp_reward: float = 5.0,
     cube_fell_off_tray_penalty: float = -5.0,
+    rotation_reward_weight: float = 1.0,
     action_space_limit: float = 0.4,
     use_wandb: bool = True,
 ):
@@ -73,6 +74,7 @@ def experiment(
         reach_sharpness=reach_sharpness,
         grasp_reward=grasp_reward,
         cube_fell_off_tray_penalty=cube_fell_off_tray_penalty,
+        rotation_reward_weight=rotation_reward_weight,
     )
 
     # Actor
@@ -259,6 +261,7 @@ def main(cfg: DictConfig):
         reach_sharpness=cfg.reach_sharpness,
         grasp_reward=cfg.grasp_reward,
         cube_fell_off_tray_penalty=cfg.cube_fell_off_tray_penalty,
+        rotation_reward_weight=cfg.rotation_reward_weight,
         action_space_limit=cfg.action_space_limit,
     )
 

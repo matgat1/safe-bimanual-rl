@@ -17,7 +17,7 @@ lr_critic: 3e-4
 use_cluster: true
 save_model: true
 use_wandb: true
-model_name: "tray_pickup_agent"
+model_name: "grasping_position_sac"
 
 # Reward parameters
 contact_cost_weight: -1e-4
@@ -27,4 +27,5 @@ contact_threshold: 2.0
 reach_sharpness: 0.3
 grasp_reward: 5.0
 cube_fell_off_tray_penalty: -5.0
+rotation_reward_weight: 1.0
 action_space_limit: 0.4
