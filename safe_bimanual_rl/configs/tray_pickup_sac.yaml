@@ -3,7 +3,7 @@
 # Training parameters
 n_epochs: 250
 n_steps: 8000
-n_steps_per_fit: 4
+n_steps_per_fit: 1
 n_episodes_test: 5
 initial_replay_size: 10000
 max_replay_size: 200000
@@ -11,7 +11,7 @@ batch_size: 256
 n_features: 256
 warmup_transitions: 10000
 tau: 0.001
-lr_alpha: 3e-4
+lr_alpha: 2e-4
 lr_actor: 3e-4
 lr_critic: 3e-4
 use_cluster: true
