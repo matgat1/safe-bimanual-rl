@@ -155,6 +155,7 @@ def experiment(
             "reach_sharpness": reach_sharpness,
             "grasp_reward": grasp_reward,
             "cube_fell_off_tray_penalty": cube_fell_off_tray_penalty,
+            "rotation_reward_weight": rotation_reward_weight,
             "action_space_limit": action_space_limit,
         },
     )
