@@ -65,7 +65,7 @@ def experiment(
     # Load Environment
     mdp = TrayPickUpEnv(
         gamma=0.99,
-        horizon=200,
+        horizon=350,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
         handle_distance_weight=handle_distance_weight,
