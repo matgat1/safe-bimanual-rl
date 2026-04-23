@@ -20,11 +20,11 @@ class TrayPickUpEnv(BimanualTableEnv):
         n_substeps: int = 5,
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
-        handle_distance_weight: float = 3.0,
+        handle_distance_weight: float = 1.0,
         cube_fell_off_tray_penalty: float = -5.0,
         contact_threshold: float = 2.0,
         control_cost_weight: float = -1e-4,
-        reach_sharpness: float = 0.3,
+        reach_sharpness: float = 0.5,
         grasp_reward: float = 5.0,
         rotation_reward_weight: float = 1.0,
         **viewer_params,
@@ -167,7 +167,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         # Create gripper rotation observations
         right_gripper_rot = self._read_data("right_hande_robotiq_hande_end_rot")
         left_gripper_rot = self._read_data("left_hande_robotiq_hande_end_rot")
-        
+
         # Create handle rotation observations
         right_handle_rot = self._read_data("right_handle_rot")
         left_handle_rot = self._read_data("left_handle_rot")
@@ -248,19 +248,40 @@ class TrayPickUpEnv(BimanualTableEnv):
         return self._handle_distance_weight * reward
 
     def _get_gripper_rotation_reward(self, obs):
-        right_handle_mat  = quat_to_mat(self.obs_helper.get_from_obs(obs, "right_handle_rot"))
-        left_handle_mat   = quat_to_mat(self.obs_helper.get_from_obs(obs, "left_handle_rot"))
-        right_gripper_mat = quat_to_mat(self.obs_helper.get_from_obs(obs, "right_gripper_rot"))
-        left_gripper_mat  = quat_to_mat(self.obs_helper.get_from_obs(obs, "left_gripper_rot"))
+        right_handle_mat = quat_to_mat(
+            self.obs_helper.get_from_obs(obs, "right_handle_rot")
+        )
+        left_handle_mat = quat_to_mat(
+            self.obs_helper.get_from_obs(obs, "left_handle_rot")
+        )
+        right_gripper_mat = quat_to_mat(
+            self.obs_helper.get_from_obs(obs, "right_gripper_rot")
+        )
+        left_gripper_mat = quat_to_mat(
+            self.obs_helper.get_from_obs(obs, "left_gripper_rot")
+        )
 
-        right_align_y  = abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1]))
-        right_align_zx = abs(np.dot(right_gripper_mat[:, 2], right_handle_mat[:, 0]))
-        left_align_y   = abs(np.dot(left_gripper_mat[:, 1],  left_handle_mat[:, 1]))
-        left_align_zx  = abs(np.dot(left_gripper_mat[:, 2],  left_handle_mat[:, 0]))
+        # Left: gripper_y parallel to handle_y, gripper_z same direction as handle_x
+        left_angle_y = np.arccos(
+            abs(np.dot(left_gripper_mat[:, 1], left_handle_mat[:, 1]))
+        )
+        left_angle_zx = np.arccos(np.dot(left_gripper_mat[:, 2], left_handle_mat[:, 0]))
 
-        right_reward = (right_align_y + right_align_zx) / 2
-        left_reward  = (left_align_y  + left_align_zx)  / 2
+        # Right: gripper_y parallel to handle_y, gripper_z opposite direction to handle_x
+        right_angle_y = np.arccos(
+            abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1]))
+        )
+        right_angle_zx = np.arccos(
+            -np.dot(right_gripper_mat[:, 2], right_handle_mat[:, 0])
+        )
 
+        left_reward = (
+            (1 - np.tanh(left_angle_y / 0.2)) + (1 - np.tanh(left_angle_zx / 0.2))
+        ) / 2
+        right_reward = (
+            (1 - np.tanh(right_angle_y / 0.2)) + (1 - np.tanh(right_angle_zx / 0.2))
+        ) / 2
+        
         return self._rotation_reward_weight * (right_reward + left_reward)
 
     def _get_grasp_reward(self):
@@ -318,7 +339,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
-        # cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
+        cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
         grasp_reward = self._get_grasp_reward()
         rotation_reward = self._get_gripper_rotation_reward(next_obs)
         reward = (
@@ -347,13 +368,101 @@ class TrayPickUpEnv(BimanualTableEnv):
             return True
         return False
 
+    def _create_info_dictionary(self, obs, action):
+        info = super()._create_info_dictionary(obs, action)
+
+        info["right_handle_pos"] = self._read_data("right_handle_pos")
+        info["left_handle_pos"] = self._read_data("left_handle_pos")
+        info["right_handle_rot"] = self._read_data("right_handle_rot")
+        info["left_handle_rot"] = self._read_data("left_handle_rot")
+        info["right_hande_robotiq_hande_end_pos"] = self.obs_helper.get_from_obs(
+            obs, "right_hande_robotiq_hande_end_pos"
+        )
+        info["left_hande_robotiq_hande_end_pos"] = self.obs_helper.get_from_obs(
+            obs, "left_hande_robotiq_hande_end_pos"
+        )
+
+        info["handle_distance_reward"] = self._get_handle_distance_reward(obs)
+        info["contact_table_cost"] = self._get_contact_cost(obs)
+        info["ctrl_cost"] = self._get_ctrl_cost(action)
+        info["grasp_reward"] = self._get_grasp_reward()
+        info["rotation_reward"] = self._get_gripper_rotation_reward(obs)
+        return info
+
 
 if __name__ == "__main__":
+    # Action ordering (18 values):
+    #   [0:7]   right arm A1-A7
+    #   [7:14]  left arm A1-A7
+    #   [14:16] left fingers      ← obs indices 16-17 (swap vs obs)
+    #   [16:18] right fingers     ← obs indices 14-15 (swap vs obs)
+    #
+    # Observation ordering:
+    #   [0:7]   right arm positions,  [7:14]  left arm positions
+    #   [14:16] right finger pos,     [16:18] left finger pos
+    #   [18:25] right arm vel,        [25:32] left arm vel
+    #   [32:34] right finger vel,     [34:36] left finger vel
+
+    # IK solution: pos (-0.6, -0.207, 0.913) + orientation aligned with handle
+    # gripper_y ∥ handle_y (-worldX), gripper_z ∥ handle_x (worldY)
+    left_arm_target = np.array(
+        [-1.5696, -0.2335, 2.7197, -1.9536, 2.4092, -1.0705, -0.5063]
+    )
+    left_finger_target = np.array([0.0, 0.0])  # open gripper
+
+    right_arm_target = -left_arm_target
+    right_finger_target = np.array([0.0, 0.0])
+
+    Kp_arm = 0.5
+    Kp_finger = 0.1
+
     env = TrayPickUpEnv()
-    env.reset()
+    obs, _ = env.reset()
     env.render()
+
+    step = 0
+
     while True:
-        action = np.zeros((18,))
-        env.step(action)
+        right_pos = obs[0:7]
+        right_finger_pos = obs[14:16]
+
+        left_pos = obs[7:14]
+        left_finger_pos = obs[16:18]
+
+        left_vel_cmd = np.clip(Kp_arm * (left_arm_target - left_pos), -1.0, 1.0)
+        left_finger_vel_cmd = np.clip(
+            Kp_finger * (left_finger_target - left_finger_pos), -0.5, 0.5
+        )
+
+        right_vel_cmd = np.clip(Kp_arm * (right_arm_target - right_pos), -1.0, 1.0)
+
+        right_finger_vel_cmd = np.clip(
+            Kp_finger * (right_finger_target - right_finger_pos), -0.5, 0.5
+        )
+
+        action = np.concatenate(
+            [
+                right_vel_cmd,  # [0:7]
+                left_vel_cmd,  # [7:14]
+                left_finger_vel_cmd,  # [14:16]
+                right_finger_vel_cmd,  # [16:18]
+            ]
+        )
+
+        obs, reward, absorbing, info = env.step(action)
         env.render()
 
+        if step % 10 == 0:
+            print(f"left_handle_pos    : {np.round(info['left_handle_pos'], 3)}")
+            print(
+                f"left_grasp_pos     : {np.round(info['left_hande_robotiq_hande_end_pos'], 3)}"
+            )
+            print(f"handle_dist_reward : {info['handle_distance_reward']:.4f}")
+            print(f"rotation_reward    : {info['rotation_reward']:.4f}")
+            print(f"grasp_reward       : {info['grasp_reward']:.4f}")
+            print(f"contact_cost       : {info['contact_table_cost']:.4f}")
+            print(f"ctrl_cost          : {info['ctrl_cost']:.4f}")
+            print(f"total_reward       : {reward:.4f}")
+            print()
+
+        step += 1
