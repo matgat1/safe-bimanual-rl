@@ -23,7 +23,7 @@ from safe_bimanual_rl.rl_utils.plotting import save_plots
 
 def experiment(
     n_epochs=100,
-    n_steps=8000,
+    n_steps=10000,
     n_steps_per_fit=1,
     n_episodes_test=5,
     initial_replay_size=10000,
