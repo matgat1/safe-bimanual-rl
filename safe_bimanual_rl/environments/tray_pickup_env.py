@@ -255,7 +255,9 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         # Left: gripper_y parallel to handle_y, gripper_z same direction as handle_x
         left_angle_y = np.arccos(
-            np.clip(abs(np.dot(left_gripper_mat[:, 1], left_handle_mat[:, 1])), -1.0, 1.0)
+            np.clip(
+                abs(np.dot(left_gripper_mat[:, 1], left_handle_mat[:, 1])), -1.0, 1.0
+            )
         )
         left_angle_zx = np.arccos(
             np.clip(np.dot(left_gripper_mat[:, 2], left_handle_mat[:, 0]), -1.0, 1.0)
@@ -263,7 +265,9 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         # Right: gripper_y parallel to handle_y, gripper_z opposite direction to handle_x
         right_angle_y = np.arccos(
-            np.clip(abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1])), -1.0, 1.0)
+            np.clip(
+                abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1])), -1.0, 1.0
+            )
         )
         right_angle_zx = np.arccos(
             np.clip(-np.dot(right_gripper_mat[:, 2], right_handle_mat[:, 0]), -1.0, 1.0)
@@ -272,11 +276,11 @@ class TrayPickUpEnv(BimanualTableEnv):
         left_reward = (
             (1 - np.tanh(left_angle_y / 0.4)) + (1 - np.tanh(left_angle_zx / 0.4))
         ) / 2
-        
+
         right_reward = (
             (1 - np.tanh(right_angle_y / 0.4)) + (1 - np.tanh(right_angle_zx / 0.4))
         ) / 2
-        
+
         return self._rotation_reward_weight * (right_reward + left_reward)
 
     def _get_grasp_reward(self):
