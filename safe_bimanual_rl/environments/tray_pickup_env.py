@@ -136,8 +136,6 @@ class TrayPickUpEnv(BimanualTableEnv):
         self.obs_helper.add_obs("rel_right_handle_pos", 3)
         self.obs_helper.add_obs("rel_left_handle_pos", 3)
         self.obs_helper.add_obs("contact_force", 1)
-        self.obs_helper.add_obs("right_gripper_rot", 4)
-        self.obs_helper.add_obs("left_gripper_rot", 4)
         self.obs_helper.add_obs("right_handle_rot", 4)
         self.obs_helper.add_obs("left_handle_rot", 4)
 
@@ -164,10 +162,6 @@ class TrayPickUpEnv(BimanualTableEnv):
             "robot", "table", self._contact_force_range
         ) + self._get_contact_force("hand", "table", self._contact_force_range)
 
-        # Create gripper rotation observations
-        right_gripper_rot = self._read_data("right_hande_robotiq_hande_end_rot")
-        left_gripper_rot = self._read_data("left_hande_robotiq_hande_end_rot")
-
         # Create handle rotation observations
         right_handle_rot = self._read_data("right_handle_rot")
         left_handle_rot = self._read_data("left_handle_rot")
@@ -179,8 +173,6 @@ class TrayPickUpEnv(BimanualTableEnv):
                 rel_right_handle_pos,
                 rel_left_handle_pos,
                 contact_force,
-                right_gripper_rot,
-                left_gripper_rot,
                 right_handle_rot,
                 left_handle_rot,
             ]
@@ -255,31 +247,34 @@ class TrayPickUpEnv(BimanualTableEnv):
             self.obs_helper.get_from_obs(obs, "left_handle_rot")
         )
         right_gripper_mat = quat_to_mat(
-            self.obs_helper.get_from_obs(obs, "right_gripper_rot")
+            self._read_data("right_hande_robotiq_hande_end_rot")
         )
         left_gripper_mat = quat_to_mat(
-            self.obs_helper.get_from_obs(obs, "left_gripper_rot")
+            self._read_data("left_hande_robotiq_hande_end_rot")
         )
 
         # Left: gripper_y parallel to handle_y, gripper_z same direction as handle_x
         left_angle_y = np.arccos(
-            abs(np.dot(left_gripper_mat[:, 1], left_handle_mat[:, 1]))
+            np.clip(abs(np.dot(left_gripper_mat[:, 1], left_handle_mat[:, 1])), -1.0, 1.0)
         )
-        left_angle_zx = np.arccos(np.dot(left_gripper_mat[:, 2], left_handle_mat[:, 0]))
+        left_angle_zx = np.arccos(
+            np.clip(np.dot(left_gripper_mat[:, 2], left_handle_mat[:, 0]), -1.0, 1.0)
+        )
 
         # Right: gripper_y parallel to handle_y, gripper_z opposite direction to handle_x
         right_angle_y = np.arccos(
-            abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1]))
+            np.clip(abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1])), -1.0, 1.0)
         )
         right_angle_zx = np.arccos(
-            -np.dot(right_gripper_mat[:, 2], right_handle_mat[:, 0])
+            np.clip(-np.dot(right_gripper_mat[:, 2], right_handle_mat[:, 0]), -1.0, 1.0)
         )
 
         left_reward = (
-            (1 - np.tanh(left_angle_y / 0.2)) + (1 - np.tanh(left_angle_zx / 0.2))
+            (1 - np.tanh(left_angle_y / 0.4)) + (1 - np.tanh(left_angle_zx / 0.4))
         ) / 2
+        
         right_reward = (
-            (1 - np.tanh(right_angle_y / 0.2)) + (1 - np.tanh(right_angle_zx / 0.2))
+            (1 - np.tanh(right_angle_y / 0.4)) + (1 - np.tanh(right_angle_zx / 0.4))
         ) / 2
         
         return self._rotation_reward_weight * (right_reward + left_reward)
