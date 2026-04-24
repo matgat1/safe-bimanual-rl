@@ -228,6 +228,12 @@ class ReachEnv(BimanualTableEnv):
 
         return reward
 
+    def step(self, action):
+        obs, reward, absorbing, info = super().step(action)
+        contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
+        info["cost"] = float(max(0.0, contact_force - self._contact_threshold))
+        return obs, reward, absorbing, info
+
     def is_absorbing(self, obs):
         """
         Check if the current state is absorbing.
