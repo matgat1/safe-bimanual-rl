@@ -13,6 +13,7 @@ import argparse
 ENV_REGISTRY = {
     "reach_cube": ReachEnv,
     "tray_pickup": TrayPickUpEnv,
+    "grasping_position": TrayPickUpEnv,
 }
 
 

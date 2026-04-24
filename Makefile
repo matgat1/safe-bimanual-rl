@@ -21,3 +21,9 @@ visualise_controller:
 
 test:
 	python -m pytest 
+
+tray_pickup_env:
+	python -m safe_bimanual_rl.environments.tray_pickup_env
+
+reach_env:
+	python -m safe_bimanual_rl.environments.reach_env
