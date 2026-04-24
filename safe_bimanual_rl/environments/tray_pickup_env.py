@@ -254,7 +254,9 @@ class TrayPickUpEnv(BimanualTableEnv):
         # Left: gripper_y parallel to handle_y, gripper_z same direction as handle_x
         left_angle_y = np.arccos(
             np.clip(
+                
                 abs(np.dot(left_gripper_mat[:, 1], left_handle_mat[:, 1])), -1.0, 1.0
+            
             )
         )
         left_angle_zx = np.arccos(
@@ -264,27 +266,22 @@ class TrayPickUpEnv(BimanualTableEnv):
         # Right: gripper_y parallel to handle_y, gripper_z opposite direction to handle_x
         right_angle_y = np.arccos(
             np.clip(
+                
                 abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1])), -1.0, 1.0
+            
             )
         )
         right_angle_zx = np.arccos(
             np.clip(-np.dot(right_gripper_mat[:, 2], right_handle_mat[:, 0]), -1.0, 1.0)
         )
 
-        # left_reward = (
-        #     (1 - np.tanh(left_angle_y / 0.4)) + (1 - np.tanh(left_angle_zx / 0.4))
-        # ) / 2
-        # 
-        # right_reward = (
-        #     (1 - np.tanh(right_angle_y / 0.4)) + (1 - np.tanh(right_angle_zx / 0.4))
-        # ) / 2
+        left_reward = (
+            (1 - np.tanh(left_angle_y / 0.4)) + (1 - np.tanh(left_angle_zx / 0.4))
+        ) / 2
 
-        proximity_threshold = 0.04
-        right_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_right_handle_pos"))
-        left_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_left_handle_pos"))
-
-        right_reward = (1 - np.tanh(right_angle_y / self._orientation_sharpness)) if right_dist <= proximity_threshold else 0.0
-        left_reward = (1 - np.tanh(left_angle_y / self._orientation_sharpness)) if left_dist <= proximity_threshold else 0.0
+        right_reward = (
+            (1 - np.tanh(right_angle_y / 0.4)) + (1 - np.tanh(right_angle_zx / 0.4))
+        ) / 2
 
         return self._rotation_reward_weight * (right_reward + left_reward)
 
