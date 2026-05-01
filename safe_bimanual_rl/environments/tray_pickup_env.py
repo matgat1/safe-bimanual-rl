@@ -136,8 +136,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         self.obs_helper.add_obs("rel_right_handle_pos", 3)
         self.obs_helper.add_obs("rel_left_handle_pos", 3)
         self.obs_helper.add_obs("contact_force", 1)
-        self.obs_helper.add_obs("right_handle_rot", 4)
-        self.obs_helper.add_obs("left_handle_rot", 4)
+        #self.obs_helper.add_obs("right_handle_rot", 4)
+        #self.obs_helper.add_obs("left_handle_rot", 4)
 
         # Update dimensions of the observation space
         mdp_info.observation_space = Box(*self.obs_helper.get_obs_limits())
@@ -173,8 +173,8 @@ class TrayPickUpEnv(BimanualTableEnv):
                 rel_right_handle_pos,
                 rel_left_handle_pos,
                 contact_force,
-                right_handle_rot,
-                left_handle_rot,
+                #right_handle_rot,
+                #left_handle_rot,
             ]
         )
 
@@ -342,8 +342,8 @@ class TrayPickUpEnv(BimanualTableEnv):
             + contact_table_cost
             + ctrl_cost
             # + cube_fell_off_tray_cost
-            + grasp_reward
-            + rotation_reward
+            # + grasp_reward
+            # + rotation_reward
         )
 
         return reward
@@ -386,78 +386,11 @@ class TrayPickUpEnv(BimanualTableEnv):
 
 
 if __name__ == "__main__":
-    # Action ordering (18 values):
-    #   [0:7]   right arm A1-A7
-    #   [7:14]  left arm A1-A7
-    #   [14:16] left fingers      ← obs indices 16-17 (swap vs obs)
-    #   [16:18] right fingers     ← obs indices 14-15 (swap vs obs)
-    #
-    # Observation ordering:
-    #   [0:7]   right arm positions,  [7:14]  left arm positions
-    #   [14:16] right finger pos,     [16:18] left finger pos
-    #   [18:25] right arm vel,        [25:32] left arm vel
-    #   [32:34] right finger vel,     [34:36] left finger vel
-
-    # IK solution: pos (-0.6, -0.207, 0.913) + orientation aligned with handle
-    # gripper_y ∥ handle_y (-worldX), gripper_z ∥ handle_x (worldY)
-    left_arm_target = np.array(
-        [-1.5696, -0.2335, 2.7197, -1.9536, 2.4092, -1.0705, -0.5063]
-    )
-    left_finger_target = np.array([0.0, 0.0])  # open gripper
-
-    right_arm_target = -left_arm_target
-    right_finger_target = np.array([0.0, 0.0])
-
-    Kp_arm = 0.5
-    Kp_finger = 0.1
-
     env = TrayPickUpEnv()
-    obs, _ = env.reset()
+    env.reset()
     env.render()
-
-    step = 0
-
     while True:
-        right_pos = obs[0:7]
-        right_finger_pos = obs[14:16]
-
-        left_pos = obs[7:14]
-        left_finger_pos = obs[16:18]
-
-        left_vel_cmd = np.clip(Kp_arm * (left_arm_target - left_pos), -1.0, 1.0)
-        left_finger_vel_cmd = np.clip(
-            Kp_finger * (left_finger_target - left_finger_pos), -0.5, 0.5
-        )
-
-        right_vel_cmd = np.clip(Kp_arm * (right_arm_target - right_pos), -1.0, 1.0)
-
-        right_finger_vel_cmd = np.clip(
-            Kp_finger * (right_finger_target - right_finger_pos), -0.5, 0.5
-        )
-
-        action = np.concatenate(
-            [
-                right_vel_cmd,  # [0:7]
-                left_vel_cmd,  # [7:14]
-                left_finger_vel_cmd,  # [14:16]
-                right_finger_vel_cmd,  # [16:18]
-            ]
-        )
-
-        obs, reward, absorbing, info = env.step(action)
+        action = np.zeros((18,))
+        # action = np.random.uniform(-2.0, 2.0, size=(14,))
+        env.step(action)
         env.render()
-
-        if step % 10 == 0:
-            print(f"left_handle_pos    : {np.round(info['left_handle_pos'], 3)}")
-            print(
-                f"left_grasp_pos     : {np.round(info['left_hande_robotiq_hande_end_pos'], 3)}"
-            )
-            print(f"handle_dist_reward : {info['handle_distance_reward']:.4f}")
-            print(f"rotation_reward    : {info['rotation_reward']:.4f}")
-            print(f"grasp_reward       : {info['grasp_reward']:.4f}")
-            print(f"contact_cost       : {info['contact_table_cost']:.4f}")
-            print(f"ctrl_cost          : {info['ctrl_cost']:.4f}")
-            print(f"total_reward       : {reward:.4f}")
-            print()
-
-        step += 1

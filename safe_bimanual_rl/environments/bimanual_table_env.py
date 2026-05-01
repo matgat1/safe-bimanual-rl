@@ -1,6 +1,7 @@
 from mushroom_rl.environments.mujoco import MuJoCo, ObservationType, MujocoViewer
 
 import numpy as np
+import mujoco
 
 
 class BimanualTableEnv(MuJoCo):
@@ -18,6 +19,7 @@ class BimanualTableEnv(MuJoCo):
         actuation_spec=None,
         collision_groups=None,
         additional_data_spec=None,
+        keyframe="home",
         **viewer_params,
     ):
         """
@@ -204,8 +206,10 @@ class BimanualTableEnv(MuJoCo):
                 "azimuth": 30.0,
                 "lookat": np.array([-0.92, 0.0, 0.9]),
             }
-        )
-
+        ) 
+        
+        self._keyframe = keyframe
+        
         super().__init__(
             xml_file=scene_xml,
             actuation_spec=action_spec,
@@ -229,3 +233,11 @@ class BimanualTableEnv(MuJoCo):
         contact_force = np.clip(collision_force, *contact_force_range)
         contact_force = np.sum(np.square(contact_force), keepdims=True)
         return contact_force
+    
+    def _load_keyframe(self, name: str):
+        keyframe = self._model.keyframe(name)
+        mujoco.mj_resetDataKeyframe(self._model, self._data, keyframe.id)  # type: ignore
+
+    def setup(self, obs):
+        super().setup(obs)
+        self._load_keyframe(self._keyframe)

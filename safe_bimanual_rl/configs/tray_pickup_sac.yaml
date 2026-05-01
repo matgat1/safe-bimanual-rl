@@ -1,7 +1,7 @@
 # SAC agent configuration for the tray pickup task
 
 # Training parameters
-n_epochs: 250
+n_epochs: 300
 n_steps: 8000
 n_steps_per_fit: 4
 n_episodes_test: 5
@@ -24,7 +24,7 @@ contact_cost_weight: -1e-4
 control_cost_weight: -1e-4
 handle_distance_weight: 3.0
 contact_threshold: 2.0
-reach_sharpness: 0.8
+reach_sharpness: 0.5
 grasp_reward: 5.0
 cube_fell_off_tray_penalty: -5.0
 rotation_reward_weight: 1.0
