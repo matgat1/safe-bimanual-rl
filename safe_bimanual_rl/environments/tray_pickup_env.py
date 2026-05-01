@@ -239,6 +239,7 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         return self._handle_distance_weight * reward
 
+    """
     def _get_gripper_rotation_reward(self, obs):
         right_handle_mat = quat_to_mat(
             self.obs_helper.get_from_obs(obs, "right_handle_rot")
@@ -278,6 +279,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         ) / 2
         
         return self._rotation_reward_weight * (right_reward + left_reward)
+
+    """
 
     def _get_grasp_reward(self):
         """
@@ -334,9 +337,9 @@ class TrayPickUpEnv(BimanualTableEnv):
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
-        cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
-        grasp_reward = self._get_grasp_reward()
-        rotation_reward = self._get_gripper_rotation_reward(next_obs)
+        # cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
+        # grasp_reward = self._get_grasp_reward()
+        # rotation_reward = self._get_gripper_rotation_reward(next_obs)
         reward = (
             handle_distance_reward
             + contact_table_cost
@@ -362,27 +365,6 @@ class TrayPickUpEnv(BimanualTableEnv):
         if contact_force > self._contact_threshold:
             return True
         return False
-
-    def _create_info_dictionary(self, obs, action):
-        info = super()._create_info_dictionary(obs, action)
-
-        info["right_handle_pos"] = self._read_data("right_handle_pos")
-        info["left_handle_pos"] = self._read_data("left_handle_pos")
-        info["right_handle_rot"] = self._read_data("right_handle_rot")
-        info["left_handle_rot"] = self._read_data("left_handle_rot")
-        info["right_hande_robotiq_hande_end_pos"] = self.obs_helper.get_from_obs(
-            obs, "right_hande_robotiq_hande_end_pos"
-        )
-        info["left_hande_robotiq_hande_end_pos"] = self.obs_helper.get_from_obs(
-            obs, "left_hande_robotiq_hande_end_pos"
-        )
-
-        info["handle_distance_reward"] = self._get_handle_distance_reward(obs)
-        info["contact_table_cost"] = self._get_contact_cost(obs)
-        info["ctrl_cost"] = self._get_ctrl_cost(action)
-        info["grasp_reward"] = self._get_grasp_reward()
-        info["rotation_reward"] = self._get_gripper_rotation_reward(obs)
-        return info
 
 
 if __name__ == "__main__":
