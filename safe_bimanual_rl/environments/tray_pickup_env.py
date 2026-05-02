@@ -362,7 +362,7 @@ class TrayPickUpEnv(BimanualTableEnv):
             + ctrl_cost
             # + cube_fell_off_tray_cost
             # + grasp_reward
-            + rotation_reward
+            # + rotation_reward
             + cube_push_penalty
         )
 
