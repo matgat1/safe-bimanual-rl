@@ -206,10 +206,10 @@ class BimanualTableEnv(MuJoCo):
                 "azimuth": 30.0,
                 "lookat": np.array([-0.92, 0.0, 0.9]),
             }
-        ) 
-        
+        )
+
         self._keyframe = keyframe
-        
+
         super().__init__(
             xml_file=scene_xml,
             actuation_spec=action_spec,
@@ -233,7 +233,7 @@ class BimanualTableEnv(MuJoCo):
         contact_force = np.clip(collision_force, *contact_force_range)
         contact_force = np.sum(np.square(contact_force), keepdims=True)
         return contact_force
-    
+
     def _load_keyframe(self, name: str):
         keyframe = self._model.keyframe(name)
         mujoco.mj_resetDataKeyframe(self._model, self._data, keyframe.id)  # type: ignore

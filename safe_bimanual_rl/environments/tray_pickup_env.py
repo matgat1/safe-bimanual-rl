@@ -27,6 +27,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         reach_sharpness: float = 0.5,
         grasp_reward: float = 5.0,
         rotation_reward_weight: float = 1.0,
+        cube_displacement_weight: float = -5.0,
         **viewer_params,
     ):
         """
@@ -47,6 +48,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         """
 
         additional_data_spec = [
+            ("cube_pos", "cube", ObservationType.BODY_POS),
             ("tray_pos", "tray", ObservationType.BODY_POS),
             ("right_handle_pos", "right_handle", ObservationType.BODY_POS),
             ("left_handle_pos", "left_handle", ObservationType.BODY_POS),
@@ -120,6 +122,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._grasp_reward = grasp_reward
         self._cube_fell_off_tray_penalty = cube_fell_off_tray_penalty
         self._rotation_reward_weight = rotation_reward_weight
+        self._cube_displacement_weight = cube_displacement_weight
+        self._prev_cube_pos = None
 
         super().__init__(
             scene_xml=scene_xml,
@@ -239,7 +243,6 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         return self._handle_distance_weight * reward
 
-    
     def _get_gripper_rotation_reward(self, obs):
         right_handle_mat = quat_to_mat(
             self.obs_helper.get_from_obs(obs, "right_handle_rot")
@@ -256,7 +259,9 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         # Left: gripper_y parallel to handle_y, gripper_z same direction as handle_x
         left_angle_y = np.arccos(
-            np.clip(abs(np.dot(left_gripper_mat[:, 1], left_handle_mat[:, 1])), -1.0, 1.0)
+            np.clip(
+                abs(np.dot(left_gripper_mat[:, 1], left_handle_mat[:, 1])), -1.0, 1.0
+            )
         )
         left_angle_zx = np.arccos(
             np.clip(np.dot(left_gripper_mat[:, 2], left_handle_mat[:, 0]), -1.0, 1.0)
@@ -264,7 +269,9 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         # Right: gripper_y parallel to handle_y, gripper_z opposite direction to handle_x
         right_angle_y = np.arccos(
-            np.clip(abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1])), -1.0, 1.0)
+            np.clip(
+                abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1])), -1.0, 1.0
+            )
         )
         right_angle_zx = np.arccos(
             np.clip(-np.dot(right_gripper_mat[:, 2], right_handle_mat[:, 0]), -1.0, 1.0)
@@ -273,11 +280,11 @@ class TrayPickUpEnv(BimanualTableEnv):
         left_reward = (
             (1 - np.tanh(left_angle_y / 0.4)) + (1 - np.tanh(left_angle_zx / 0.4))
         ) / 2
-        
+
         right_reward = (
             (1 - np.tanh(right_angle_y / 0.4)) + (1 - np.tanh(right_angle_zx / 0.4))
         ) / 2
-        
+
         return self._rotation_reward_weight * (right_reward + left_reward)
 
     def _get_grasp_reward(self):
@@ -321,6 +328,15 @@ class TrayPickUpEnv(BimanualTableEnv):
         ctrl_cost = np.sum(np.square(action))
         return self._control_cost_weight * ctrl_cost
 
+    def _get_cube_push_cost(self):
+        cube_pos = self._read_data("cube_pos")
+        if self._prev_cube_pos is None:
+            self._prev_cube_pos = cube_pos.copy()
+            return 0.0
+        displacement = np.linalg.norm(cube_pos - self._prev_cube_pos)
+        self._prev_cube_pos = cube_pos.copy()
+        return self._cube_displacement_weight * displacement
+
     def reward(self, obs, action, next_obs, absorbing):
         """
         Compute the reward for the reach environment.
@@ -338,6 +354,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         # cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
         # grasp_reward = self._get_grasp_reward()
         rotation_reward = self._get_gripper_rotation_reward(next_obs)
+        cube_push_penalty = self._get_cube_push_cost()
+
         reward = (
             handle_distance_reward
             + contact_table_cost
@@ -345,6 +363,7 @@ class TrayPickUpEnv(BimanualTableEnv):
             # + cube_fell_off_tray_cost
             # + grasp_reward
             + rotation_reward
+            + cube_push_penalty
         )
 
         return reward
