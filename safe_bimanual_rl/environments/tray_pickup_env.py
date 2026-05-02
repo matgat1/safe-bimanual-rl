@@ -136,8 +136,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         self.obs_helper.add_obs("rel_right_handle_pos", 3)
         self.obs_helper.add_obs("rel_left_handle_pos", 3)
         self.obs_helper.add_obs("contact_force", 1)
-        #self.obs_helper.add_obs("right_handle_rot", 4)
-        #self.obs_helper.add_obs("left_handle_rot", 4)
+        self.obs_helper.add_obs("right_handle_rot", 4)
+        self.obs_helper.add_obs("left_handle_rot", 4)
 
         # Update dimensions of the observation space
         mdp_info.observation_space = Box(*self.obs_helper.get_obs_limits())
@@ -173,8 +173,8 @@ class TrayPickUpEnv(BimanualTableEnv):
                 rel_right_handle_pos,
                 rel_left_handle_pos,
                 contact_force,
-                #right_handle_rot,
-                #left_handle_rot,
+                right_handle_rot,
+                left_handle_rot,
             ]
         )
 
@@ -239,7 +239,7 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         return self._handle_distance_weight * reward
 
-    """
+    
     def _get_gripper_rotation_reward(self, obs):
         right_handle_mat = quat_to_mat(
             self.obs_helper.get_from_obs(obs, "right_handle_rot")
@@ -279,8 +279,6 @@ class TrayPickUpEnv(BimanualTableEnv):
         ) / 2
         
         return self._rotation_reward_weight * (right_reward + left_reward)
-
-    """
 
     def _get_grasp_reward(self):
         """
@@ -339,14 +337,14 @@ class TrayPickUpEnv(BimanualTableEnv):
         ctrl_cost = self._get_ctrl_cost(action)
         # cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
         # grasp_reward = self._get_grasp_reward()
-        # rotation_reward = self._get_gripper_rotation_reward(next_obs)
+        rotation_reward = self._get_gripper_rotation_reward(next_obs)
         reward = (
             handle_distance_reward
             + contact_table_cost
             + ctrl_cost
             # + cube_fell_off_tray_cost
             # + grasp_reward
-            # + rotation_reward
+            + rotation_reward
         )
 
         return reward
@@ -360,7 +358,6 @@ class TrayPickUpEnv(BimanualTableEnv):
         Returns:
             is_absorbing (bool): True if the current state is absorbing, False otherwise.
         """
-
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         if contact_force > self._contact_threshold:
             return True
