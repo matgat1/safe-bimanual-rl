@@ -27,7 +27,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         reach_sharpness: float = 0.5,
         grasp_reward: float = 5.0,
         rotation_reward_weight: float = 1.0,
-        cube_displacement_weight: float = -5.0,
+        tray_push_penalty: float = -10.0,
         **viewer_params,
     ):
         """
@@ -122,8 +122,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._grasp_reward = grasp_reward
         self._cube_fell_off_tray_penalty = cube_fell_off_tray_penalty
         self._rotation_reward_weight = rotation_reward_weight
-        self._cube_displacement_weight = cube_displacement_weight
-        self._prev_cube_pos = None
+        self._tray_push_penalty = tray_push_penalty
+        self._initial_tray_pos = None
 
         super().__init__(
             scene_xml=scene_xml,
@@ -183,6 +183,15 @@ class TrayPickUpEnv(BimanualTableEnv):
         )
 
         return obs
+
+    def setup(self, obs):
+        super().setup(obs)
+        self._initial_tray_pos = self._read_data("tray_pos").copy()
+
+    def _tray_pushed(self):
+        if self._initial_tray_pos is None:
+            return False
+        return np.linalg.norm(self._read_data("tray_pos") - self._initial_tray_pos) > 0.04
 
     def _cube_on_tray(self):
         """
@@ -328,15 +337,6 @@ class TrayPickUpEnv(BimanualTableEnv):
         ctrl_cost = np.sum(np.square(action))
         return self._control_cost_weight * ctrl_cost
 
-    def _get_cube_push_cost(self):
-        cube_pos = self._read_data("cube_pos")
-        if self._prev_cube_pos is None:
-            self._prev_cube_pos = cube_pos.copy()
-            return 0.0
-        displacement = np.linalg.norm(cube_pos - self._prev_cube_pos)
-        self._prev_cube_pos = cube_pos.copy()
-        return self._cube_displacement_weight * displacement
-
     def reward(self, obs, action, next_obs, absorbing):
         """
         Compute the reward for the reach environment.
@@ -353,8 +353,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         ctrl_cost = self._get_ctrl_cost(action)
         # cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
         # grasp_reward = self._get_grasp_reward()
-        rotation_reward = self._get_gripper_rotation_reward(next_obs)
-        cube_push_penalty = self._get_cube_push_cost()
+        # rotation_reward = self._get_gripper_rotation_reward(next_obs)
+        tray_push_penalty = self._tray_push_penalty if self._tray_pushed() else 0.0
 
         reward = (
             handle_distance_reward
@@ -363,7 +363,7 @@ class TrayPickUpEnv(BimanualTableEnv):
             # + cube_fell_off_tray_cost
             # + grasp_reward
             # + rotation_reward
-            + cube_push_penalty
+            + tray_push_penalty
         )
 
         return reward
@@ -379,6 +379,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         """
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         if contact_force > self._contact_threshold:
+            return True
+        if self._tray_pushed():
             return True
         return False
 
