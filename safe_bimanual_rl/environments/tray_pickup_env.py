@@ -186,12 +186,14 @@ class TrayPickUpEnv(BimanualTableEnv):
 
     def setup(self, obs):
         super().setup(obs)
-        self._initial_tray_pos = self._read_data("tray_pos").copy()
+        self._initial_tray_pos = None
 
     def _tray_pushed(self):
         if self._initial_tray_pos is None:
+            self._initial_tray_pos = self._read_data("tray_pos").copy()
             return False
-        return np.linalg.norm(self._read_data("tray_pos") - self._initial_tray_pos) > 0.04
+        displacement = np.linalg.norm(self._read_data("tray_pos") - self._initial_tray_pos)
+        return displacement > 0.04
 
     def _cube_on_tray(self):
         """
@@ -387,10 +389,14 @@ class TrayPickUpEnv(BimanualTableEnv):
 
 if __name__ == "__main__":
     env = TrayPickUpEnv()
-    env.reset()
+    obs = env.reset()
     env.render()
+    step = 0
     while True:
         action = np.zeros((18,))
         # action = np.random.uniform(-2.0, 2.0, size=(14,))
-        env.step(action)
+        obs, reward, absorbing, _ = env.step(action)
+        if step % 10 == 0:
+            print(f"Step {step} | reward: {reward:.4f}")
+        step += 1
         env.render()
