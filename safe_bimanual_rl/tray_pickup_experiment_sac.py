@@ -43,11 +43,12 @@ def experiment(
     contact_threshold: float = 2.0,
     control_cost_weight: float = -1e-4,
     reach_sharpness: float = 0.3,
-    grasp_reward: float = 5.0,
-    cube_fell_off_tray_penalty: float = -5.0,
     tray_push_penalty: float = -10.0,
     rotation_reward_weight: float = 1.0,
     orientation_sharpness: float = 0.5,
+    success_reward: float = 50.0,
+    success_threshold: float = 0.03,
+    success_orientation_threshold: float = 0.3,
     action_space_limit: float = 0.4,
     use_wandb: bool = True,
 ):
@@ -74,11 +75,12 @@ def experiment(
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
         reach_sharpness=reach_sharpness,
-        grasp_reward=grasp_reward,
-        cube_fell_off_tray_penalty=cube_fell_off_tray_penalty,
         tray_push_penalty=tray_push_penalty,
         rotation_reward_weight=rotation_reward_weight,
         orientation_sharpness=orientation_sharpness,
+        success_reward=success_reward,
+        success_threshold=success_threshold,
+        success_orientation_threshold=success_orientation_threshold,
     )
 
     # Actor
@@ -157,8 +159,6 @@ def experiment(
             "contact_threshold": contact_threshold,
             "control_cost_weight": control_cost_weight,
             "reach_sharpness": reach_sharpness,
-            "grasp_reward": grasp_reward,
-            "cube_fell_off_tray_penalty": cube_fell_off_tray_penalty,
             "rotation_reward_weight": rotation_reward_weight,
             "orientation_sharpness": orientation_sharpness,
             "action_space_limit": action_space_limit,
@@ -265,11 +265,12 @@ def main(cfg: DictConfig):
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
         reach_sharpness=cfg.reach_sharpness,
-        grasp_reward=cfg.grasp_reward,
-        cube_fell_off_tray_penalty=cfg.cube_fell_off_tray_penalty,
         tray_push_penalty=cfg.tray_push_penalty,
         rotation_reward_weight=cfg.rotation_reward_weight,
         orientation_sharpness=cfg.orientation_sharpness,
+        success_reward=cfg.success_reward,
+        success_threshold=cfg.success_threshold,
+        success_orientation_threshold=cfg.success_orientation_threshold,
         action_space_limit=cfg.action_space_limit,
     )
 

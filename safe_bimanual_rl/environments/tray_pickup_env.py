@@ -21,14 +21,15 @@ class TrayPickUpEnv(BimanualTableEnv):
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
         handle_distance_weight: float = 1.0,
-        cube_fell_off_tray_penalty: float = -5.0,
         contact_threshold: float = 2.0,
         control_cost_weight: float = -1e-4,
         reach_sharpness: float = 0.5,
-        grasp_reward: float = 5.0,
         rotation_reward_weight: float = 1.0,
         tray_push_penalty: float = -10.0,
         orientation_sharpness: float = 0.5,
+        success_reward: float = 50.0,
+        success_threshold: float = 0.03,
+        success_orientation_threshold: float = 0.3,
         **viewer_params,
     ):
         """
@@ -120,11 +121,11 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._contact_threshold = contact_threshold
         self._control_cost_weight = control_cost_weight
         self._reach_sharpness = reach_sharpness
-        self._grasp_reward = grasp_reward
-        self._cube_fell_off_tray_penalty = cube_fell_off_tray_penalty
         self._rotation_reward_weight = rotation_reward_weight
         self._tray_push_penalty = tray_push_penalty
         self._orientation_sharpness = orientation_sharpness
+        self._success_reward = success_reward
+        self._success_threshold = success_threshold
         self._initial_tray_pos = None
 
         super().__init__(
@@ -196,26 +197,6 @@ class TrayPickUpEnv(BimanualTableEnv):
             return False
         displacement = np.linalg.norm(self._read_data("tray_pos") - self._initial_tray_pos)
         return displacement > 0.1 # Threshold for considering the tray as pushed
-
-    def _cube_on_tray(self):
-        """
-        Check if the cube is on the tray.
-
-        Returns:
-            bool: True if the cube is on the tray, False otherwise.
-        """
-        return self._check_collision("cube", "tray")
-
-    def _get_cube_fell_off_tray_cost(self):
-        """
-        Compute the penalty if the cube has fallen off the tray.
-
-        Returns:
-            float: The penalty value if the cube is not on the tray, 0 otherwise.
-        """
-        if not self._cube_on_tray():
-            return self._cube_fell_off_tray_penalty
-        return 0
 
     def _get_contact_cost(self, obs):
         """
@@ -307,34 +288,6 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         return self._rotation_reward_weight * (right_reward + left_reward)
 
-    def _get_grasp_reward(self):
-        """
-        Compute the reward for grasping both tray handles with the correct fingers.
-
-        Returns:
-            float: Reward accumulated for each hand that has both fingers on its handle.
-        """
-        right_hand_right_finger_on_handle = self._check_collision(
-            "right_handle", "right_hand_right_finger"
-        )
-        right_hand_left_finger_on_handle = self._check_collision(
-            "right_handle", "right_hand_left_finger"
-        )
-        left_hand_right_finger_on_handle = self._check_collision(
-            "left_handle", "left_hand_right_finger"
-        )
-        left_hand_left_finger_on_handle = self._check_collision(
-            "left_handle", "left_hand_left_finger"
-        )
-
-        reward = 0
-
-        if right_hand_right_finger_on_handle and right_hand_left_finger_on_handle:
-            reward += self._grasp_reward
-        if left_hand_right_finger_on_handle and left_hand_left_finger_on_handle:
-            reward += self._grasp_reward
-        return reward
-
     def _get_ctrl_cost(self, action):
         """
         Compute the control cost penalizing large actions.
@@ -362,22 +315,39 @@ class TrayPickUpEnv(BimanualTableEnv):
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
-        # cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
-        # grasp_reward = self._get_grasp_reward()
         rotation_reward = self._get_gripper_rotation_reward(next_obs)
         tray_push_penalty = self._tray_push_penalty if self._tray_pushed() else 0.0
+        success_bonus = self._success_reward if self._position_reached(next_obs) else 0.0
 
         reward = (
             handle_distance_reward
             + contact_table_cost
             + ctrl_cost
-            # + cube_fell_off_tray_cost
-            # + grasp_reward
             + rotation_reward
             + tray_push_penalty
+            + success_bonus
         )
 
         return reward
+
+    def _position_reached(self, obs):
+        """
+        Check if the end effectors have reached the target position.
+        """
+        right_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_right_handle_pos"))
+        left_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_left_handle_pos"))
+        if not (right_dist < self._success_threshold and left_dist < self._success_threshold):
+            return False
+
+        right_handle_mat = quat_to_mat(self.obs_helper.get_from_obs(obs, "right_handle_rot"))
+        left_handle_mat = quat_to_mat(self.obs_helper.get_from_obs(obs, "left_handle_rot"))
+        right_gripper_mat = quat_to_mat(self._read_data("right_hande_robotiq_hande_end_rot"))
+        left_gripper_mat = quat_to_mat(self._read_data("left_hande_robotiq_hande_end_rot"))
+
+        right_angle = np.arccos(np.clip(abs(np.dot(right_gripper_mat[:, 1], right_handle_mat[:, 1])), -1.0, 1.0))
+        left_angle = np.arccos(np.clip(abs(np.dot(left_gripper_mat[:, 1], left_handle_mat[:, 1])), -1.0, 1.0))
+
+        return right_angle < self._success_orientation_threshold and left_angle < self._success_orientation_threshold
 
     def is_absorbing(self, obs):
         """
@@ -388,6 +358,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         Returns:
             is_absorbing (bool): True if the current state is absorbing, False otherwise.
         """
+        if self._position_reached(obs):
+            return True
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         if contact_force > self._contact_threshold:
             return True
