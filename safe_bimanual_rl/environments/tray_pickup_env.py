@@ -195,7 +195,7 @@ class TrayPickUpEnv(BimanualTableEnv):
             self._initial_tray_pos = self._read_data("tray_pos").copy()
             return False
         displacement = np.linalg.norm(self._read_data("tray_pos") - self._initial_tray_pos)
-        return displacement > 0.08
+        return displacement > 0.1 # Threshold for considering the tray as pushed
 
     def _cube_on_tray(self):
         """
