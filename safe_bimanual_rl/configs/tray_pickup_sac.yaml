@@ -29,4 +29,5 @@ grasp_reward: 5.0
 cube_fell_off_tray_penalty: -5.0
 tray_push_penalty: -10.0
 rotation_reward_weight: 1.0
+orientation_sharpness: 0.4
 action_space_limit: 0.4

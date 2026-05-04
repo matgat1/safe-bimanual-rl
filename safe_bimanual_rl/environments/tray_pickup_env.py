@@ -28,6 +28,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         grasp_reward: float = 5.0,
         rotation_reward_weight: float = 1.0,
         tray_push_penalty: float = -10.0,
+        orientation_sharpness: float = 0.5,
         **viewer_params,
     ):
         """
@@ -123,6 +124,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._cube_fell_off_tray_penalty = cube_fell_off_tray_penalty
         self._rotation_reward_weight = rotation_reward_weight
         self._tray_push_penalty = tray_push_penalty
+        self._orientation_sharpness = orientation_sharpness
         self._initial_tray_pos = None
 
         super().__init__(
@@ -193,7 +195,7 @@ class TrayPickUpEnv(BimanualTableEnv):
             self._initial_tray_pos = self._read_data("tray_pos").copy()
             return False
         displacement = np.linalg.norm(self._read_data("tray_pos") - self._initial_tray_pos)
-        return displacement > 0.04
+        return displacement > 0.08
 
     def _cube_on_tray(self):
         """
@@ -288,14 +290,17 @@ class TrayPickUpEnv(BimanualTableEnv):
             np.clip(-np.dot(right_gripper_mat[:, 2], right_handle_mat[:, 0]), -1.0, 1.0)
         )
 
-        left_reward = (
-            (1 - np.tanh(left_angle_y / 0.4)) + (1 - np.tanh(left_angle_zx / 0.4))
-        ) / 2
+        # left_reward = (
+        #     (1 - np.tanh(left_angle_y / 0.4)) + (1 - np.tanh(left_angle_zx / 0.4))
+        # ) / 2
+        # 
+        # right_reward = (
+        #     (1 - np.tanh(right_angle_y / 0.4)) + (1 - np.tanh(right_angle_zx / 0.4))
+        # ) / 2
 
-        right_reward = (
-            (1 - np.tanh(right_angle_y / 0.4)) + (1 - np.tanh(right_angle_zx / 0.4))
-        ) / 2
-
+        left_reward = 1 - np.tanh(left_angle_y / self._orientation_sharpness)
+        right_reward = 1 - np.tanh(right_angle_y / self._orientation_sharpness)
+        
         return self._rotation_reward_weight * (right_reward + left_reward)
 
     def _get_grasp_reward(self):
