@@ -298,9 +298,13 @@ class TrayPickUpEnv(BimanualTableEnv):
         #     (1 - np.tanh(right_angle_y / 0.4)) + (1 - np.tanh(right_angle_zx / 0.4))
         # ) / 2
 
-        left_reward = 1 - np.tanh(left_angle_y / self._orientation_sharpness)
-        right_reward = 1 - np.tanh(right_angle_y / self._orientation_sharpness)
-        
+        proximity_threshold = 0.04
+        right_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_right_handle_pos"))
+        left_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_left_handle_pos"))
+
+        right_reward = (1 - np.tanh(right_angle_y / self._orientation_sharpness)) if right_dist <= proximity_threshold else 0.0
+        left_reward = (1 - np.tanh(left_angle_y / self._orientation_sharpness)) if left_dist <= proximity_threshold else 0.0
+
         return self._rotation_reward_weight * (right_reward + left_reward)
 
     def _get_grasp_reward(self):
@@ -360,7 +364,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         ctrl_cost = self._get_ctrl_cost(action)
         # cube_fell_off_tray_cost = self._get_cube_fell_off_tray_cost()
         # grasp_reward = self._get_grasp_reward()
-        # rotation_reward = self._get_gripper_rotation_reward(next_obs)
+        rotation_reward = self._get_gripper_rotation_reward(next_obs)
         tray_push_penalty = self._tray_push_penalty if self._tray_pushed() else 0.0
 
         reward = (
@@ -369,7 +373,7 @@ class TrayPickUpEnv(BimanualTableEnv):
             + ctrl_cost
             # + cube_fell_off_tray_cost
             # + grasp_reward
-            # + rotation_reward
+            + rotation_reward
             + tray_push_penalty
         )
 
