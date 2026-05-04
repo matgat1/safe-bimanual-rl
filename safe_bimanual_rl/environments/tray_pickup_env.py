@@ -51,8 +51,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         additional_data_spec = [
             ("cube_pos", "cube", ObservationType.BODY_POS),
             ("tray_pos", "tray", ObservationType.BODY_POS),
-            ("right_handle_pos", "right_handle", ObservationType.BODY_POS),
-            ("left_handle_pos", "left_handle", ObservationType.BODY_POS),
+            ("right_grasp_target_pos", "right_grasp_target", ObservationType.SITE_POS),
+            ("left_grasp_target_pos", "left_grasp_target", ObservationType.SITE_POS),
             ("right_handle_rot", "right_handle", ObservationType.BODY_ROT),
             ("left_handle_rot", "left_handle", ObservationType.BODY_ROT),
             (
@@ -153,15 +153,15 @@ class TrayPickUpEnv(BimanualTableEnv):
     def _create_observation(self, obs):
         obs = super()._create_observation(obs)
 
-        # Create relative positions observations of the handles with respect to the end effectors
-        right_handle_pos = self._read_data("right_handle_pos")
-        left_handle_pos = self._read_data("left_handle_pos")
+        # Relative positions to grasp targets (5 cm from each handle, tracked via MuJoCo sites)
+        right_grasp_target = self._read_data("right_grasp_target_pos")
+        left_grasp_target = self._read_data("left_grasp_target_pos")
 
         right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
         left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
 
-        rel_right_handle_pos = right_handle_pos - right_arm_pos
-        rel_left_handle_pos = left_handle_pos - left_arm_pos
+        rel_right_handle_pos = right_grasp_target - right_arm_pos
+        rel_left_handle_pos = left_grasp_target - left_arm_pos
 
         # Create contact force observation (robot+hand / table)
         contact_force = self._get_contact_force(
