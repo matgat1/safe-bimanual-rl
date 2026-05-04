@@ -126,6 +126,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._orientation_sharpness = orientation_sharpness
         self._success_reward = success_reward
         self._success_threshold = success_threshold
+        self._success_orientation_threshold = success_orientation_threshold
         self._initial_tray_pos = None
 
         super().__init__(
