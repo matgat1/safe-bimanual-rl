@@ -30,6 +30,6 @@ rotation_reward_weight: 1.0
 orientation_sharpness: 0.4
 success_position_reward: 10.0
 success_orientation_reward: 50.0
-success_position_threshold: 0.03
+success_position_threshold: 0.02
 success_orientation_threshold: 0.3
 action_space_limit: 0.4

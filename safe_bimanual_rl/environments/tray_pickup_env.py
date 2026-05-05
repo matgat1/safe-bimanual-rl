@@ -199,7 +199,7 @@ class TrayPickUpEnv(BimanualTableEnv):
             self._initial_tray_pos = self._read_data("tray_pos").copy()
             return False
         displacement = np.linalg.norm(self._read_data("tray_pos") - self._initial_tray_pos)
-        return displacement > 0.1 # Threshold for considering the tray as pushed
+        return displacement > 0.15 # Threshold for considering the tray as pushed
 
     def _get_contact_cost(self, obs):
         """
@@ -303,38 +303,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         """
         ctrl_cost = np.sum(np.square(action))
         return self._control_cost_weight * ctrl_cost
-
-    def reward(self, obs, action, next_obs, absorbing):
-        """
-        Compute the reward for the reach environment.
-
-        Args:
-            obs (np.ndarray): The observation of the environment.
-            action (np.ndarray): The action taken by the agent.
-        Returns:
-            reward (float): The reward for the current state and action.
-        """
-
-        handle_distance_reward = self._get_handle_distance_reward(next_obs)
-        contact_table_cost = self._get_contact_cost(next_obs)
-        ctrl_cost = self._get_ctrl_cost(action)
-        # rotation_reward = self._get_gripper_rotation_reward(next_obs)
-        tray_push_penalty = self._tray_push_penalty if self._tray_pushed() else 0.0
-        position_bonus = self._success_position_reward if self._position_reached(next_obs) else 0.0
-        # orientation_bonus = self._success_orientation_reward if self._orientation_reached(next_obs) else 0.0
-
-        reward = (
-            handle_distance_reward
-            + contact_table_cost
-            + ctrl_cost
-            # + rotation_reward
-            + tray_push_penalty
-            + position_bonus
-            # + orientation_bonus
-        )
-
-        return reward
-
+    
     def _position_reached(self, obs):
         """
         Check if both end effectors are within success_threshold of their grasp targets.
@@ -357,6 +326,37 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         return right_angle < self._success_orientation_threshold and left_angle < self._success_orientation_threshold
 
+    def reward(self, obs, action, next_obs, absorbing):
+        """
+        Compute the reward for the reach environment.
+
+        Args:
+            obs (np.ndarray): The observation of the environment.
+            action (np.ndarray): The action taken by the agent.
+        Returns:
+            reward (float): The reward for the current state and action.
+        """
+
+        handle_distance_reward = self._get_handle_distance_reward(next_obs)
+        contact_table_cost = self._get_contact_cost(next_obs)
+        ctrl_cost = self._get_ctrl_cost(action)
+        rotation_reward = self._get_gripper_rotation_reward(next_obs)
+        tray_push_penalty = self._tray_push_penalty if self._tray_pushed() else 0.0
+        position_bonus = self._success_position_reward if self._position_reached(next_obs) else 0.0
+        orientation_bonus = self._success_orientation_reward if self._orientation_reached(next_obs) else 0.0
+
+        reward = (
+            handle_distance_reward
+            + contact_table_cost
+            + ctrl_cost
+            + rotation_reward
+            + tray_push_penalty
+            + position_bonus
+            + orientation_bonus
+        )
+
+        return reward
+
     def is_absorbing(self, obs):
         """
         Check if the current state is absorbing.
@@ -366,12 +366,15 @@ class TrayPickUpEnv(BimanualTableEnv):
         Returns:
             is_absorbing (bool): True if the current state is absorbing, False otherwise.
         """
-        if self._position_reached(obs):  # and self._orientation_reached(obs):
+        if self._position_reached(obs) and self._orientation_reached(obs):
+            print("Success! Episode will terminate.")
             return True
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         if contact_force > self._contact_threshold:
+            print(f"Contact force {contact_force:.2f} exceeded threshold! Episode will terminate.")
             return True
         if self._tray_pushed():
+            print("Tray pushed! Episode will terminate.")
             return True
         return False
 

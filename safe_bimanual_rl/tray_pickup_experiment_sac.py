@@ -69,7 +69,7 @@ def experiment(
     # Load Environment
     mdp = TrayPickUpEnv(
         gamma=0.99,
-        horizon=150,
+        horizon=120,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
         handle_distance_weight=handle_distance_weight,
@@ -163,6 +163,11 @@ def experiment(
             "reach_sharpness": reach_sharpness,
             "rotation_reward_weight": rotation_reward_weight,
             "orientation_sharpness": orientation_sharpness,
+            "tray_push_penalty": tray_push_penalty,
+            "success_position_reward": success_position_reward,
+            "success_orientation_reward": success_orientation_reward,
+            "success_position_threshold": success_position_threshold,
+            "success_orientation_threshold": success_orientation_threshold,
             "action_space_limit": action_space_limit,
         },
     )
