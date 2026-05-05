@@ -26,7 +26,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         reach_sharpness: float = 0.5,
         rotation_reward_weight: float = 1.0,
         tray_push_penalty: float = -10.0,
-        orientation_sharpness: float = 0.5,
+        orientation_sharpness: float = 0.3,
         success_position_reward: float = 10.0,
         success_orientation_reward: float = 50.0,
         success_position_threshold: float = 0.03,
@@ -282,7 +282,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         #     (1 - np.tanh(right_angle_y / 0.4)) + (1 - np.tanh(right_angle_zx / 0.4))
         # ) / 2
 
-        proximity_threshold = 0.04
+        proximity_threshold = 0.10
         right_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_right_handle_pos"))
         left_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_left_handle_pos"))
 
@@ -342,8 +342,9 @@ class TrayPickUpEnv(BimanualTableEnv):
         ctrl_cost = self._get_ctrl_cost(action)
         rotation_reward = self._get_gripper_rotation_reward(next_obs)
         tray_push_penalty = self._tray_push_penalty if self._tray_pushed() else 0.0
-        position_bonus = self._success_position_reward if self._position_reached(next_obs) else 0.0
-        orientation_bonus = self._success_orientation_reward if self._orientation_reached(next_obs) else 0.0
+        both_reached = self._position_reached(next_obs) and self._orientation_reached(next_obs)
+        position_bonus = self._success_position_reward if both_reached else 0.0
+        orientation_bonus = self._success_orientation_reward if both_reached else 0.0
 
         reward = (
             handle_distance_reward
