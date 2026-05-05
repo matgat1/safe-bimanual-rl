@@ -64,7 +64,7 @@ def experiment(
     # Load Environment
     mdp = ReachEnv(
         gamma=0.99,
-        horizon=200,
+        horizon=130,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
         cube_distance_weight=cube_distance_weight,

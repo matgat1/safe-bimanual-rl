@@ -1,9 +1,9 @@
-# SAC agent configuration for the reach cube task
+# DatacomSAC agent configuration for the reach cube task
 
 # Training parameters
-n_epochs: 230
+n_epochs: 150
 n_steps: 8000
-n_steps_per_fit: 4
+n_steps_per_fit: 1
 n_episodes_test: 5
 initial_replay_size: 10000
 max_replay_size: 200000
@@ -14,17 +14,28 @@ tau: 0.001
 lr_alpha: 3e-4
 lr_actor: 5e-4
 lr_critic: 1e-4
+lr_constraint: 5e-4
 use_cluster: true
 save_model: true
 use_wandb: true
-model_name: "reach_cube_agent"
+model_name: "reach_cube_datacom_agent"
 
-#Reward parameters
+# D-ATACOM / safety parameters
+accepted_risk: 0.9
+atacom_lam: 25.0
+atacom_beta: 3.0
+cost_budget: 1.0
+lr_delta: 0.05
+init_delta: 3.0
+delta_warmup_transitions: 50000
+acc_limit: 1.0
+
+# Reward / environment parameters
 contact_cost_weight: -1e-4
 control_cost_weight: -1e-4
 cube_distance_weight: 3.0
 cube_touched_reward: 3.0
 contact_threshold: 2.0
 reach_sharpness: 0.5
-cube_displacement_weight: -6.0
+cube_displacement_weight: -5.0
 action_space_limit: 0.4
