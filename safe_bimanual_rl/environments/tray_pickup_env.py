@@ -26,7 +26,6 @@ class TrayPickUpEnv(BimanualTableEnv):
         reach_sharpness: float = 0.5,
         rotation_reward_weight: float = 1.0,
         tray_push_penalty: float = -10.0,
-        orientation_sharpness: float = 0.5,
         success_reward: float = 50.0,
         success_threshold: float = 0.03,
         success_orientation_threshold: float = 0.3,
@@ -123,7 +122,6 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._reach_sharpness = reach_sharpness
         self._rotation_reward_weight = rotation_reward_weight
         self._tray_push_penalty = tray_push_penalty
-        self._orientation_sharpness = orientation_sharpness
         self._success_reward = success_reward
         self._success_threshold = success_threshold
         self._success_orientation_threshold = success_orientation_threshold

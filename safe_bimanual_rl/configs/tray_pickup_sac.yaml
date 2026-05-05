@@ -27,7 +27,6 @@ contact_threshold: 2.0
 reach_sharpness: 0.3
 tray_push_penalty: -10.0
 rotation_reward_weight: 1.0
-orientation_sharpness: 0.4
 success_reward: 50.0
 success_threshold: 0.03
 success_orientation_threshold: 0.3
