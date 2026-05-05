@@ -27,8 +27,9 @@ class TrayPickUpEnv(BimanualTableEnv):
         rotation_reward_weight: float = 1.0,
         tray_push_penalty: float = -10.0,
         orientation_sharpness: float = 0.5,
-        success_reward: float = 50.0,
-        success_threshold: float = 0.03,
+        success_position_reward: float = 10.0,
+        success_orientation_reward: float = 50.0,
+        success_position_threshold: float = 0.03,
         success_orientation_threshold: float = 0.3,
         **viewer_params,
     ):
@@ -124,8 +125,9 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._rotation_reward_weight = rotation_reward_weight
         self._tray_push_penalty = tray_push_penalty
         self._orientation_sharpness = orientation_sharpness
-        self._success_reward = success_reward
-        self._success_threshold = success_threshold
+        self._success_position_reward = success_position_reward
+        self._success_orientation_reward = success_orientation_reward
+        self._success_position_threshold = success_position_threshold
         self._success_orientation_threshold = success_orientation_threshold
         self._initial_tray_pos = None
 
@@ -316,30 +318,35 @@ class TrayPickUpEnv(BimanualTableEnv):
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
-        rotation_reward = self._get_gripper_rotation_reward(next_obs)
+        # rotation_reward = self._get_gripper_rotation_reward(next_obs)
         tray_push_penalty = self._tray_push_penalty if self._tray_pushed() else 0.0
-        success_bonus = self._success_reward if self._position_reached(next_obs) else 0.0
+        position_bonus = self._success_position_reward if self._position_reached(next_obs) else 0.0
+        # orientation_bonus = self._success_orientation_reward if self._orientation_reached(next_obs) else 0.0
 
         reward = (
             handle_distance_reward
             + contact_table_cost
             + ctrl_cost
-            + rotation_reward
+            # + rotation_reward
             + tray_push_penalty
-            + success_bonus
+            + position_bonus
+            # + orientation_bonus
         )
 
         return reward
 
     def _position_reached(self, obs):
         """
-        Check if the end effectors have reached the target position.
+        Check if both end effectors are within success_threshold of their grasp targets.
         """
         right_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_right_handle_pos"))
         left_dist = np.linalg.norm(self.obs_helper.get_from_obs(obs, "rel_left_handle_pos"))
-        if not (right_dist < self._success_threshold and left_dist < self._success_threshold):
-            return False
+        return right_dist < self._success_position_threshold and left_dist < self._success_position_threshold
 
+    def _orientation_reached(self, obs):
+        """
+        Check if both grippers are within success_orientation_threshold of their handle orientations.
+        """
         right_handle_mat = quat_to_mat(self.obs_helper.get_from_obs(obs, "right_handle_rot"))
         left_handle_mat = quat_to_mat(self.obs_helper.get_from_obs(obs, "left_handle_rot"))
         right_gripper_mat = quat_to_mat(self._read_data("right_hande_robotiq_hande_end_rot"))
@@ -359,7 +366,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         Returns:
             is_absorbing (bool): True if the current state is absorbing, False otherwise.
         """
-        if self._position_reached(obs):
+        if self._position_reached(obs):  # and self._orientation_reached(obs):
             return True
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         if contact_force > self._contact_threshold:
