@@ -24,12 +24,12 @@ contact_cost_weight: -1e-4
 control_cost_weight: -1e-4
 handle_distance_weight: 2.0
 contact_threshold: 2.0
-reach_sharpness: 0.3
+reach_sharpness: 0.4
 tray_push_penalty: -10.0
 rotation_reward_weight: 1.0
 orientation_sharpness: 0.3
 success_position_reward: 10.0
 success_orientation_reward: 50.0
-success_position_threshold: 0.03
+success_position_threshold: 0.05
 success_orientation_threshold: 0.3
 action_space_limit: 0.4
