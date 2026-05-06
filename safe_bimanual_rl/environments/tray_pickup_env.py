@@ -199,7 +199,8 @@ class TrayPickUpEnv(BimanualTableEnv):
             self._initial_tray_pos = self._read_data("tray_pos").copy()
             return False
         displacement = np.linalg.norm(self._read_data("tray_pos") - self._initial_tray_pos)
-        return displacement > 0.15 # Threshold for considering the tray as pushed
+        return False
+        #return displacement > 0.15 # Threshold for considering the tray as pushed
 
     def _get_contact_cost(self, obs):
         """
