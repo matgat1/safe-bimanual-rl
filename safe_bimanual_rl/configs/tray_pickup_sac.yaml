@@ -2,7 +2,7 @@
 
 # Training parameters
 n_epochs: 150
-n_steps: 8000
+n_steps: 10000
 n_steps_per_fit: 4
 n_episodes_test: 5
 initial_replay_size: 10000
@@ -26,10 +26,11 @@ handle_distance_weight: 2.0
 contact_threshold: 2.0
 reach_sharpness: 0.4
 tray_push_penalty: -10.0
-rotation_reward_weight: 1.0
+rotation_reward_weight: 2.0
 orientation_sharpness: 0.3
 success_position_reward: 10.0
 success_orientation_reward: 50.0
 success_position_threshold: 0.05
 success_orientation_threshold: 0.3
 action_space_limit: 0.4
+seed: 0

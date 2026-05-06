@@ -52,6 +52,7 @@ def experiment(
     success_orientation_threshold: float = 0.3,
     action_space_limit: float = 0.4,
     use_wandb: bool = True,
+    seed: int = 0,
 ):
 
     hydra_cfg = HydraConfig.get()
@@ -60,7 +61,7 @@ def experiment(
     date, time, job_num = save_dir.split(os.sep)[-3:]
     run_name = f"{model_name}_{date}_{time}_{job_num}"
 
-    np.random.seed()
+    np.random.seed(seed)
 
     logger = Logger(SAC.__name__, results_dir=None)
     logger.strong_line()
@@ -169,6 +170,7 @@ def experiment(
             "success_position_threshold": success_position_threshold,
             "success_orientation_threshold": success_orientation_threshold,
             "action_space_limit": action_space_limit,
+            "seed": seed,
         },
     )
 
@@ -280,6 +282,7 @@ def main(cfg: DictConfig):
         success_position_threshold=cfg.success_position_threshold,
         success_orientation_threshold=cfg.success_orientation_threshold,
         action_space_limit=cfg.action_space_limit,
+        seed=cfg.seed,
     )
 
 
