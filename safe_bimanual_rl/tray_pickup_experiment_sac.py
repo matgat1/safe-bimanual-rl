@@ -172,6 +172,7 @@ def experiment(
             "success_position_threshold": success_position_threshold,
             "success_orientation_threshold": success_orientation_threshold,
             "action_space_limit": action_space_limit,
+            "target_entropy": target_entropy,
             "seed": seed,
         },
     )
