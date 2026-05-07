@@ -33,4 +33,5 @@ success_orientation_reward: 50.0
 success_position_threshold: 0.05
 success_orientation_threshold: 0.3
 action_space_limit: 0.4
+target_entropy: null
 seed: 0

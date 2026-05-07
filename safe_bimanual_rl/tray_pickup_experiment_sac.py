@@ -51,6 +51,7 @@ def experiment(
     success_position_threshold: float = 0.03,
     success_orientation_threshold: float = 0.3,
     action_space_limit: float = 0.4,
+    target_entropy: float = None,
     use_wandb: bool = True,
     seed: int = 0,
 ):
@@ -130,6 +131,7 @@ def experiment(
         warmup_transitions,
         tau,
         lr_alpha,
+        target_entropy=target_entropy,
         critic_fit_params=None,
     )
 
@@ -282,6 +284,7 @@ def main(cfg: DictConfig):
         success_position_threshold=cfg.success_position_threshold,
         success_orientation_threshold=cfg.success_orientation_threshold,
         action_space_limit=cfg.action_space_limit,
+        target_entropy=cfg.target_entropy,
         seed=cfg.seed,
     )
 
