@@ -13,9 +13,9 @@ class CriticNetwork(nn.Module):
         self._h2 = nn.Linear(n_features, n_features)
         self._h3 = nn.Linear(n_features, n_output)
 
-        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain("linear"))
+        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain("relu") / 10)
+        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain("relu") / 10)
+        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain("linear") / 10)
 
     def forward(self, state, action):
         state_action = torch.cat((state.float(), action.float()), dim=1)
@@ -34,9 +34,9 @@ class ActorNetwork(nn.Module):
         self._h2 = nn.Linear(n_features, n_features)
         self._h3 = nn.Linear(n_features, n_output)
 
-        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain("relu"))
-        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain("linear"))
+        nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain("relu") / 10)
+        nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain("relu") / 10)
+        nn.init.xavier_uniform_(self._h3.weight, gain=nn.init.calculate_gain("linear") / 10)
 
     def forward(self, state):
         features1 = F.relu(self._h1(torch.squeeze(state, 1).float()))
