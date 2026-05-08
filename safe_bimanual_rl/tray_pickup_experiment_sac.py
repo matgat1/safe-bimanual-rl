@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import optim
 
 import hydra
 from hydra.core.hydra_config import HydraConfig
@@ -22,41 +22,47 @@ from safe_bimanual_rl.rl_utils.plotting import save_plots
 
 
 def experiment(
-    n_epochs=100,
-    n_steps=10000,
-    n_steps_per_fit=1,
+    n_epochs=150,
+    n_steps=8000,
+    n_steps_per_fit=4,
     n_episodes_test=5,
     initial_replay_size=10000,
     max_replay_size=200000,
     batch_size=256,
-    n_features=128,
+    n_features=256,
     warmup_transitions=10000,
-    tau=0.003,
-    lr_alpha=1e-4,
+    tau=0.001,
+    lr_alpha=3e-4,
     lr_actor=3e-4,
     lr_critic=3e-4,
     use_cluster=False,
     save_model=False,
     model_name: str = "tray_pickup_agent",
     contact_cost_weight: float = -1e-4,
-    handle_distance_weight: float = 3.0,
+    handle_distance_weight: float = 2.0,
     contact_threshold: float = 2.0,
     control_cost_weight: float = -1e-4,
     reach_sharpness: float = 0.3,
-    grasp_reward: float = 5.0,
-    cube_fell_off_tray_penalty: float = -5.0,
+    tray_push_penalty: float = -10.0,
     rotation_reward_weight: float = 1.0,
+    orientation_sharpness: float = 0.3,
+    success_position_reward: float = 10.0,
+    success_orientation_reward: float = 50.0,
+    success_position_threshold: float = 0.03,
+    success_orientation_threshold: float = 0.3,
     action_space_limit: float = 0.4,
+    target_entropy: float = None,
     use_wandb: bool = True,
+    seed: int = 0,
 ):
-
+    """Run a SAC training experiment on TrayPickUpEnv."""
     hydra_cfg = HydraConfig.get()
     save_dir = hydra_cfg.runtime.output_dir
     # Extract date, time, job_num from multirun output path: .../multirun/date/time/job_num
     date, time, job_num = save_dir.split(os.sep)[-3:]
     run_name = f"{model_name}_{date}_{time}_{job_num}"
 
-    np.random.seed()
+    np.random.seed(seed)
 
     logger = Logger(SAC.__name__, results_dir=None)
     logger.strong_line()
@@ -65,16 +71,20 @@ def experiment(
     # Load Environment
     mdp = TrayPickUpEnv(
         gamma=0.99,
-        horizon=350,
+        horizon=120,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
         handle_distance_weight=handle_distance_weight,
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
         reach_sharpness=reach_sharpness,
-        grasp_reward=grasp_reward,
-        cube_fell_off_tray_penalty=cube_fell_off_tray_penalty,
+        tray_push_penalty=tray_push_penalty,
         rotation_reward_weight=rotation_reward_weight,
+        orientation_sharpness=orientation_sharpness,
+        success_position_reward=success_position_reward,
+        success_orientation_reward=success_orientation_reward,
+        success_position_threshold=success_position_threshold,
+        success_orientation_threshold=success_orientation_threshold,
     )
 
     # Actor
@@ -95,14 +105,14 @@ def experiment(
 
     # Critic
     critic_input_shape = (actor_input_shape[0] + mdp.info.action_space.shape[0],)
-    critic_params = dict(
-        network=CriticNetwork,
-        optimizer={"class": optim.Adam, "params": {"lr": lr_critic}},
-        loss=F.mse_loss,
-        n_features=n_features,
-        input_shape=critic_input_shape,
-        output_shape=(1,),
-    )
+    critic_params = {
+        "network": CriticNetwork,
+        "optimizer": {"class": optim.Adam, "params": {"lr": lr_critic}},
+        "loss": F.mse_loss,
+        "n_features": n_features,
+        "input_shape": critic_input_shape,
+        "output_shape": (1,),
+    }
 
     # Action space normalization to [-action_space_limit, action_space_limit]
     mdp.info.action_space.low[:] = -action_space_limit
@@ -121,6 +131,7 @@ def experiment(
         warmup_transitions,
         tau,
         lr_alpha,
+        target_entropy=target_entropy,
         critic_fit_params=None,
     )
 
@@ -153,10 +164,16 @@ def experiment(
             "contact_threshold": contact_threshold,
             "control_cost_weight": control_cost_weight,
             "reach_sharpness": reach_sharpness,
-            "grasp_reward": grasp_reward,
-            "cube_fell_off_tray_penalty": cube_fell_off_tray_penalty,
             "rotation_reward_weight": rotation_reward_weight,
+            "orientation_sharpness": orientation_sharpness,
+            "tray_push_penalty": tray_push_penalty,
+            "success_position_reward": success_position_reward,
+            "success_orientation_reward": success_orientation_reward,
+            "success_position_threshold": success_position_threshold,
+            "success_orientation_threshold": success_orientation_threshold,
             "action_space_limit": action_space_limit,
+            "target_entropy": target_entropy,
+            "seed": seed,
         },
     )
 
@@ -236,6 +253,7 @@ def experiment(
 
 @hydra.main(version_base=None, config_path="configs", config_name="tray_pickup_sac")
 def main(cfg: DictConfig):
+    """Entry point: parse Hydra config and run the experiment."""
     print(f"Running with config:\n{cfg}")
     experiment(
         n_epochs=cfg.n_epochs,
@@ -260,12 +278,18 @@ def main(cfg: DictConfig):
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
         reach_sharpness=cfg.reach_sharpness,
-        grasp_reward=cfg.grasp_reward,
-        cube_fell_off_tray_penalty=cfg.cube_fell_off_tray_penalty,
+        tray_push_penalty=cfg.tray_push_penalty,
         rotation_reward_weight=cfg.rotation_reward_weight,
+        orientation_sharpness=cfg.orientation_sharpness,
+        success_position_reward=cfg.success_position_reward,
+        success_orientation_reward=cfg.success_orientation_reward,
+        success_position_threshold=cfg.success_position_threshold,
+        success_orientation_threshold=cfg.success_orientation_threshold,
         action_space_limit=cfg.action_space_limit,
+        target_entropy=cfg.target_entropy,
+        seed=cfg.seed,
     )
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pylint: disable=no-value-for-parameter

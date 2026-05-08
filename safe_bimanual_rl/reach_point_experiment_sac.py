@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import optim
 
 import hydra
 from hydra.core.hydra_config import HydraConfig
@@ -64,7 +64,7 @@ def experiment(
     # Load Environment
     mdp = ReachEnv(
         gamma=0.99,
-        horizon=200,
+        horizon=130,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
         cube_distance_weight=cube_distance_weight,
@@ -93,14 +93,14 @@ def experiment(
 
     # Critic
     critic_input_shape = (actor_input_shape[0] + mdp.info.action_space.shape[0],)
-    critic_params = dict(
-        network=CriticNetwork,
-        optimizer={"class": optim.Adam, "params": {"lr": lr_critic}},
-        loss=F.mse_loss,
-        n_features=n_features,
-        input_shape=critic_input_shape,
-        output_shape=(1,),
-    )
+    critic_params = {
+        "network": CriticNetwork,
+        "optimizer": {"class": optim.Adam, "params": {"lr": lr_critic}},
+        "loss": F.mse_loss,
+        "n_features": n_features,
+        "input_shape": critic_input_shape,
+        "output_shape": (1,),
+    }
 
     # Action space normalization to [-action_space_limit, action_space_limit]
     mdp.info.action_space.low[:] = -action_space_limit
