@@ -144,6 +144,11 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._success_position_threshold = success_position_threshold
         self._success_orientation_threshold = success_orientation_threshold
         self._initial_tray_pos = None
+        self._absorbing_counts = {
+            "position_reached": 0,
+            "contact_force": 0,
+            "tray_pushed": 0,
+        }
 
         super().__init__(
             scene_xml=scene_xml,
@@ -426,16 +431,14 @@ class TrayPickUpEnv(BimanualTableEnv):
             is_absorbing (bool): True if the current state is absorbing, False otherwise.
         """
         if self._position_reached(obs) and self._orientation_reached(obs):
-            print("Success! Episode will terminate.")
+            self._absorbing_counts["position_reached"] += 1
             return True
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         if contact_force > self._contact_threshold:
-            print(
-                f"Contact force {contact_force:.2f} exceeded threshold! Episode will terminate."
-            )
+            self._absorbing_counts["contact_force"] += 1
             return True
         if self._tray_pushed():
-            print("Tray pushed! Episode will terminate.")
+            self._absorbing_counts["tray_pushed"] += 1
             return True
         return False
 

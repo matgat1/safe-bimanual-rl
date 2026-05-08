@@ -178,6 +178,7 @@ def experiment(
     )
 
     J_values, R_values, H_values = [], [], []
+    best_J = -np.inf
 
     # Evaluation before training
     dataset = core.evaluate(n_episodes=n_episodes_test, render=False)
@@ -223,6 +224,15 @@ def experiment(
         R_values.append(R)
         H_values.append(H)
 
+        if save_model and J > best_J:
+            best_J = J
+            best_file = os.path.join(save_dir, f"{model_name}_best.msh")
+            agent.save(best_file)
+            logger.info(f"New best model saved (J={J:.2f}): {best_file}")
+
+    run.summary["absorbing/position_reached"] = mdp._absorbing_counts["position_reached"]
+    run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
+    run.summary["absorbing/tray_pushed"] = mdp._absorbing_counts["tray_pushed"]
     run.finish()
 
     save_plots(
@@ -245,10 +255,9 @@ def experiment(
         logger.info("Experiment finished.")
 
     if save_model:
-        file_name = f"{model_name}.msh"
-        agent.save(os.path.join(save_dir, file_name))
-
-        logger.info(f"Model saved : {save_dir}/{file_name}")
+        last_file = os.path.join(save_dir, f"{model_name}_last.msh")
+        agent.save(last_file)
+        logger.info(f"Last model saved: {last_file}")
 
 
 @hydra.main(version_base=None, config_path="configs", config_name="tray_pickup_sac")
