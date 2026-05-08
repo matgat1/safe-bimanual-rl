@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import torch.nn.functional as F
-import torch.optim as optim
+from torch import optim
 
 import hydra
 from hydra.core.hydra_config import HydraConfig
@@ -55,7 +55,7 @@ def experiment(
     use_wandb: bool = True,
     seed: int = 0,
 ):
-
+    """Run a SAC training experiment on TrayPickUpEnv."""
     hydra_cfg = HydraConfig.get()
     save_dir = hydra_cfg.runtime.output_dir
     # Extract date, time, job_num from multirun output path: .../multirun/date/time/job_num
@@ -105,14 +105,14 @@ def experiment(
 
     # Critic
     critic_input_shape = (actor_input_shape[0] + mdp.info.action_space.shape[0],)
-    critic_params = dict(
-        network=CriticNetwork,
-        optimizer={"class": optim.Adam, "params": {"lr": lr_critic}},
-        loss=F.mse_loss,
-        n_features=n_features,
-        input_shape=critic_input_shape,
-        output_shape=(1,),
-    )
+    critic_params = {
+        "network": CriticNetwork,
+        "optimizer": {"class": optim.Adam, "params": {"lr": lr_critic}},
+        "loss": F.mse_loss,
+        "n_features": n_features,
+        "input_shape": critic_input_shape,
+        "output_shape": (1,),
+    }
 
     # Action space normalization to [-action_space_limit, action_space_limit]
     mdp.info.action_space.low[:] = -action_space_limit
@@ -253,6 +253,7 @@ def experiment(
 
 @hydra.main(version_base=None, config_path="configs", config_name="tray_pickup_sac")
 def main(cfg: DictConfig):
+    """Entry point: parse Hydra config and run the experiment."""
     print(f"Running with config:\n{cfg}")
     experiment(
         n_epochs=cfg.n_epochs,
@@ -291,4 +292,4 @@ def main(cfg: DictConfig):
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pylint: disable=no-value-for-parameter
