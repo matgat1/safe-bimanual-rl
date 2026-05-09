@@ -432,13 +432,16 @@ class TrayPickUpEnv(BimanualTableEnv):
         """
         if self._position_reached(obs) and self._orientation_reached(obs):
             self._absorbing_counts["position_reached"] += 1
+            print("Position and orientation success")
             return True
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         if contact_force > self._contact_threshold:
             self._absorbing_counts["contact_force"] += 1
+            print("Contact force exceeded threshold")
             return True
         if self._tray_pushed():
             self._absorbing_counts["tray_pushed"] += 1
+            print("Tray pushed")
             return True
         return False
 
