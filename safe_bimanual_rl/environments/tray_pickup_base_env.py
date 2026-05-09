@@ -31,7 +31,7 @@ class TrayPickUpBaseEnv(BimanualTableEnv):
         success_position_reward: float = 10.0,
         success_orientation_reward: float = 50.0,
         success_position_threshold: float = 0.06,
-        success_orientation_threshold: float = 0.3,
+        success_orientation_threshold: float = 0.4,
         **viewer_params,
     ):
         """

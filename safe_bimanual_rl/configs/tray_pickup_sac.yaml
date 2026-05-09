@@ -31,7 +31,7 @@ orientation_sharpness: 0.3
 success_position_reward: 10.0
 success_orientation_reward: 50.0
 success_position_threshold: 0.06
-success_orientation_threshold: 0.3
+success_orientation_threshold: 0.4
 action_space_limit: 0.4
 target_entropy: null
 seed: 0
