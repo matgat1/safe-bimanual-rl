@@ -31,6 +31,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         success_orientation_reward: float = 50.0,
         success_position_threshold: float = 0.06,
         success_orientation_threshold: float = 0.4,
+        success_steps: int = 10,
         **viewer_params,
     ):
         """
@@ -139,6 +140,8 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._success_orientation_reward = success_orientation_reward
         self._success_position_threshold = success_position_threshold
         self._success_orientation_threshold = success_orientation_threshold
+        self._success_steps = success_steps
+        self._consecutive_success_steps = 0
         self._absorbing_counts = {
             "position_reached": 0,
             "contact_force": 0,
@@ -398,6 +401,10 @@ class TrayPickUpEnv(BimanualTableEnv):
 
         return reward
 
+    def setup(self, obs):
+        super().setup(obs)
+        self._consecutive_success_steps = 0
+
     def is_absorbing(self, obs):
         """
         Check if the current state is absorbing.
@@ -408,9 +415,13 @@ class TrayPickUpEnv(BimanualTableEnv):
             is_absorbing (bool): True if the current state is absorbing, False otherwise.
         """
         if self._position_reached(obs) and self._orientation_reached(obs):
-            self._absorbing_counts["position_reached"] += 1
+            self._consecutive_success_steps += 1
             print("Position and orientation success")
-            return True
+            if self._consecutive_success_steps >= self._success_steps:
+                self._absorbing_counts["position_reached"] += 1
+                return True
+            return False
+        self._consecutive_success_steps = 0
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         if contact_force > self._contact_threshold:
             self._absorbing_counts["contact_force"] += 1
