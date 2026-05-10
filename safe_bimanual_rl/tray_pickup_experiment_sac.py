@@ -43,7 +43,6 @@ def experiment(
     contact_threshold: float = 2.0,
     control_cost_weight: float = -1e-4,
     reach_sharpness: float = 0.3,
-    tray_push_penalty: float = -10.0,
     rotation_reward_weight: float = 1.0,
     orientation_sharpness: float = 0.3,
     success_position_reward: float = 10.0,
@@ -78,7 +77,6 @@ def experiment(
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
         reach_sharpness=reach_sharpness,
-        tray_push_penalty=tray_push_penalty,
         rotation_reward_weight=rotation_reward_weight,
         orientation_sharpness=orientation_sharpness,
         success_position_reward=success_position_reward,
@@ -166,7 +164,6 @@ def experiment(
             "reach_sharpness": reach_sharpness,
             "rotation_reward_weight": rotation_reward_weight,
             "orientation_sharpness": orientation_sharpness,
-            "tray_push_penalty": tray_push_penalty,
             "success_position_reward": success_position_reward,
             "success_orientation_reward": success_orientation_reward,
             "success_position_threshold": success_position_threshold,
@@ -234,7 +231,6 @@ def experiment(
         "position_reached"
     ]
     run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
-    run.summary["absorbing/tray_pushed"] = mdp._absorbing_counts["tray_pushed"]
     run.finish()
 
     save_plots(
@@ -262,7 +258,9 @@ def experiment(
         logger.info(f"Last model saved: {last_file}")
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="tray_pickup_sac")
+@hydra.main(
+    version_base=None, config_path="configs", config_name="tray_pickup_reach_sac"
+)
 def main(cfg: DictConfig):
     """Entry point: parse Hydra config and run the experiment."""
     print(f"Running with config:\n{cfg}")
@@ -289,7 +287,6 @@ def main(cfg: DictConfig):
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
         reach_sharpness=cfg.reach_sharpness,
-        tray_push_penalty=cfg.tray_push_penalty,
         rotation_reward_weight=cfg.rotation_reward_weight,
         orientation_sharpness=cfg.orientation_sharpness,
         success_position_reward=cfg.success_position_reward,

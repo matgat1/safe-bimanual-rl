@@ -22,11 +22,10 @@ class TrayPickUpEnv(BimanualTableEnv):
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
         handle_distance_weight: float = 1.0,
-        contact_threshold: float = 2.0,
+        contact_threshold: float = 3.0,
         control_cost_weight: float = -1e-4,
         reach_sharpness: float = 0.5,
         rotation_reward_weight: float = 1.0,
-        tray_push_penalty: float = -10.0,
         orientation_sharpness: float = 0.3,
         success_position_reward: float = 10.0,
         success_orientation_reward: float = 50.0,
@@ -51,8 +50,6 @@ class TrayPickUpEnv(BimanualTableEnv):
             reach_sharpness (float): Controls how sharply the tanh reward drops off with distance
                 to the grasp target.
             rotation_reward_weight (float): Weight for the gripper orientation reward.
-            tray_push_penalty (float): Penalty applied when the tray is pushed from its initial
-                position.
             orientation_sharpness (float): Controls how sharply the tanh orientation reward drops
                 off with angular error.
             success_position_reward (float): Bonus reward granted when both end-effectors reach
@@ -137,17 +134,14 @@ class TrayPickUpEnv(BimanualTableEnv):
         self._control_cost_weight = control_cost_weight
         self._reach_sharpness = reach_sharpness
         self._rotation_reward_weight = rotation_reward_weight
-        self._tray_push_penalty = tray_push_penalty
         self._orientation_sharpness = orientation_sharpness
         self._success_position_reward = success_position_reward
         self._success_orientation_reward = success_orientation_reward
         self._success_position_threshold = success_position_threshold
         self._success_orientation_threshold = success_orientation_threshold
-        self._initial_tray_pos = None
         self._absorbing_counts = {
             "position_reached": 0,
             "contact_force": 0,
-            "tray_pushed": 0,
         }
 
         super().__init__(
@@ -208,20 +202,6 @@ class TrayPickUpEnv(BimanualTableEnv):
         )
 
         return obs
-
-    def setup(self, obs):
-        super().setup(obs)
-        self._initial_tray_pos = None
-
-    def _tray_pushed(self):
-        if self._initial_tray_pos is None:
-            self._initial_tray_pos = self._read_data("tray_pos").copy()
-            return False
-        # displacement = np.linalg.norm(
-        #     self._read_data("tray_pos") - self._initial_tray_pos
-        # )
-        return False
-        # return displacement > 0.15 # Threshold for considering the tray as pushed
 
     def _get_contact_cost(self, obs):
         """
@@ -397,12 +377,10 @@ class TrayPickUpEnv(BimanualTableEnv):
         Returns:
             reward (float): The reward for the current state and action.
         """
-
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
         rotation_reward = self._get_gripper_rotation_reward(next_obs)
-        tray_push_penalty = self._tray_push_penalty if self._tray_pushed() else 0.0
         both_reached = self._position_reached(next_obs) and self._orientation_reached(
             next_obs
         )
@@ -414,7 +392,6 @@ class TrayPickUpEnv(BimanualTableEnv):
             + contact_table_cost
             + ctrl_cost
             + rotation_reward
-            + tray_push_penalty
             + position_bonus
             + orientation_bonus
         )
@@ -439,10 +416,6 @@ class TrayPickUpEnv(BimanualTableEnv):
             self._absorbing_counts["contact_force"] += 1
             print("Contact force exceeded threshold")
             return True
-        if self._tray_pushed():
-            self._absorbing_counts["tray_pushed"] += 1
-            print("Tray pushed")
-            return True
         return False
 
     def _create_info_dictionary(self, obs, action):
@@ -452,9 +425,6 @@ class TrayPickUpEnv(BimanualTableEnv):
         info["contact_table_cost"] = self._get_contact_cost(obs)
         info["ctrl_cost"] = self._get_ctrl_cost(action)
         info["rotation_reward"] = self._get_gripper_rotation_reward(obs)
-        info["tray_push_penalty"] = (
-            self._tray_push_penalty if self._tray_pushed() else 0.0
-        )
         info["position_bonus"] = self._success_position_reward if both_reached else 0.0
         info["orientation_bonus"] = (
             self._success_orientation_reward if both_reached else 0.0
