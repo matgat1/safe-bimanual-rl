@@ -217,7 +217,9 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
         contact_table_cost = self._get_contact_cost(next_obs)
         ctrl_cost = self._get_ctrl_cost(action)
         rotation_reward = self._get_gripper_rotation_reward(next_obs)
-        both_reached = self._position_reached(next_obs) and self._orientation_reached(next_obs)
+        both_reached = self._position_reached(next_obs) and self._orientation_reached(
+            next_obs
+        )
         position_bonus = self._success_position_reward if both_reached else 0.0
         orientation_bonus = self._success_orientation_reward if both_reached else 0.0
 
