@@ -189,7 +189,7 @@ With all options:
 python -m safe_bimanual_rl.utils.collect_absorbing_positions \
     --model_path "models/reach_best.msh" \
     --n_episodes 50 \
-    --output_path "data/absorbing_positions.npz" \
+    --output_path "safe_bimanual_rl/environments/data/initial_states/grasp_init_states_1.npz" \
     --render
 ```
 
