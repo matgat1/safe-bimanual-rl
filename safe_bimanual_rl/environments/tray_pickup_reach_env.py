@@ -282,11 +282,9 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
 
 if __name__ == "__main__":
     env = TrayPickUpReachEnv()
-    obs, _ = env.reset()
+    env.reset()
     env.render()
     while True:
-        action = np.zeros(env.info.action_space.shape)
-        obs, reward, absorbing, info = env.step(action)
-        if absorbing:
-            obs, _ = env.reset()
+        action = np.zeros(env.info.action_space.shape[0])
+        env.step(action)
         env.render()
