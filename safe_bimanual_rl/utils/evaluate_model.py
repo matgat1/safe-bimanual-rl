@@ -1,6 +1,13 @@
 from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core
-from safe_bimanual_rl.environments import TrayPickUpEnv, TrayPickUpGraspEnv, TrayPickUpLiftEnv, TrayPickUpReachEnv, ReachEnv, BimanualTableEnv
+from safe_bimanual_rl.environments import (
+    TrayPickUpEnv,
+    TrayPickUpGraspEnv,
+    TrayPickUpLiftEnv,
+    TrayPickUpReachEnv,
+    ReachEnv,
+    BimanualTableEnv,
+)
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (  # noqa: F401
     ActorNetwork,
     CriticNetwork,

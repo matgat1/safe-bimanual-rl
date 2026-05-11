@@ -103,6 +103,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         # Both fingers must contact the handle: product is zero if either finger misses.
         right_grasp = np.tanh(right_finger_right) * np.tanh(right_finger_left)
         left_grasp = np.tanh(left_finger_right) * np.tanh(left_finger_left)
+
         # Track the weaker finger on each hand for success detection.
         self._last_right_grasp_force = np.minimum(right_finger_right, right_finger_left)
         self._last_left_grasp_force = np.minimum(left_finger_right, left_finger_left)
