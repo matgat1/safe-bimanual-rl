@@ -2,7 +2,7 @@ import numpy as np
 import argparse
 from pathlib import Path
 from mushroom_rl.algorithms.actor_critic import SAC
-from safe_bimanual_rl.environments.tray_pickup_env import TrayPickUpEnv
+from safe_bimanual_rl.environments import TrayPickUpEnv
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (  # noqa: F401
     ActorNetwork,
     CriticNetwork,

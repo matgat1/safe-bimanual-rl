@@ -1,10 +1,6 @@
 from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core
-from safe_bimanual_rl.environments.bimanual_table_env import BimanualTableEnv
-from safe_bimanual_rl.environments.reach_env import ReachEnv
-from safe_bimanual_rl.environments.tray_pickup_env import TrayPickUpEnv
-from safe_bimanual_rl.environments.tray_pickup_grasp_env import TrayPickUpGraspEnv
-from safe_bimanual_rl.environments.tray_pickup_lift_env import TrayPickUpLiftEnv
+from safe_bimanual_rl.environments import TrayPickUpEnv, TrayPickUpGraspEnv, TrayPickUpLiftEnv, TrayPickUpReachEnv, ReachEnv, BimanualTableEnv
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (  # noqa: F401
     ActorNetwork,
     CriticNetwork,
@@ -15,7 +11,7 @@ import argparse
 ENV_REGISTRY = {
     "reach_cube": ReachEnv,
     "tray_pickup": TrayPickUpEnv,
-    "grasping_position": TrayPickUpEnv,  # Change to TrayPickUpReachEnv when implemented
+    "grasping_position": TrayPickUpReachEnv,
     "grasp_sac": TrayPickUpGraspEnv,
     "lift_sac": TrayPickUpLiftEnv,
 }

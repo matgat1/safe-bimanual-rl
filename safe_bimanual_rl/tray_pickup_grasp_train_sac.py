@@ -13,7 +13,7 @@ from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core, Logger
 from tqdm import trange
 
-from safe_bimanual_rl.environments.tray_pickup_grasp_env import TrayPickUpGraspEnv
+from safe_bimanual_rl.environments import TrayPickUpGraspEnv
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (
     ActorNetwork,
     CriticNetwork,

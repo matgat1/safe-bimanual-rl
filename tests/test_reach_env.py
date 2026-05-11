@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from safe_bimanual_rl.environments.reach_env import ReachEnv
+from safe_bimanual_rl.environments import ReachEnv
 
 
 @pytest.fixture(scope="module")
