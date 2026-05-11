@@ -20,10 +20,12 @@ We use **MuJoCo-based environments** and the **MushroomRL** library to design ta
 ├── figs/                         # Figures and GIFs used in the README
 ├── safe_bimanual_rl/
 │   ├── configs/                  # Hydra config files (e.g. reach_cube_sac.yaml)
-│   ├── environments/             # MuJoCo environments (bimanual, reach)
+│   ├── environments/             # MuJoCo environments (bimanual, reach, tray pickup)
 │   ├── rl_utils/                 # SAC networks and plotting helpers
-│   ├── utils/                    # Evaluation and controller utilities
-│   └── reach_point_experiment_sac.py # Main training entry point
+│   ├── utils/                    # Evaluation, controller, and data collection utilities
+│   ├── reach_point_experiment_sac.py      # Training: reach task
+│   ├── tray_pickup_reach_train_sac.py     # Training: tray pickup — reach phase
+│   └── tray_pickup_grasp_train_sac.py     # Training: tray pickup — grasp phase
 ├── tests/                        # Unit and integration tests
 ├── environment.yml               # Conda environment definition
 ├── Makefile                      # Shortcuts for common commands
@@ -103,20 +105,101 @@ python -m safe_bimanual_rl.reach_point_experiment_sac --multirun \
     contact_threshold=1.0,5.0,20.0
 ```
 
-To use on the cluster 
+To use on the cluster:
 
 ```bash
 python -m safe_bimanual_rl.reach_point_experiment_sac --multirun \
   hydra/launcher=cosmos \
   contact_threshold=1.0,2.0,3.0
 ```
+
+### Tray pickup — reach phase
+
+Train the agent to move the end-effectors to the tray handle positions with the correct orientation:
+
 ```bash
-python -m safe_bimanual_rl.tray_pickup_experiment_sac --multirun \
-  hydra/launcher=cosmos \
-  n_epochs=200 \
-  reach_sharpness=0.3,0.5 \
-  grasp_reward=5.0,10.0
+python -m safe_bimanual_rl.tray_pickup_reach_train_sac
 ```
+
+Override key parameters:
+
+```bash
+python -m safe_bimanual_rl.tray_pickup_reach_train_sac \
+    n_epochs=130 \
+    model_name="reach_test" \
+    reach_sharpness=0.4 \
+    success_position_reward=500.0 \
+    save_model=true \
+    use_wandb=false
+```
+
+Sweep on the cluster:
+
+```bash
+python -m safe_bimanual_rl.tray_pickup_reach_train_sac --multirun \
+  hydra/launcher=cosmos \
+  reach_sharpness=0.3,0.4,0.5 \
+  success_position_reward=100.0,500.0
+```
+
+### Tray pickup — grasp phase
+
+Train the agent to apply the correct contact forces on the tray handles:
+
+```bash
+python -m safe_bimanual_rl.tray_pickup_grasp_train_sac
+```
+
+Override key parameters:
+
+```bash
+python -m safe_bimanual_rl.tray_pickup_grasp_train_sac \
+    n_epochs=150 \
+    model_name="grasp_test" \
+    success_grasp_reward=30.0 \
+    grasp_force_threshold=0.3 \
+    contact_threshold=5.0 \
+    save_model=true \
+    use_wandb=false
+```
+
+Sweep on the cluster:
+
+```bash
+python -m safe_bimanual_rl.tray_pickup_grasp_train_sac --multirun \
+  hydra/launcher=cosmos \
+  success_grasp_reward=15.0,30.0 \
+  grasp_force_threshold=0.2,0.3,0.5
+```
+
+## Utilities
+
+### Collect absorbing positions
+
+After training a reach model, collect the joint configurations at successful episode ends to use as initial states for the grasp phase:
+
+```bash
+python -m safe_bimanual_rl.utils.collect_absorbing_positions \
+    --model_path "models/reach_best.msh"
+```
+
+With all options:
+
+```bash
+python -m safe_bimanual_rl.utils.collect_absorbing_positions \
+    --model_path "models/reach_best.msh" \
+    --n_episodes 50 \
+    --output_path "data/absorbing_positions.npz" \
+    --render
+```
+
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `--model_path` | `str` | required | Path to the saved `.msh` reach model |
+| `--n_episodes` | `int` | `20` | Number of episodes to run |
+| `--output_path` | `str` | `absorbing_positions.npz` | Path to save the collected states |
+| `--render` | flag | `False` | Render the environment during collection |
+
 ## Evaluate models
 
 To evaluate and display a model:
