@@ -1,5 +1,6 @@
 import numpy as np
 import argparse
+from pathlib import Path
 from mushroom_rl.algorithms.actor_critic import SAC
 from safe_bimanual_rl.environments.tray_pickup_env import TrayPickUpEnv
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (  # noqa: F401
@@ -71,6 +72,7 @@ def collect_absorbing_positions(
             "qvel": np.array(qvel_list),
             "act": np.array(act_list),
         }
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
         np.savez(output_path, **result)
         print(
             f"\nSaved {len(qpos_list)}/{n_episodes} success states to '{output_path}'"
