@@ -253,8 +253,8 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
         """
         if self._position_reached(obs) and self._orientation_reached(obs):
             self._consecutive_success_steps += 1
-            print("Position and orientation success")
             if self._consecutive_success_steps >= self._success_steps:
+                print("Position and orientation success")
                 self._absorbing_counts["position_reached"] += 1
                 return True
             return False

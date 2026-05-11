@@ -31,7 +31,7 @@ class TrayPickUpEnv(BimanualTableEnv):
         success_orientation_reward: float = 50.0,
         success_position_threshold: float = 0.06,
         success_orientation_threshold: float = 0.4,
-        success_steps: int = 10,
+        success_steps: int = 40,
         **viewer_params,
     ):
         """
@@ -416,9 +416,9 @@ class TrayPickUpEnv(BimanualTableEnv):
         """
         if self._position_reached(obs) and self._orientation_reached(obs):
             self._consecutive_success_steps += 1
-            print("Position and orientation success")
             if self._consecutive_success_steps >= self._success_steps:
                 self._absorbing_counts["position_reached"] += 1
+                print("Position and orientation success")
                 return True
             return False
         self._consecutive_success_steps = 0
