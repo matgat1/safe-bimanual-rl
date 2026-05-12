@@ -1,0 +1,36 @@
+# SAC agent configuration for the tray pickup task
+
+# Training parameters
+n_epochs: 130
+n_steps: 10000
+n_steps_per_fit: 4
+n_episodes_test: 5
+initial_replay_size: 10000
+max_replay_size: 200000
+batch_size: 256
+n_features: 256
+warmup_transitions: 10000
+tau: 0.001
+lr_alpha: 1e-3
+lr_actor: 3e-4
+lr_critic: 3e-4
+use_cluster: true
+save_model: true
+use_wandb: true
+model_name: "grasping_position_sac"
+
+# Reward parameters
+contact_cost_weight: -1e-4
+control_cost_weight: -1e-4
+handle_distance_weight: 2.0
+contact_threshold: 3.0
+reach_sharpness: 0.4
+rotation_reward_weight: 2.0
+orientation_sharpness: 0.3
+success_position_reward: 500.0
+success_orientation_reward: 2500.0
+success_position_threshold: 0.02
+success_orientation_threshold: 0.2
+action_space_limit: 0.4
+target_entropy: null
+seed: 0

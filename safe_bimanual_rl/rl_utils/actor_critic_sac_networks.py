@@ -16,13 +16,13 @@ class CriticNetwork(nn.Module):
         self._h3 = nn.Linear(n_features, n_output)
 
         nn.init.xavier_uniform_(
-            self._h1.weight, gain=nn.init.calculate_gain("relu") / 10
+            self._h1.weight, gain=nn.init.calculate_gain("relu") / 2
         )
         nn.init.xavier_uniform_(
-            self._h2.weight, gain=nn.init.calculate_gain("relu") / 10
+            self._h2.weight, gain=nn.init.calculate_gain("relu") / 2
         )
         nn.init.xavier_uniform_(
-            self._h3.weight, gain=nn.init.calculate_gain("linear") / 10
+            self._h3.weight, gain=nn.init.calculate_gain("linear") / 2
         )
 
     def forward(self, state, action):
@@ -46,13 +46,13 @@ class ActorNetwork(nn.Module):
         self._h3 = nn.Linear(n_features, n_output)
 
         nn.init.xavier_uniform_(
-            self._h1.weight, gain=nn.init.calculate_gain("relu") / 10
+            self._h1.weight, gain=nn.init.calculate_gain("relu") / 2
         )
         nn.init.xavier_uniform_(
-            self._h2.weight, gain=nn.init.calculate_gain("relu") / 10
+            self._h2.weight, gain=nn.init.calculate_gain("relu") / 2
         )
         nn.init.xavier_uniform_(
-            self._h3.weight, gain=nn.init.calculate_gain("linear") / 10
+            self._h3.weight, gain=nn.init.calculate_gain("linear") / 2
         )
 
     def forward(self, state):

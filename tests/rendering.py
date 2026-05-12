@@ -1,4 +1,4 @@
-from safe_bimanual_rl.environments.bimanual_table_env import BimanualTableEnv
+from safe_bimanual_rl.environments import BimanualTableEnv
 
 env = BimanualTableEnv(
     xml_path="safe_bimanual_rl/environments/data/dual_arm_iiwa_mujoco.xml",

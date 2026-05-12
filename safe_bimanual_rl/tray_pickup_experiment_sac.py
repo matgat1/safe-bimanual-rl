@@ -13,7 +13,7 @@ from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core, Logger
 from tqdm import trange
 
-from safe_bimanual_rl.environments.tray_pickup_env import TrayPickUpEnv
+from safe_bimanual_rl.environments import TrayPickUpEnv
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (
     ActorNetwork,
     CriticNetwork,
@@ -43,13 +43,12 @@ def experiment(
     contact_threshold: float = 2.0,
     control_cost_weight: float = -1e-4,
     reach_sharpness: float = 0.3,
-    tray_push_penalty: float = -10.0,
     rotation_reward_weight: float = 1.0,
     orientation_sharpness: float = 0.3,
     success_position_reward: float = 10.0,
     success_orientation_reward: float = 50.0,
-    success_position_threshold: float = 0.03,
-    success_orientation_threshold: float = 0.3,
+    success_position_threshold: float = 0.06,
+    success_orientation_threshold: float = 0.4,
     action_space_limit: float = 0.4,
     target_entropy: float = None,
     use_wandb: bool = True,
@@ -78,7 +77,6 @@ def experiment(
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
         reach_sharpness=reach_sharpness,
-        tray_push_penalty=tray_push_penalty,
         rotation_reward_weight=rotation_reward_weight,
         orientation_sharpness=orientation_sharpness,
         success_position_reward=success_position_reward,
@@ -166,7 +164,6 @@ def experiment(
             "reach_sharpness": reach_sharpness,
             "rotation_reward_weight": rotation_reward_weight,
             "orientation_sharpness": orientation_sharpness,
-            "tray_push_penalty": tray_push_penalty,
             "success_position_reward": success_position_reward,
             "success_orientation_reward": success_orientation_reward,
             "success_position_threshold": success_position_threshold,
@@ -178,6 +175,7 @@ def experiment(
     )
 
     J_values, R_values, H_values = [], [], []
+    best_J = -np.inf
 
     # Evaluation before training
     dataset = core.evaluate(n_episodes=n_episodes_test, render=False)
@@ -223,6 +221,16 @@ def experiment(
         R_values.append(R)
         H_values.append(H)
 
+        if save_model and J > best_J:
+            best_J = J
+            best_file = os.path.join(save_dir, f"{model_name}_best.msh")
+            agent.save(best_file)
+            logger.info(f"New best model saved (J={J:.2f}): {best_file}")
+
+    run.summary["absorbing/position_reached"] = mdp._absorbing_counts[
+        "position_reached"
+    ]
+    run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
     run.finish()
 
     save_plots(
@@ -245,13 +253,14 @@ def experiment(
         logger.info("Experiment finished.")
 
     if save_model:
-        file_name = f"{model_name}.msh"
-        agent.save(os.path.join(save_dir, file_name))
+        last_file = os.path.join(save_dir, f"{model_name}_last.msh")
+        agent.save(last_file)
+        logger.info(f"Last model saved: {last_file}")
 
-        logger.info(f"Model saved : {save_dir}/{file_name}")
 
-
-@hydra.main(version_base=None, config_path="configs", config_name="tray_pickup_sac")
+@hydra.main(
+    version_base=None, config_path="configs", config_name="tray_pickup_reach_sac"
+)
 def main(cfg: DictConfig):
     """Entry point: parse Hydra config and run the experiment."""
     print(f"Running with config:\n{cfg}")
@@ -278,7 +287,6 @@ def main(cfg: DictConfig):
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
         reach_sharpness=cfg.reach_sharpness,
-        tray_push_penalty=cfg.tray_push_penalty,
         rotation_reward_weight=cfg.rotation_reward_weight,
         orientation_sharpness=cfg.orientation_sharpness,
         success_position_reward=cfg.success_position_reward,

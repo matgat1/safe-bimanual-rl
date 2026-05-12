@@ -9,6 +9,9 @@ xml_path = os.path.join(BASE_DIR, "environments", "data", "tray_pickup_env.xml")
 model = mujoco.MjModel.from_xml_path(xml_path)
 data = mujoco.MjData(model)
 
+home_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_KEY, "home")
+mujoco.mj_resetDataKeyframe(model, data, home_id)
+
 print(f"Bodies : {model.nbody}")
 print(f"Joints : {model.njnt}")
 print(f"Actuators : {model.nu}")
