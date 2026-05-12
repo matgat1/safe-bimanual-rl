@@ -41,6 +41,8 @@ class TrayPickUpBaseEnv(BimanualTableEnv):
             ("tray_pos", "tray", ObservationType.BODY_POS),
             ("right_grasp_target_pos", "right_grasp_target", ObservationType.SITE_POS),
             ("left_grasp_target_pos", "left_grasp_target", ObservationType.SITE_POS),
+            ("right_grip_point_pos", "right_grip_point", ObservationType.SITE_POS),
+            ("left_grip_point_pos", "left_grip_point", ObservationType.SITE_POS),
             ("right_handle_pos", "right_handle", ObservationType.BODY_POS),
             ("left_handle_pos", "left_handle", ObservationType.BODY_POS),
             ("right_handle_rot", "right_handle", ObservationType.BODY_ROT),

@@ -70,10 +70,10 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
 
     def _create_observation(self, obs):
         obs = super()._create_observation(obs)
-        right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
-        left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
-        rel_right = self._read_data("right_handle_pos") - right_arm_pos
-        rel_left = self._read_data("left_handle_pos") - left_arm_pos
+        right_grip_pos = self._read_data("right_grip_point_pos")
+        left_grip_pos = self._read_data("left_grip_point_pos")
+        rel_right = self._read_data("right_handle_pos") - right_grip_pos
+        rel_left = self._read_data("left_handle_pos") - left_grip_pos
         # Create contact force observation (robot+hand / table)
         contact_force = self._get_contact_force(
             "robot", "table", self._contact_force_range
@@ -142,16 +142,93 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
 
     def _create_info_dictionary(self, obs, action):
         info = super()._create_info_dictionary(obs, action)
-        info["grasp_contact_reward"] = self._get_grasp_contact_reward()
-        info["distance_reward"] = self._get_handle_distance_reward(obs)
+        grasp_contact = self._get_grasp_contact_reward()
+        distance = self._get_handle_distance_reward(obs)
+        grasp_bonus = self._success_grasp_reward if self._grasp_reached() else 0.0
+        info["grasp_contact_reward"] = grasp_contact
+        info["distance_reward"] = distance
+        info["grasp_bonus"] = grasp_bonus
+        info["total_reward"] = grasp_contact + distance + grasp_bonus
         return info
+
+
+def _grasp_controller(env):
+    """
+    Jacobian-transpose controller: drives each grip_point site to the handle
+    centre (+1 cm overshoot), then closes the fingers.
+
+    The grip_point sites sit at the finger level (z=0.099 in the link frame),
+    so targeting them at the handle positions the fingers around the bar.
+    Fingers close once the grip_point is within CLOSE_THRESHOLD of the handle.
+
+    Action layout (BimanualTableEnv order):
+      [0:7]   right arm A1-A7   ctrlrange [-1, 1]
+      [7:14]  left arm A1-A7    ctrlrange [-1, 1]
+      [14:16] left fingers       ctrlrange [-0.5, 0.5]
+      [16:18] right fingers      ctrlrange [-0.5, 0.5]
+    """
+    model = env._model
+    data = env._data
+    nv = model.nv
+
+    right_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "right_grip_point")
+    left_site_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_SITE, "left_grip_point")
+    right_handle_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "right_handle")
+    left_handle_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "left_handle")
+
+    right_arm_dofs = [model.joint(f"right_arm_A{i}").dofadr[0] for i in range(1, 8)]
+    left_arm_dofs = [model.joint(f"left_arm_A{i}").dofadr[0] for i in range(1, 8)]
+
+    OVERSHOOT = 0.00    # push 1 cm past the handle centre along approach axis
+    CLOSE_THRESHOLD = 0.005  # start closing when grip_point is within 4 cm
+
+    # Overshoot: push 1 cm past the handle in the current approach direction.
+    right_link_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "right_hande_robotiq_hande_link")
+    left_link_id = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, "left_hande_robotiq_hande_link")
+    right_z = data.xmat[right_link_id].reshape(3, 3)[:, 2]
+    left_z = data.xmat[left_link_id].reshape(3, 3)[:, 2]
+
+    right_target = data.xpos[right_handle_id] + OVERSHOOT * right_z
+    left_target = data.xpos[left_handle_id] + OVERSHOOT * left_z
+
+    right_err = right_target - data.site_xpos[right_site_id]
+    left_err = left_target - data.site_xpos[left_site_id]
+
+    jacp_right = np.zeros((3, nv))
+    jacp_left = np.zeros((3, nv))
+    mujoco.mj_jacSite(model, data, jacp_right, None, right_site_id)
+    mujoco.mj_jacSite(model, data, jacp_left, None, left_site_id)
+
+    K = 4.0
+    right_dq = K * jacp_right[:, right_arm_dofs].T @ right_err
+    left_dq = K * jacp_left[:, left_arm_dofs].T @ left_err
+
+    right_finger_cmd = -0.5 if np.linalg.norm(right_err) < CLOSE_THRESHOLD else 0.5
+    left_finger_cmd = -0.5 if np.linalg.norm(left_err) < CLOSE_THRESHOLD else 0.5
+
+    action = np.zeros(18)
+    action[0:7] = np.clip(right_dq, -1.0, 1.0)
+    action[7:14] = np.clip(left_dq, -1.0, 1.0)
+    action[14:16] = left_finger_cmd
+    action[16:18] = right_finger_cmd
+    return action
 
 
 if __name__ == "__main__":
     env = TrayPickUpGraspEnv()
     obs = env.reset()
     env.render()
+
     while True:
-        action = np.zeros((18,))
-        env.step(action)
+        action = _grasp_controller(env)
+        obs, _, _, info = env.step(action)
         env.render()
+
+        print(
+            f"\r  distance={info['distance_reward']:+.3f}"
+            f"  contact={info['grasp_contact_reward']:+.3f}"
+            f"  bonus={info['grasp_bonus']:+.3f}"
+            f"  total={info['total_reward']:+.3f}",
+            end="",
+            flush=True,
+        )
