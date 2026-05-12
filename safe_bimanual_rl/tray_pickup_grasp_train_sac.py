@@ -22,8 +22,8 @@ from safe_bimanual_rl.rl_utils.plotting import save_plots
 
 
 def experiment(
-    n_epochs=150,
-    n_steps=10000,
+    n_epochs=200,
+    n_steps=13000,
     n_steps_per_fit=4,
     n_episodes_test=5,
     initial_replay_size=10000,
@@ -43,6 +43,10 @@ def experiment(
     grasp_force_threshold: float = 0.3,
     success_grasp_reward: float = 30.0,
     contact_threshold: float = 5.0,
+    lift_height_weight: float = 2.0,
+    lift_sharpness: float = 0.1,
+    lift_target_height: float = 0.5,
+    success_lift_reward: float = 100.0,
     action_space_limit: float = 0.2,
     target_entropy: float = None,
     use_wandb: bool = True,
@@ -62,12 +66,16 @@ def experiment(
     logger.info("Experiment Algorithm: SAC - TrayPickUpGraspEnv")
 
     mdp = TrayPickUpGraspEnv(
-        horizon=200,
+        horizon=500,
         handle_distance_weight=handle_distance_weight,
         reach_sharpness=reach_sharpness,
         grasp_force_threshold=grasp_force_threshold,
         success_grasp_reward=success_grasp_reward,
         contact_threshold=contact_threshold,
+        lift_height_weight=lift_height_weight,
+        lift_sharpness=lift_sharpness,
+        lift_target_height=lift_target_height,
+        success_lift_reward=success_lift_reward,
     )
 
     # Actor
@@ -147,6 +155,10 @@ def experiment(
             "grasp_force_threshold": grasp_force_threshold,
             "success_grasp_reward": success_grasp_reward,
             "contact_threshold": contact_threshold,
+            "lift_height_weight": lift_height_weight,
+            "lift_sharpness": lift_sharpness,
+            "lift_target_height": lift_target_height,
+            "success_lift_reward": success_lift_reward,
             "action_space_limit": action_space_limit,
             "target_entropy": target_entropy,
             "seed": seed,
@@ -206,7 +218,7 @@ def experiment(
             agent.save(best_file)
             logger.info(f"New best model saved (J={J:.2f}): {best_file}")
 
-    run.summary["absorbing/grasp_reached"] = mdp._absorbing_counts["grasp_reached"]
+    run.summary["absorbing/lift_reached"] = mdp._absorbing_counts["lift_reached"]
     run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
     run.finish()
 
@@ -264,6 +276,10 @@ def main(cfg: DictConfig):
         grasp_force_threshold=cfg.grasp_force_threshold,
         success_grasp_reward=cfg.success_grasp_reward,
         contact_threshold=cfg.contact_threshold,
+        lift_height_weight=cfg.lift_height_weight,
+        lift_sharpness=cfg.lift_sharpness,
+        lift_target_height=cfg.lift_target_height,
+        success_lift_reward=cfg.success_lift_reward,
         action_space_limit=cfg.action_space_limit,
         target_entropy=cfg.target_entropy,
         seed=cfg.seed,

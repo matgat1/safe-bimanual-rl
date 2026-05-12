@@ -1,8 +1,8 @@
 # SAC agent configuration for the tray pickup grasp phase
 
 # Training parameters
-n_epochs: 150
-n_steps: 10000
+n_epochs: 200
+n_steps: 15000
 n_steps_per_fit: 4
 n_episodes_test: 5
 initial_replay_size: 10000
@@ -25,6 +25,10 @@ reach_sharpness: 0.15
 grasp_force_threshold: 0.3
 success_grasp_reward: 30.0
 contact_threshold: 5.0
+lift_height_weight: 2.0
+lift_sharpness: 0.1
+lift_target_height: 0.5
+success_lift_reward: 100.0
 action_space_limit: 0.2
 target_entropy: null
 seed: 0
