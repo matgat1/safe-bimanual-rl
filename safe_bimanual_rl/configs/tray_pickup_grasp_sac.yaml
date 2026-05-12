@@ -24,7 +24,10 @@ handle_distance_weight: 1.5
 reach_sharpness: 0.15
 grasp_force_threshold: 0.3
 success_grasp_reward: 30.0
-contact_threshold: 5.0
+contact_threshold: 3.0
+contact_cost_weight: -1e-4
+tray_contact_threshold: 1.5
+tray_contact_cost_weight: -1e-4
 lift_height_weight: 2.0
 lift_sharpness: 0.1
 lift_target_height: 0.5

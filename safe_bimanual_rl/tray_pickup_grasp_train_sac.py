@@ -43,6 +43,9 @@ def experiment(
     grasp_force_threshold: float = 0.3,
     success_grasp_reward: float = 30.0,
     contact_threshold: float = 5.0,
+    contact_cost_weight: float = -1e-4,
+    tray_contact_threshold: float = 3.0,
+    tray_contact_cost_weight: float = -1e-4,
     lift_height_weight: float = 2.0,
     lift_sharpness: float = 0.1,
     lift_target_height: float = 0.5,
@@ -66,12 +69,15 @@ def experiment(
     logger.info("Experiment Algorithm: SAC - TrayPickUpGraspEnv")
 
     mdp = TrayPickUpGraspEnv(
-        horizon=500,
+        horizon=360,
         handle_distance_weight=handle_distance_weight,
         reach_sharpness=reach_sharpness,
         grasp_force_threshold=grasp_force_threshold,
         success_grasp_reward=success_grasp_reward,
         contact_threshold=contact_threshold,
+        contact_cost_weight=contact_cost_weight,
+        tray_contact_threshold=tray_contact_threshold,
+        tray_contact_cost_weight=tray_contact_cost_weight,
         lift_height_weight=lift_height_weight,
         lift_sharpness=lift_sharpness,
         lift_target_height=lift_target_height,
@@ -155,6 +161,9 @@ def experiment(
             "grasp_force_threshold": grasp_force_threshold,
             "success_grasp_reward": success_grasp_reward,
             "contact_threshold": contact_threshold,
+            "contact_cost_weight": contact_cost_weight,
+            "tray_contact_threshold": tray_contact_threshold,
+            "tray_contact_cost_weight": tray_contact_cost_weight,
             "lift_height_weight": lift_height_weight,
             "lift_sharpness": lift_sharpness,
             "lift_target_height": lift_target_height,
@@ -220,6 +229,7 @@ def experiment(
 
     run.summary["absorbing/lift_reached"] = mdp._absorbing_counts["lift_reached"]
     run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
+    run.summary["absorbing/tray_contact_force"] = mdp._absorbing_counts["tray_contact_force"]
     run.summary["absorbing/grasp_reached"] = mdp._absorbing_counts["grasp_reached"]
     run.finish()
 
@@ -277,6 +287,9 @@ def main(cfg: DictConfig):
         grasp_force_threshold=cfg.grasp_force_threshold,
         success_grasp_reward=cfg.success_grasp_reward,
         contact_threshold=cfg.contact_threshold,
+        contact_cost_weight=cfg.contact_cost_weight,
+        tray_contact_threshold=cfg.tray_contact_threshold,
+        tray_contact_cost_weight=cfg.tray_contact_cost_weight,
         lift_height_weight=cfg.lift_height_weight,
         lift_sharpness=cfg.lift_sharpness,
         lift_target_height=cfg.lift_target_height,
