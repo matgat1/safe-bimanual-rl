@@ -67,6 +67,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         self._absorbing_counts = {
             "lift_reached": 0,
             "contact_force": 0,
+            "grasp_reached": 0,
         }
         self.init_states_path = os.path.join(
             os.path.dirname(__file__), "data", "initial_states", "grasp_init_states.npz"
@@ -159,6 +160,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         if not self._grasp_bonus_given and self._grasp_reached():
             grasp_bonus = self._success_grasp_reward
             self._grasp_bonus_given = True
+            self._absorbing_counts["grasp_reached"] += 1
 
         reward = (
             handle_distance_reward

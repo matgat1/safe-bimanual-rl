@@ -220,6 +220,7 @@ def experiment(
 
     run.summary["absorbing/lift_reached"] = mdp._absorbing_counts["lift_reached"]
     run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
+    run.summary["absorbing/grasp_reached"] = mdp._absorbing_counts["grasp_reached"]
     run.finish()
 
     save_plots(
