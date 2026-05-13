@@ -1,5 +1,6 @@
 import os
 import numpy as np
+from mushroom_rl.rl_utils.spaces import Box
 from safe_bimanual_rl.environments.bimanual_table_env import BimanualTableEnv
 from mushroom_rl.environments.mujoco import ObservationType
 
@@ -120,6 +121,46 @@ class TrayPickUpBaseEnv(BimanualTableEnv):
             additional_data_spec=additional_data_spec,
             collision_groups=collision_groups,
             **viewer_params,
+        )
+
+    def _modify_mdp_info(self, mdp_info):
+        mdp_info = super()._modify_mdp_info(mdp_info)
+        self.obs_helper.add_obs("rel_right_handle_pos", 3)
+        self.obs_helper.add_obs("rel_left_handle_pos", 3)
+        self.obs_helper.add_obs("contact_force", 1)
+        self.obs_helper.add_obs("tray_contact_force", 1)
+        self.obs_helper.add_obs("cube_pos", 3)
+        self.obs_helper.add_obs("right_handle_rot", 4)
+        self.obs_helper.add_obs("left_handle_rot", 4)
+        mdp_info.observation_space = Box(*self.obs_helper.get_obs_limits())
+        return mdp_info
+
+    def _create_observation(self, obs):
+        obs = super()._create_observation(obs)
+        right_grip_pos = self._read_data("right_grip_point_pos")
+        left_grip_pos = self._read_data("left_grip_point_pos")
+        rel_right = self._read_data("right_handle_pos") - right_grip_pos
+        rel_left = self._read_data("left_handle_pos") - left_grip_pos
+        contact_force = self._get_contact_force(
+            "robot", "table", self._contact_force_range
+        ) + self._get_contact_force("hand", "table", self._contact_force_range)
+        tray_contact_force = self._get_contact_force(
+            "tray", "table", self._contact_force_range
+        ) - 0.9  # subtract gravity baseline so the observation is ~0 at rest
+        cube_pos = self._read_data("cube_pos")
+        right_handle_rot = self._read_data("right_handle_rot")
+        left_handle_rot = self._read_data("left_handle_rot")
+        return np.concatenate(
+            [
+                obs,
+                rel_right,
+                rel_left,
+                contact_force,
+                tray_contact_force,
+                cube_pos,
+                right_handle_rot,
+                left_handle_rot,
+            ]
         )
 
     def _get_contact_cost(self, obs):
