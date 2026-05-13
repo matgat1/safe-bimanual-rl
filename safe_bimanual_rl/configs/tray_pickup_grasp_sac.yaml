@@ -32,6 +32,6 @@ lift_height_weight: 2.0
 lift_sharpness: 0.1
 lift_target_height: 0.5
 success_lift_reward: 100.0
-action_space_limit: 0.2
+action_space_limit: 0.4
 target_entropy: null
 seed: 0
