@@ -103,11 +103,13 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
         )
 
         proximity_threshold = 0.10
+        right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
+        left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
         right_dist = np.linalg.norm(
-            self.obs_helper.get_from_obs(obs, "rel_right_handle_pos")
+            self._read_data("right_grasp_target_pos") - right_arm_pos
         )
         left_dist = np.linalg.norm(
-            self.obs_helper.get_from_obs(obs, "rel_left_handle_pos")
+            self._read_data("left_grasp_target_pos") - left_arm_pos
         )
 
         # Left: gripper_y parallel to handle_y
@@ -139,10 +141,12 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
     def _position_reached(self, obs):
         """Check if both end effectors are within success_threshold of their grasp targets."""
         right_dist = np.linalg.norm(
-            self.obs_helper.get_from_obs(obs, "rel_right_handle_pos")
+            self._read_data("right_grasp_target_pos")
+            - self._read_data("right_hande_robotiq_hande_end_pos")
         )
         left_dist = np.linalg.norm(
-            self.obs_helper.get_from_obs(obs, "rel_left_handle_pos")
+            self._read_data("left_grasp_target_pos")
+            - self._read_data("left_hande_robotiq_hande_end_pos")
         )
         return (
             right_dist < self._success_position_threshold
