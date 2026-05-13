@@ -196,12 +196,12 @@ def experiment(
     H_values.append(H)
 
     # Replay initialisation
-    core.learn(n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size)
+    core.learn(n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size, quiet=use_cluster)
 
     # Training loop
     for n in trange(n_epochs, leave=False):
-        core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit)
-        dataset = core.evaluate(n_episodes=5, render=False)
+        core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit, quiet=use_cluster)
+        dataset = core.evaluate(n_episodes=5, render=False, quiet=use_cluster)
 
         J = np.mean(dataset.discounted_return)
         R = np.mean(dataset.undiscounted_return)
