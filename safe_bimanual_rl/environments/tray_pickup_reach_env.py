@@ -1,5 +1,4 @@
 import numpy as np
-from mushroom_rl.rl_utils.spaces import Box
 from safe_bimanual_rl.environments.tray_pickup_base_env import TrayPickUpBaseEnv
 from safe_bimanual_rl.utils.quaternions import quat_to_mat
 
@@ -27,7 +26,7 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
         success_orientation_reward: float = 50.0,
         success_position_threshold: float = 0.06,
         success_orientation_threshold: float = 0.4,
-        success_steps: int = 40,
+        success_steps: int = 10,
         **viewer_params,
     ):
         """
@@ -74,39 +73,16 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
             "contact_force": 0,
         }
 
-    def _modify_mdp_info(self, mdp_info):
-        mdp_info = super()._modify_mdp_info(mdp_info)
-        self.obs_helper.add_obs("rel_right_handle_pos", 3)
-        self.obs_helper.add_obs("rel_left_handle_pos", 3)
-        self.obs_helper.add_obs("contact_force", 1)
-        self.obs_helper.add_obs("right_handle_rot", 4)
-        self.obs_helper.add_obs("left_handle_rot", 4)
-        # Update dimensions of the observation space
-        mdp_info.observation_space = Box(*self.obs_helper.get_obs_limits())
-        return mdp_info
-
-    def _create_observation(self, obs):
-        obs = super()._create_observation(obs)
-        # Relative positions to grasp targets (5 cm from each handle, tracked via MuJoCo sites)
+    def _get_handle_distance_reward(self, obs):
+        # Reward uses site-to-hand-end distance, not the handle-centre obs
         right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
         left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
         rel_right = self._read_data("right_grasp_target_pos") - right_arm_pos
         rel_left = self._read_data("left_grasp_target_pos") - left_arm_pos
-        # Create contact force observation (robot+hand / table)
-        contact_force = self._get_contact_force(
-            "robot", "table", self._contact_force_range
-        ) + self._get_contact_force("hand", "table", self._contact_force_range)
-        # Concatenate the new observations to the original observation
-        return np.concatenate(
-            [
-                obs,
-                rel_right,
-                rel_left,
-                contact_force,
-                self._read_data("right_handle_rot"),
-                self._read_data("left_handle_rot"),
-            ]
+        reward = (1 - np.tanh(np.linalg.norm(rel_right) / self._reach_sharpness)) + (
+            1 - np.tanh(np.linalg.norm(rel_left) / self._reach_sharpness)
         )
+        return self._handle_distance_weight * reward
 
     def _get_gripper_rotation_reward(self, obs):
         """
@@ -127,11 +103,13 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
         )
 
         proximity_threshold = 0.10
+        right_arm_pos = self._read_data("right_hande_robotiq_hande_end_pos")
+        left_arm_pos = self._read_data("left_hande_robotiq_hande_end_pos")
         right_dist = np.linalg.norm(
-            self.obs_helper.get_from_obs(obs, "rel_right_handle_pos")
+            self._read_data("right_grasp_target_pos") - right_arm_pos
         )
         left_dist = np.linalg.norm(
-            self.obs_helper.get_from_obs(obs, "rel_left_handle_pos")
+            self._read_data("left_grasp_target_pos") - left_arm_pos
         )
 
         # Left: gripper_y parallel to handle_y
@@ -163,10 +141,12 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
     def _position_reached(self, obs):
         """Check if both end effectors are within success_threshold of their grasp targets."""
         right_dist = np.linalg.norm(
-            self.obs_helper.get_from_obs(obs, "rel_right_handle_pos")
+            self._read_data("right_grasp_target_pos")
+            - self._read_data("right_hande_robotiq_hande_end_pos")
         )
         left_dist = np.linalg.norm(
-            self.obs_helper.get_from_obs(obs, "rel_left_handle_pos")
+            self._read_data("left_grasp_target_pos")
+            - self._read_data("left_hande_robotiq_hande_end_pos")
         )
         return (
             right_dist < self._success_position_threshold
