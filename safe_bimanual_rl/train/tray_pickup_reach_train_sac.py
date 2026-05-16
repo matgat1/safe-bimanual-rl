@@ -196,7 +196,11 @@ def experiment(
     H_values.append(H)
 
     # Replay initialisation
-    core.learn(n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size, quiet=use_cluster)
+    core.learn(
+        n_steps=initial_replay_size,
+        n_steps_per_fit=initial_replay_size,
+        quiet=use_cluster,
+    )
 
     # Training loop
     for n in trange(n_epochs, leave=False):

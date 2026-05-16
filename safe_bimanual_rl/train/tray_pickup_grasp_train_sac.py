@@ -69,7 +69,7 @@ def experiment(
     logger.info("Experiment Algorithm: SAC - TrayPickUpGraspEnv")
 
     mdp = TrayPickUpGraspEnv(
-        horizon=360,
+        horizon=500,
         handle_distance_weight=handle_distance_weight,
         reach_sharpness=reach_sharpness,
         grasp_force_threshold=grasp_force_threshold,
@@ -197,7 +197,11 @@ def experiment(
     H_values.append(H)
 
     # Replay initialisation
-    core.learn(n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size, quiet=use_cluster)
+    core.learn(
+        n_steps=initial_replay_size,
+        n_steps_per_fit=initial_replay_size,
+        quiet=use_cluster,
+    )
 
     # Training loop
     for n in trange(n_epochs, leave=False):
@@ -229,7 +233,9 @@ def experiment(
 
     run.summary["absorbing/lift_reached"] = mdp._absorbing_counts["lift_reached"]
     run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
-    run.summary["absorbing/tray_contact_force"] = mdp._absorbing_counts["tray_contact_force"]
+    run.summary["absorbing/tray_contact_force"] = mdp._absorbing_counts[
+        "tray_contact_force"
+    ]
     run.summary["absorbing/grasp_reached"] = mdp._absorbing_counts["grasp_reached"]
     run.finish()
 

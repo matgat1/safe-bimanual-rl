@@ -40,13 +40,18 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             reach_sharpness (float): Controls how sharply the tanh reward drops off with distance.
             grasp_force_threshold (float): Contact force threshold for grasp quality gate.
             success_grasp_reward (float): Bonus reward when both grippers first grasp the handles.
-            contact_threshold (float): Robot/hand-table contact force magnitude above which the episode terminates.
-            contact_cost_weight (float): Weight applied to the robot/hand-table contact force cost (negative).
-            tray_contact_threshold (float): Tray-table contact force (baseline-subtracted) above which the episode terminates.
-            tray_contact_cost_weight (float): Weight applied to the tray-table contact force cost (negative).
+            contact_threshold (float): Robot/hand-table contact force magnitude above
+                which the episode terminates.
+            contact_cost_weight (float): Weight applied to the robot/hand-table contact
+                force cost (negative).
+            tray_contact_threshold (float): Tray-table contact force (baseline-subtracted)
+                above which the episode terminates.
+            tray_contact_cost_weight (float): Weight applied to the tray-table contact
+                force cost (negative).
             lift_height_weight (float): Weight for the continuous tray height reward.
             lift_sharpness (float): Tanh sharpness for the height reward (meters).
-            lift_target_height (float): Height above initial position (m) that triggers lift success.
+            lift_target_height (float): Height above initial position (m) that triggers
+                lift success.
             success_lift_reward (float): Bonus reward when the tray is lifted to target height.
         """
         super().__init__(

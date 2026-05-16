@@ -40,7 +40,9 @@ class ConstraintNetwork(nn.Module):
         nn.init.xavier_uniform_(self._h1.weight, gain=nn.init.calculate_gain("relu"))
         nn.init.xavier_uniform_(self._h2.weight, gain=nn.init.calculate_gain("relu"))
         nn.init.xavier_uniform_(self._mu.weight, gain=nn.init.calculate_gain("linear"))
-        nn.init.xavier_uniform_(self._log_std.weight, gain=nn.init.calculate_gain("linear"))
+        nn.init.xavier_uniform_(
+            self._log_std.weight, gain=nn.init.calculate_gain("linear")
+        )
 
     def forward(self, state):
         x = F.relu(self._h1(state.float()))
@@ -192,9 +194,15 @@ def experiment(
         mode="online" if use_wandb else "disabled",
         settings=wandb.Settings(silent=True),
         config=dict(
-            n_epochs=n_epochs, n_steps=n_steps, batch_size=batch_size,
-            accepted_risk=accepted_risk, atacom_lam=atacom_lam, atacom_beta=atacom_beta,
-            cost_budget=cost_budget, init_delta=init_delta, acc_limit=acc_limit,
+            n_epochs=n_epochs,
+            n_steps=n_steps,
+            batch_size=batch_size,
+            accepted_risk=accepted_risk,
+            atacom_lam=atacom_lam,
+            atacom_beta=atacom_beta,
+            cost_budget=cost_budget,
+            init_delta=init_delta,
+            acc_limit=acc_limit,
         ),
     )
 
@@ -216,7 +224,9 @@ def experiment(
         eval_data = core.evaluate(n_episodes=n_episodes_test, render=False)
 
         logger.epoch_info(n + 1, J=eval_data["J"], mean_cost=eval_data["mean_cost"])
-        run.log({"J": eval_data["J"], "mean_cost": eval_data["mean_cost"], "epoch": n + 1})
+        run.log(
+            {"J": eval_data["J"], "mean_cost": eval_data["mean_cost"], "epoch": n + 1}
+        )
         J_values.append(eval_data["J"])
         cost_values.append(eval_data["mean_cost"])
 
@@ -242,7 +252,9 @@ def experiment(
         logger.info("Experiment finished.")
 
 
-@hydra.main(version_base=None, config_path="../configs", config_name="reach_cube_datacom")
+@hydra.main(
+    version_base=None, config_path="../configs", config_name="reach_cube_datacom"
+)
 def main(cfg: DictConfig):
     print(f"Running with config:\n{cfg}")
     experiment(
