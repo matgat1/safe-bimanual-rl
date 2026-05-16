@@ -111,8 +111,8 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         left_grasp = np.minimum(np.tanh(left_finger_right), np.tanh(left_finger_left))
 
         # Track the weaker finger on each hand: both fingers must contact for success.
-        self._last_right_grasp_force = np.minimum(right_finger_right, right_finger_left)
-        self._last_left_grasp_force = np.minimum(left_finger_right, left_finger_left)
+        self._last_right_grasp_force = np.maximum(right_finger_right, right_finger_left)
+        self._last_left_grasp_force = np.maximum(left_finger_right, left_finger_left)
 
         return (2 * np.minimum(right_grasp, left_grasp)).item()
 
