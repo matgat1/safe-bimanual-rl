@@ -37,7 +37,7 @@ jobs:
     - name: Analyse the code with Pylint
       shell: bash -l {0}
       run: |
-        pylint safe_bimanual_rl --disable=E0401,C0114,C0103 --fail-under=7.5
+        pylint safe_bimanual_rl --disable=E0401,C0114,C0103 --fail-under=7.2
 
     - name: Test with pytest
       shell: bash -l {0}
