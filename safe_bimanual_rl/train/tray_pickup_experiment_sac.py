@@ -13,7 +13,7 @@ from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core, Logger
 from tqdm import trange
 
-from safe_bimanual_rl.environments import ReachEnv
+from safe_bimanual_rl.environments import TrayPickUpEnv
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (
     ActorNetwork,
     CriticNetwork,
@@ -22,57 +22,65 @@ from safe_bimanual_rl.rl_utils.plotting import save_plots
 
 
 def experiment(
-    n_epochs=100,
+    n_epochs=150,
     n_steps=8000,
-    n_steps_per_fit=1,
+    n_steps_per_fit=4,
     n_episodes_test=5,
     initial_replay_size=10000,
     max_replay_size=200000,
     batch_size=256,
-    n_features=128,
+    n_features=256,
     warmup_transitions=10000,
-    tau=0.003,
-    lr_alpha=1e-4,
+    tau=0.001,
+    lr_alpha=3e-4,
     lr_actor=3e-4,
     lr_critic=3e-4,
     use_cluster=False,
     save_model=False,
-    model_name: str = "reach_cube_agent",
+    model_name: str = "tray_pickup_agent",
     contact_cost_weight: float = -1e-4,
-    cube_distance_weight: float = 3.0,
-    cube_touched_reward: float = 3.0,
+    handle_distance_weight: float = 2.0,
     contact_threshold: float = 2.0,
     control_cost_weight: float = -1e-4,
-    reach_sharpness: float = 0.5,
-    cube_displacement_weight: float = -5.0,
+    reach_sharpness: float = 0.3,
+    rotation_reward_weight: float = 1.0,
+    orientation_sharpness: float = 0.3,
+    success_position_reward: float = 10.0,
+    success_orientation_reward: float = 50.0,
+    success_position_threshold: float = 0.06,
+    success_orientation_threshold: float = 0.4,
     action_space_limit: float = 0.4,
+    target_entropy: float = None,
     use_wandb: bool = True,
+    seed: int = 0,
 ):
-
+    """Run a SAC training experiment on TrayPickUpEnv."""
     hydra_cfg = HydraConfig.get()
     save_dir = hydra_cfg.runtime.output_dir
     # Extract date, time, job_num from multirun output path: .../multirun/date/time/job_num
     date, time, job_num = save_dir.split(os.sep)[-3:]
     run_name = f"{model_name}_{date}_{time}_{job_num}"
 
-    np.random.seed()
+    np.random.seed(seed)
 
     logger = Logger(SAC.__name__, results_dir=None)
     logger.strong_line()
-    logger.info("Experiment Algorithm: SAC - ReachEnv")
+    logger.info("Experiment Algorithm: SAC - TrayPickUpEnv")
 
     # Load Environment
-    mdp = ReachEnv(
+    mdp = TrayPickUpEnv(
         gamma=0.99,
-        horizon=130,
+        horizon=120,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
-        cube_distance_weight=cube_distance_weight,
-        cube_touched_reward=cube_touched_reward,
+        handle_distance_weight=handle_distance_weight,
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
         reach_sharpness=reach_sharpness,
-        cube_displacement_weight=cube_displacement_weight,
+        rotation_reward_weight=rotation_reward_weight,
+        success_reward=success_reward,
+        success_threshold=success_threshold,
+        success_orientation_threshold=success_orientation_threshold,
     )
 
     # Actor
@@ -119,6 +127,7 @@ def experiment(
         warmup_transitions,
         tau,
         lr_alpha,
+        target_entropy=target_entropy,
         critic_fit_params=None,
     )
 
@@ -147,17 +156,24 @@ def experiment(
             "lr_actor": lr_actor,
             "lr_critic": lr_critic,
             "contact_cost_weight": contact_cost_weight,
-            "cube_distance_weight": cube_distance_weight,
-            "cube_touched_reward": cube_touched_reward,
+            "handle_distance_weight": handle_distance_weight,
             "contact_threshold": contact_threshold,
             "control_cost_weight": control_cost_weight,
             "reach_sharpness": reach_sharpness,
-            "cube_displacement_weight": cube_displacement_weight,
+            "rotation_reward_weight": rotation_reward_weight,
+            "orientation_sharpness": orientation_sharpness,
+            "success_position_reward": success_position_reward,
+            "success_orientation_reward": success_orientation_reward,
+            "success_position_threshold": success_position_threshold,
+            "success_orientation_threshold": success_orientation_threshold,
             "action_space_limit": action_space_limit,
+            "target_entropy": target_entropy,
+            "seed": seed,
         },
     )
 
     J_values, R_values, H_values = [], [], []
+    best_J = -np.inf
 
     # Evaluation before training
     dataset = core.evaluate(n_episodes=n_episodes_test, render=False)
@@ -203,6 +219,16 @@ def experiment(
         R_values.append(R)
         H_values.append(H)
 
+        if save_model and J > best_J:
+            best_J = J
+            best_file = os.path.join(save_dir, f"{model_name}_best.msh")
+            agent.save(best_file)
+            logger.info(f"New best model saved (J={J:.2f}): {best_file}")
+
+    run.summary["absorbing/position_reached"] = mdp._absorbing_counts[
+        "position_reached"
+    ]
+    run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
     run.finish()
 
     save_plots(
@@ -225,14 +251,16 @@ def experiment(
         logger.info("Experiment finished.")
 
     if save_model:
-        file_name = f"{model_name}.msh"
-        agent.save(os.path.join(save_dir, file_name))
+        last_file = os.path.join(save_dir, f"{model_name}_last.msh")
+        agent.save(last_file)
+        logger.info(f"Last model saved: {last_file}")
 
-        logger.info(f"Model saved : {save_dir}/{file_name}")
 
-
-@hydra.main(version_base=None, config_path="configs", config_name="reach_cube_sac")
+@hydra.main(
+    version_base=None, config_path="../configs", config_name="tray_pickup_reach_sac"
+)
 def main(cfg: DictConfig):
+    """Entry point: parse Hydra config and run the experiment."""
     print(f"Running with config:\n{cfg}")
     experiment(
         n_epochs=cfg.n_epochs,
@@ -253,15 +281,19 @@ def main(cfg: DictConfig):
         model_name=cfg.model_name,
         use_wandb=cfg.use_wandb,
         contact_cost_weight=cfg.contact_cost_weight,
-        cube_distance_weight=cfg.cube_distance_weight,
-        cube_touched_reward=cfg.cube_touched_reward,
+        handle_distance_weight=cfg.handle_distance_weight,
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
         reach_sharpness=cfg.reach_sharpness,
-        cube_displacement_weight=cfg.cube_displacement_weight,
+        rotation_reward_weight=cfg.rotation_reward_weight,
+        success_reward=cfg.success_reward,
+        success_threshold=cfg.success_threshold,
+        success_orientation_threshold=cfg.success_orientation_threshold,
         action_space_limit=cfg.action_space_limit,
+        target_entropy=cfg.target_entropy,
+        seed=cfg.seed,
     )
 
 
 if __name__ == "__main__":
-    main()
+    main()  # pylint: disable=no-value-for-parameter

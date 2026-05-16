@@ -13,7 +13,7 @@ from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core, Logger
 from tqdm import trange
 
-from safe_bimanual_rl.environments import TrayPickUpGraspEnv
+from safe_bimanual_rl.environments import ReachEnv
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (
     ActorNetwork,
     CriticNetwork,
@@ -22,66 +22,57 @@ from safe_bimanual_rl.rl_utils.plotting import save_plots
 
 
 def experiment(
-    n_epochs=200,
-    n_steps=13000,
-    n_steps_per_fit=4,
+    n_epochs=100,
+    n_steps=8000,
+    n_steps_per_fit=1,
     n_episodes_test=5,
     initial_replay_size=10000,
     max_replay_size=200000,
     batch_size=256,
-    n_features=256,
+    n_features=128,
     warmup_transitions=10000,
-    tau=0.001,
-    lr_alpha=1e-3,
+    tau=0.003,
+    lr_alpha=1e-4,
     lr_actor=3e-4,
     lr_critic=3e-4,
     use_cluster=False,
     save_model=False,
-    model_name: str = "grasp_sac",
-    handle_distance_weight: float = 1.5,
-    reach_sharpness: float = 0.15,
-    grasp_force_threshold: float = 0.3,
-    success_grasp_reward: float = 30.0,
-    contact_threshold: float = 5.0,
+    model_name: str = "reach_cube_agent",
     contact_cost_weight: float = -1e-4,
-    tray_contact_threshold: float = 3.0,
-    tray_contact_cost_weight: float = -1e-4,
-    lift_height_weight: float = 2.0,
-    lift_sharpness: float = 0.1,
-    lift_target_height: float = 0.5,
-    success_lift_reward: float = 100.0,
-    action_space_limit: float = 0.2,
-    target_entropy: float = None,
+    cube_distance_weight: float = 3.0,
+    cube_touched_reward: float = 3.0,
+    contact_threshold: float = 2.0,
+    control_cost_weight: float = -1e-4,
+    reach_sharpness: float = 0.5,
+    cube_displacement_weight: float = -5.0,
+    action_space_limit: float = 0.4,
     use_wandb: bool = True,
-    seed: int = 0,
 ):
-    """Run a SAC training experiment on TrayPickUpGraspEnv."""
+
     hydra_cfg = HydraConfig.get()
     save_dir = hydra_cfg.runtime.output_dir
     # Extract date, time, job_num from multirun output path: .../multirun/date/time/job_num
     date, time, job_num = save_dir.split(os.sep)[-3:]
     run_name = f"{model_name}_{date}_{time}_{job_num}"
 
-    np.random.seed(seed)
+    np.random.seed()
 
     logger = Logger(SAC.__name__, results_dir=None)
     logger.strong_line()
-    logger.info("Experiment Algorithm: SAC - TrayPickUpGraspEnv")
+    logger.info("Experiment Algorithm: SAC - ReachEnv")
 
-    mdp = TrayPickUpGraspEnv(
-        horizon=360,
-        handle_distance_weight=handle_distance_weight,
-        reach_sharpness=reach_sharpness,
-        grasp_force_threshold=grasp_force_threshold,
-        success_grasp_reward=success_grasp_reward,
-        contact_threshold=contact_threshold,
+    # Load Environment
+    mdp = ReachEnv(
+        gamma=0.99,
+        horizon=130,
+        n_substeps=4,
         contact_cost_weight=contact_cost_weight,
-        tray_contact_threshold=tray_contact_threshold,
-        tray_contact_cost_weight=tray_contact_cost_weight,
-        lift_height_weight=lift_height_weight,
-        lift_sharpness=lift_sharpness,
-        lift_target_height=lift_target_height,
-        success_lift_reward=success_lift_reward,
+        cube_distance_weight=cube_distance_weight,
+        cube_touched_reward=cube_touched_reward,
+        contact_threshold=contact_threshold,
+        control_cost_weight=control_cost_weight,
+        reach_sharpness=reach_sharpness,
+        cube_displacement_weight=cube_displacement_weight,
     )
 
     # Actor
@@ -128,7 +119,6 @@ def experiment(
         warmup_transitions,
         tau,
         lr_alpha,
-        target_entropy=target_entropy,
         critic_fit_params=None,
     )
 
@@ -156,26 +146,18 @@ def experiment(
             "lr_alpha": lr_alpha,
             "lr_actor": lr_actor,
             "lr_critic": lr_critic,
-            "handle_distance_weight": handle_distance_weight,
-            "reach_sharpness": reach_sharpness,
-            "grasp_force_threshold": grasp_force_threshold,
-            "success_grasp_reward": success_grasp_reward,
-            "contact_threshold": contact_threshold,
             "contact_cost_weight": contact_cost_weight,
-            "tray_contact_threshold": tray_contact_threshold,
-            "tray_contact_cost_weight": tray_contact_cost_weight,
-            "lift_height_weight": lift_height_weight,
-            "lift_sharpness": lift_sharpness,
-            "lift_target_height": lift_target_height,
-            "success_lift_reward": success_lift_reward,
+            "cube_distance_weight": cube_distance_weight,
+            "cube_touched_reward": cube_touched_reward,
+            "contact_threshold": contact_threshold,
+            "control_cost_weight": control_cost_weight,
+            "reach_sharpness": reach_sharpness,
+            "cube_displacement_weight": cube_displacement_weight,
             "action_space_limit": action_space_limit,
-            "target_entropy": target_entropy,
-            "seed": seed,
         },
     )
 
     J_values, R_values, H_values = [], [], []
-    best_J = -np.inf
 
     # Evaluation before training
     dataset = core.evaluate(n_episodes=n_episodes_test, render=False)
@@ -197,12 +179,12 @@ def experiment(
     H_values.append(H)
 
     # Replay initialisation
-    core.learn(n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size, quiet=use_cluster)
+    core.learn(n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size)
 
     # Training loop
     for n in trange(n_epochs, leave=False):
-        core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit, quiet=use_cluster)
-        dataset = core.evaluate(n_episodes=5, render=False, quiet=use_cluster)
+        core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit)
+        dataset = core.evaluate(n_episodes=5, render=False)
 
         J = np.mean(dataset.discounted_return)
         R = np.mean(dataset.undiscounted_return)
@@ -221,16 +203,6 @@ def experiment(
         R_values.append(R)
         H_values.append(H)
 
-        if save_model and J > best_J:
-            best_J = J
-            best_file = os.path.join(save_dir, f"{model_name}_best.msh")
-            agent.save(best_file)
-            logger.info(f"New best model saved (J={J:.2f}): {best_file}")
-
-    run.summary["absorbing/lift_reached"] = mdp._absorbing_counts["lift_reached"]
-    run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
-    run.summary["absorbing/tray_contact_force"] = mdp._absorbing_counts["tray_contact_force"]
-    run.summary["absorbing/grasp_reached"] = mdp._absorbing_counts["grasp_reached"]
     run.finish()
 
     save_plots(
@@ -253,16 +225,14 @@ def experiment(
         logger.info("Experiment finished.")
 
     if save_model:
-        last_file = os.path.join(save_dir, f"{model_name}_last.msh")
-        agent.save(last_file)
-        logger.info(f"Last model saved: {last_file}")
+        file_name = f"{model_name}.msh"
+        agent.save(os.path.join(save_dir, file_name))
+
+        logger.info(f"Model saved : {save_dir}/{file_name}")
 
 
-@hydra.main(
-    version_base=None, config_path="configs", config_name="tray_pickup_grasp_sac"
-)
+@hydra.main(version_base=None, config_path="../configs", config_name="reach_cube_sac")
 def main(cfg: DictConfig):
-    """Entry point: parse Hydra config and run the experiment."""
     print(f"Running with config:\n{cfg}")
     experiment(
         n_epochs=cfg.n_epochs,
@@ -282,23 +252,16 @@ def main(cfg: DictConfig):
         save_model=cfg.save_model,
         model_name=cfg.model_name,
         use_wandb=cfg.use_wandb,
-        handle_distance_weight=cfg.handle_distance_weight,
-        reach_sharpness=cfg.reach_sharpness,
-        grasp_force_threshold=cfg.grasp_force_threshold,
-        success_grasp_reward=cfg.success_grasp_reward,
-        contact_threshold=cfg.contact_threshold,
         contact_cost_weight=cfg.contact_cost_weight,
-        tray_contact_threshold=cfg.tray_contact_threshold,
-        tray_contact_cost_weight=cfg.tray_contact_cost_weight,
-        lift_height_weight=cfg.lift_height_weight,
-        lift_sharpness=cfg.lift_sharpness,
-        lift_target_height=cfg.lift_target_height,
-        success_lift_reward=cfg.success_lift_reward,
+        cube_distance_weight=cfg.cube_distance_weight,
+        cube_touched_reward=cfg.cube_touched_reward,
+        contact_threshold=cfg.contact_threshold,
+        control_cost_weight=cfg.control_cost_weight,
+        reach_sharpness=cfg.reach_sharpness,
+        cube_displacement_weight=cfg.cube_displacement_weight,
         action_space_limit=cfg.action_space_limit,
-        target_entropy=cfg.target_entropy,
-        seed=cfg.seed,
     )
 
 
 if __name__ == "__main__":
-    main()  # pylint: disable=no-value-for-parameter
+    main()

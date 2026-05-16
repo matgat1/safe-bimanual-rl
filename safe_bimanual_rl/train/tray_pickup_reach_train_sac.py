@@ -258,7 +258,7 @@ def experiment(
 
 
 @hydra.main(
-    version_base=None, config_path="configs", config_name="tray_pickup_reach_sac"
+    version_base=None, config_path="../configs", config_name="tray_pickup_reach_sac"
 )
 def main(cfg: DictConfig):
     """Entry point: parse Hydra config and run the experiment."""

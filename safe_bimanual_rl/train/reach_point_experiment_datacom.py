@@ -242,7 +242,7 @@ def experiment(
         logger.info("Experiment finished.")
 
 
-@hydra.main(version_base=None, config_path="configs", config_name="reach_cube_datacom")
+@hydra.main(version_base=None, config_path="../configs", config_name="reach_cube_datacom")
 def main(cfg: DictConfig):
     print(f"Running with config:\n{cfg}")
     experiment(
