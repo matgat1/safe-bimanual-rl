@@ -10,7 +10,7 @@ We use **MuJoCo-based environments** and the **MushroomRL** library to design ta
 ***Reach Cube experiment*** trained for 250 epochs
 
 
-<img src="figs/reach_cube_agent_2026-04-19_20-21-46_52.gif" width="48%"/> <img src="figs/reach_cube_agent_2026-04-19_20-21-46_44.gif" width="48%"/> 
+<img src="figs/reach_cube_agent_2026-04-19_20-21-46_52.gif" width="48%"/> <img src="figs/state_machine.gif" width="48%"/> 
 
 
 
