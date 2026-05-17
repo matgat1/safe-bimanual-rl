@@ -220,22 +220,52 @@ def experiment(
 
     # Initial evaluation
     eval_data = core.evaluate(n_episodes=n_episodes_test, render=False)
-    logger.epoch_info(0, J=eval_data["J"], mean_cost=eval_data["mean_cost"])
-    run.log({"J": eval_data["J"], "mean_cost": eval_data["mean_cost"], "epoch": 0})
+    logger.epoch_info(
+        0,
+        J=eval_data["J"],
+        R=eval_data["R"],
+        entropy=eval_data["H"],
+        mean_cost=eval_data["mean_cost"],
+    )
+    run.log(
+        {
+            "Discounted Return (J)": eval_data["J"],
+            "Undiscounted Return (R)": eval_data["R"],
+            "Entropy (H)": eval_data["H"],
+            "mean_cost": eval_data["mean_cost"],
+            "epoch": 0,
+        }
+    )
     J_values.append(eval_data["J"])
     cost_values.append(eval_data["mean_cost"])
 
     # Replay buffer warm-up
-    core.learn(n_steps=initial_replay_size, n_steps_per_fit=initial_replay_size)
+    core.learn(
+        n_steps=initial_replay_size,
+        n_steps_per_fit=initial_replay_size,
+        quiet=use_cluster,
+    )
 
     # Training loop
     for n in trange(n_epochs, leave=False):
-        core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit)
+        core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit, quiet=use_cluster)
         eval_data = core.evaluate(n_episodes=n_episodes_test, render=False)
 
-        logger.epoch_info(n + 1, J=eval_data["J"], mean_cost=eval_data["mean_cost"])
+        logger.epoch_info(
+            n + 1,
+            J=eval_data["J"],
+            R=eval_data["R"],
+            entropy=eval_data["H"],
+            mean_cost=eval_data["mean_cost"],
+        )
         run.log(
-            {"J": eval_data["J"], "mean_cost": eval_data["mean_cost"], "epoch": n + 1}
+            {
+                "Discounted Return (J)": eval_data["J"],
+                "Undiscounted Return (R)": eval_data["R"],
+                "Entropy (H)": eval_data["H"],
+                "mean_cost": eval_data["mean_cost"],
+                "epoch": n + 1,
+            }
         )
         J_values.append(eval_data["J"])
         cost_values.append(eval_data["mean_cost"])

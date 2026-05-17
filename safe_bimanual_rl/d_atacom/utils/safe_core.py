@@ -95,22 +95,28 @@ class SafeCore(Core):
         safe_data = getattr(dataset, "_safe_dataset", [])
 
         if not safe_data:
-            return {"J": 0.0, "mean_cost": 0.0}
+            return {"J": 0.0, "R": 0.0, "H": 0.0, "mean_cost": 0.0}
 
         gamma = self.env.info.gamma
-        episode_J, episode_costs = [], []
-        current_J, current_cost, discount = 0.0, 0.0, 1.0
+        episode_J, episode_R, episode_costs = [], [], []
+        current_J, current_R, current_cost, discount = 0.0, 0.0, 0.0, 1.0
 
         for _, _, reward, _, cost, _, last in safe_data:
             current_J += discount * float(reward)
+            current_R += float(reward)
             current_cost += float(cost)
             discount *= gamma
             if last:
                 episode_J.append(current_J)
+                episode_R.append(current_R)
                 episode_costs.append(current_cost)
-                current_J, current_cost, discount = 0.0, 0.0, 1.0
+                current_J, current_R, current_cost, discount = 0.0, 0.0, 0.0, 1.0
+
+        H = self.agent.policy.entropy(dataset.state).item()
 
         return {
             "J": float(np.mean(episode_J)) if episode_J else 0.0,
+            "R": float(np.mean(episode_R)) if episode_R else 0.0,
+            "H": H,
             "mean_cost": float(np.mean(episode_costs)) if episode_costs else 0.0,
         }
