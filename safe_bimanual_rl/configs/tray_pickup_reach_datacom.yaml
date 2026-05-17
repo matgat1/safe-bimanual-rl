@@ -1,0 +1,46 @@
+# DatacomSAC agent configuration for the tray pickup reach task
+
+# Training parameters
+n_epochs: 150
+n_steps: 10000
+n_steps_per_fit: 1
+n_episodes_test: 5
+initial_replay_size: 10000
+max_replay_size: 200000
+batch_size: 256
+n_features: 256
+warmup_transitions: 10000
+tau: 0.001
+lr_alpha: 1e-3
+lr_actor: 3e-4
+lr_critic: 3e-4
+lr_constraint: 5e-4
+use_cluster: true
+save_model: true
+use_wandb: true
+model_name: "tray_pickup_reach_datacom_agent"
+seed: 0
+
+# D-ATACOM / safety parameters
+accepted_risk: 0.9
+atacom_lam: 25.0
+atacom_beta: 3.0
+cost_budget: 1.0
+lr_delta: 0.05
+init_delta: 3.0
+delta_warmup_transitions: 50000
+vel_limit: 1.0
+
+# Reward / environment parameters
+contact_cost_weight: -1e-4
+control_cost_weight: -1e-4
+handle_distance_weight: 2.0
+contact_threshold: 3.0
+reach_sharpness: 0.4
+rotation_reward_weight: 2.0
+orientation_sharpness: 0.3
+success_position_reward: 500.0
+success_orientation_reward: 2500.0
+success_position_threshold: 0.02
+success_orientation_threshold: 0.2
+action_space_limit: 0.4
