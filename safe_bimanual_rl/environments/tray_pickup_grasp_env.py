@@ -149,6 +149,8 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
 
     def reward(self, obs, action, next_obs, absorbing):
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
+        # Always call to update internal grasp force state, but only reward
+        # before the grasp bonus is given — after that the agent must lift.
         grasp_contact_reward = self._get_grasp_contact_reward()
         lift_reward = self._get_lift_reward()
         lift_bonus = self._success_lift_reward if self._lift_reached() else 0.0
@@ -161,6 +163,10 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             grasp_bonus = self._success_grasp_reward
             self._grasp_bonus_given = True
             self._absorbing_counts["grasp_reached"] += 1
+
+        # Drop grasp contact reward once grasp is confirmed to push agent to lift.
+        if self._grasp_bonus_given:
+            grasp_contact_reward = 0.0
 
         reward = (
             handle_distance_reward
@@ -183,8 +189,12 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             self._absorbing_counts["contact_force"] += 1
             print("Contact force exceeded threshold")
             return True
+        # Skip tray contact termination while the tray is actively being lifted
+        # to avoid false terminations from simulation force artifacts mid-air.
+        cube_z = self._read_data("cube_pos")[2]
+        tray_is_grounded = (cube_z - self._initial_cube_height) < 0.05
         tray_contact_force = self.obs_helper.get_from_obs(obs, "tray_contact_force")[0]
-        if tray_contact_force > self._tray_contact_threshold:
+        if tray_is_grounded and tray_contact_force > self._tray_contact_threshold:
             self._absorbing_counts["tray_contact_force"] += 1
             print("Tray contact force exceeded threshold")
             return True

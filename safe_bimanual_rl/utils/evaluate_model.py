@@ -1,7 +1,6 @@
 from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core
 from safe_bimanual_rl.environments import (
-    TrayPickUpEnv,
     TrayPickUpGraspEnv,
     TrayPickUpLiftEnv,
     TrayPickUpReachEnv,
@@ -17,7 +16,6 @@ import argparse
 
 ENV_REGISTRY = {
     "reach_cube": ReachEnv,
-    "tray_pickup": TrayPickUpEnv,
     "grasping_position": TrayPickUpReachEnv,
     "grasp_sac": TrayPickUpGraspEnv,
     "lift_sac": TrayPickUpLiftEnv,
