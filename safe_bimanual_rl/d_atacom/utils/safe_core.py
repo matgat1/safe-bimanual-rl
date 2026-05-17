@@ -11,15 +11,21 @@ class SafeCore(Core):
     build the same 7-tuple for agent.fit via a parallel safe_dataset list.
     """
 
-    def __init__(self, agent, env, callbacks_fit=None, callback_step=None, record_dictionary=None):
-        super(SafeCore, self).__init__(agent, env, callbacks_fit, callback_step, record_dictionary)
+    def __init__(
+        self, agent, env, callbacks_fit=None, callback_step=None, record_dictionary=None
+    ):
+        super(SafeCore, self).__init__(
+            agent, env, callbacks_fit, callback_step, record_dictionary
+        )
         self._cost = 0
 
     def _reset(self, initial_states):
         super(SafeCore, self)._reset(initial_states)
         self._cost = 0
 
-    def _run(self, dataset, n_steps, n_episodes, render, quiet, record, initial_states=None):
+    def _run(
+        self, dataset, n_steps, n_episodes, render, quiet, record, initial_states=None
+    ):
         self._core_logic.initialize_run(n_steps, n_episodes, initial_states, quiet)
 
         safe_dataset = []
@@ -44,7 +50,9 @@ class SafeCore(Core):
 
             # Build 7-tuple matching the original cremini format
             state, action, reward, next_state, absorbing, last_flag = sample[:6]
-            safe_dataset.append((state, action, reward, next_state, cost, absorbing, last_flag))
+            safe_dataset.append(
+                (state, action, reward, next_state, cost, absorbing, last_flag)
+            )
 
             if self._core_logic.fit_required():
                 self.agent.fit(safe_dataset)
@@ -66,11 +74,22 @@ class SafeCore(Core):
         dataset._safe_dataset = safe_dataset
         return dataset
 
-    def evaluate(self, initial_states=None, n_steps=None, n_episodes=None,
-                 render=False, quiet=True, record=False):
+    def evaluate(
+        self,
+        initial_states=None,
+        n_steps=None,
+        n_episodes=None,
+        render=False,
+        quiet=True,
+        record=False,
+    ):
         dataset = super().evaluate(
-            initial_states=initial_states, n_steps=n_steps, n_episodes=n_episodes,
-            render=render, quiet=quiet, record=record,
+            initial_states=initial_states,
+            n_steps=n_steps,
+            n_episodes=n_episodes,
+            render=render,
+            quiet=quiet,
+            record=record,
         )
 
         safe_data = getattr(dataset, "_safe_dataset", [])

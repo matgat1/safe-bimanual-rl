@@ -641,7 +641,7 @@ class GaussianAtacomReplayMemory(Serializable):
         c = list()
         ss = list()
         ab = list()
-        l = list()
+        last = list()
 
         for i in np.random.randint(sum(self.size), size=n_samples):
             b = 0
@@ -661,7 +661,7 @@ class GaussianAtacomReplayMemory(Serializable):
             c.append(self._constraints[b][index])
             ss.append(np.array(self._next_states[b][index]))
             ab.append(self._absorbing[b][index])
-            l.append(self._last[b][index])
+            last.append(self._last[b][index])
 
         s = np.array(s)
         a = np.array(a)
@@ -671,9 +671,9 @@ class GaussianAtacomReplayMemory(Serializable):
         c = np.array(c)
         ss = np.array(ss)
         ab = np.array(ab)
-        l = np.array(l)
+        last = np.array(last)
 
-        return s, a, u, p, r, c, ss, ab, l
+        return s, a, u, p, r, c, ss, ab, last
 
     def reset(self):
         """

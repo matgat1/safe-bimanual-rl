@@ -54,7 +54,7 @@ class ControlAffineSystem(Serializable):
 
 
 class VelocityControlSystem(ControlAffineSystem):
-    def __init__(self, dim_q, index_q, vel_limit):
+    def __init__(self, dim_q, index_q, vel_limit, dim_x=0, index_x=None):
         if np.isscalar(vel_limit):
             self.vel_limit = np.ones(dim_q) * vel_limit
         else:
@@ -63,7 +63,7 @@ class VelocityControlSystem(ControlAffineSystem):
         self._add_save_attr(
             vel_limit="primitive",
         )
-        super().__init__(dim_q, dim_q, index_q)
+        super().__init__(dim_q, dim_q, index_q, dim_x=dim_x, index_x=index_x)
 
     def f(self, q):
         assert q.shape[-1] == self.dim_q

@@ -14,7 +14,9 @@ import wandb
 from mushroom_rl.core import Logger
 from tqdm import trange
 
-from safe_bimanual_rl.environments.reach_env import ReachEnv
+from safe_bimanual_rl.environments.safe_tray_pickup_reach_env import (
+    SafeTrayPickUpReachEnv,
+)
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (
     ActorNetwork,
     CriticNetwork,
@@ -31,7 +33,6 @@ class ConstraintNetwork(nn.Module):
     def __init__(self, input_shape, output_shape, n_features, **kwargs):
         super().__init__()
         n_input = input_shape[-1]
-
         self._h1 = nn.Linear(n_input, n_features)
         self._h2 = nn.Linear(n_features, n_features)
         self._mu = nn.Linear(n_features, output_shape[0])
@@ -51,17 +52,17 @@ class ConstraintNetwork(nn.Module):
 
 
 def experiment(
-    n_epochs=100,
-    n_steps=8000,
+    n_epochs=150,
+    n_steps=10000,
     n_steps_per_fit=1,
     n_episodes_test=5,
     initial_replay_size=10000,
     max_replay_size=200000,
     batch_size=256,
-    n_features=128,
+    n_features=256,
     warmup_transitions=10000,
-    tau=0.003,
-    lr_alpha=1e-4,
+    tau=0.001,
+    lr_alpha=1e-3,
     lr_actor=3e-4,
     lr_critic=3e-4,
     lr_constraint=5e-4,
@@ -75,15 +76,20 @@ def experiment(
     vel_limit=1.0,
     use_cluster=False,
     save_model=False,
-    model_name: str = "reach_cube_datacom_agent",
+    model_name: str = "tray_pickup_reach_datacom_agent",
     contact_cost_weight: float = -1e-4,
-    cube_distance_weight: float = 3.0,
-    cube_touched_reward: float = 3.0,
-    contact_threshold: float = 2.0,
+    handle_distance_weight: float = 2.0,
+    contact_threshold: float = 3.0,
     control_cost_weight: float = -1e-4,
-    reach_sharpness: float = 0.5,
-    cube_displacement_weight: float = -5.0,
+    reach_sharpness: float = 0.4,
+    rotation_reward_weight: float = 2.0,
+    orientation_sharpness: float = 0.3,
+    success_position_reward: float = 500.0,
+    success_orientation_reward: float = 2500.0,
+    success_position_threshold: float = 0.02,
+    success_orientation_threshold: float = 0.2,
     action_space_limit: float = 0.4,
+    seed: int = 0,
     use_wandb: bool = True,
 ):
     hydra_cfg = HydraConfig.get()
@@ -91,25 +97,29 @@ def experiment(
     date, time, job_num = save_dir.split(os.sep)[-3:]
     run_name = f"{model_name}_{date}_{time}_{job_num}"
 
-    np.random.seed()
-    torch.manual_seed(0)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
 
     logger = Logger(DatacomSAC.__name__, results_dir=None)
     logger.strong_line()
-    logger.info("Experiment Algorithm: DatacomSAC - ReachEnv")
+    logger.info("Experiment Algorithm: DatacomSAC - SafeTrayPickUpReachEnv")
 
     # Environment
-    mdp = ReachEnv(
+    mdp = SafeTrayPickUpReachEnv(
         gamma=0.99,
-        horizon=200,
+        horizon=120,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
-        cube_distance_weight=cube_distance_weight,
-        cube_touched_reward=cube_touched_reward,
+        handle_distance_weight=handle_distance_weight,
         contact_threshold=contact_threshold,
         control_cost_weight=control_cost_weight,
         reach_sharpness=reach_sharpness,
-        cube_displacement_weight=cube_displacement_weight,
+        rotation_reward_weight=rotation_reward_weight,
+        orientation_sharpness=orientation_sharpness,
+        success_position_reward=success_position_reward,
+        success_orientation_reward=success_orientation_reward,
+        success_position_threshold=success_position_threshold,
+        success_orientation_threshold=success_orientation_threshold,
     )
     mdp.info.action_space.low[:] = -action_space_limit
     mdp.info.action_space.high[:] = action_space_limit
@@ -136,7 +146,7 @@ def experiment(
     }
     actor_optimizer = {"class": optim.Adam, "params": {"lr": lr_actor}}
 
-    # Critic network (takes state + action as input)
+    # Critic network (state + action)
     critic_input_shape = (actor_input_shape[0] + mdp.info.action_space.shape[0],)
     critic_params = dict(
         network=CriticNetwork,
@@ -183,7 +193,6 @@ def experiment(
 
     core = SafeCore(agent, mdp)
 
-    # Wandb
     run = wandb.init(
         entity="matgat1-lth",
         project="safe_bimanual_rl",
@@ -201,6 +210,9 @@ def experiment(
             cost_budget=cost_budget,
             init_delta=init_delta,
             vel_limit=vel_limit,
+            handle_distance_weight=handle_distance_weight,
+            rotation_reward_weight=rotation_reward_weight,
+            seed=seed,
         ),
     )
 
@@ -228,6 +240,10 @@ def experiment(
         J_values.append(eval_data["J"])
         cost_values.append(eval_data["mean_cost"])
 
+    run.summary["absorbing/position_reached"] = mdp._absorbing_counts[
+        "position_reached"
+    ]
+    run.summary["absorbing/contact_force"] = mdp._absorbing_counts["contact_force"]
     run.finish()
 
     save_plots(
@@ -251,7 +267,7 @@ def experiment(
 
 
 @hydra.main(
-    version_base=None, config_path="../configs", config_name="reach_cube_datacom"
+    version_base=None, config_path="../configs", config_name="tray_pickup_reach_datacom"
 )
 def main(cfg: DictConfig):
     print(f"Running with config:\n{cfg}")
@@ -283,13 +299,18 @@ def main(cfg: DictConfig):
         model_name=cfg.model_name,
         use_wandb=cfg.use_wandb,
         contact_cost_weight=cfg.contact_cost_weight,
-        cube_distance_weight=cfg.cube_distance_weight,
-        cube_touched_reward=cfg.cube_touched_reward,
+        handle_distance_weight=cfg.handle_distance_weight,
         contact_threshold=cfg.contact_threshold,
         control_cost_weight=cfg.control_cost_weight,
         reach_sharpness=cfg.reach_sharpness,
-        cube_displacement_weight=cfg.cube_displacement_weight,
+        rotation_reward_weight=cfg.rotation_reward_weight,
+        orientation_sharpness=cfg.orientation_sharpness,
+        success_position_reward=cfg.success_position_reward,
+        success_orientation_reward=cfg.success_orientation_reward,
+        success_position_threshold=cfg.success_position_threshold,
+        success_orientation_threshold=cfg.success_orientation_threshold,
         action_space_limit=cfg.action_space_limit,
+        seed=cfg.seed,
     )
 
 

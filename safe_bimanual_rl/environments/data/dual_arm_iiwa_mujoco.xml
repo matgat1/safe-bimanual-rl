@@ -100,7 +100,7 @@
                           <inertial pos="3.0000e-06 -2.0000e-06 1.3782e-02" quat="1.0 0.0 0.0 0.0" mass="0.259474" diaginertia="0.000171 0.000171 0.000299" />
                           <geom name="left_arm_link_7_collision" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_7.stl" class="collision" />
                           <geom name="left_arm_link_7_visual" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_7.stl" class="visual" />
-                          <site name="left_arm_link_7_sphere" pos="0 0 0.018" class="safety_sphere" size="0.04"/>
+                          <site name="left_arm_link_7_sphere" pos="0 0 0.018" class="safety_sphere" size="0.001"/>
                           <body name="left_arm_link_ee" pos="0 0 0.035" quat="1.0 0.0 0.0 0.0">
                             <body name="left_hande_robotiq_hande_coupler" pos="0 0 0" quat="1.0 0.0 0.0 0.0">
                               <inertial pos="0 0 0.005449999999999999" quat="1.0 0.0 0.0 0.0" mass="0.119" diaginertia="4.4668218799372e-05 4.4668218799372e-05 8.367187499999999e-05" />
