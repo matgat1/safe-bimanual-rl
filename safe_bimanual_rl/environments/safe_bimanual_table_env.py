@@ -4,26 +4,32 @@ from safe_bimanual_rl.environments.bimanual_table_env import BimanualTableEnv
 
 _LEFT_SPHERE_NAMES = [
     "left_arm_link_0_sphere",
+    "left_arm_A1_joint_sphere",
     "left_arm_link_1_sphere",
     "left_arm_A2_joint_sphere",
     "left_arm_link_2_sphere",
+    "left_arm_A3_joint_sphere",
     "left_arm_link_3_sphere",
     "left_arm_A4_joint_sphere",
     "left_arm_link_4_sphere",
+    "left_arm_A5_joint_sphere",
     "left_arm_link_5_sphere",
-    "left_arm_link_6_sphere",
+    "left_arm_A6_joint_sphere",
     "left_arm_link_7_sphere",
 ]
 _RIGHT_SPHERE_NAMES = [
     "right_arm_link_0_sphere",
+    "right_arm_A1_joint_sphere",
     "right_arm_link_1_sphere",
     "right_arm_A2_joint_sphere",
     "right_arm_link_2_sphere",
+    "right_arm_A3_joint_sphere",
     "right_arm_link_3_sphere",
     "right_arm_A4_joint_sphere",
     "right_arm_link_4_sphere",
+    "right_arm_A5_joint_sphere",
     "right_arm_link_5_sphere",
-    "right_arm_link_6_sphere",
+    "right_arm_A6_joint_sphere",
     "right_arm_link_7_sphere",
 ]
 

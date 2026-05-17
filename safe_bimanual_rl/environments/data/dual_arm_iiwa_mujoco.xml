@@ -17,7 +17,7 @@
         <geom material="collision_material" condim="3" conaffinity="1" priority="1" group="1" solref="0.005 1" solimp="0.99 0.999 1e-05" friction="1 0.01 0.01" />
       </default>
       <default class="safety_sphere">
-        <site type="sphere" size="0.13" rgba="0.0 0.8 0.2 0.3" group="3"/>
+        <site type="sphere" size="0.10" rgba="0.0 0.8 0.2 0.3" group="3"/>
       </default>
     </default>
   </default>
@@ -62,6 +62,7 @@
               <inertial pos="0.0 -0.034819 0.123299" quat="1.0 0.0 0.0 0.0" mass="3.394011" diaginertia="0.021383 0.020403 0.007563" />
               <geom name="left_arm_link_1_collision" pos="0.0 0.0 -0.1475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_1.stl" class="collision" />
               <geom name="left_arm_link_1_visual" pos="0.0 0.0 -0.1475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_1.stl" class="visual" />
+              <site name="left_arm_A1_joint_sphere" pos="0 0 0" class="safety_sphere"/>
               <site name="left_arm_link_1_sphere" pos="0 -0.005 0.096" class="safety_sphere"/>
               <body name="left_arm_link_2" pos="0.0 -0.0105 0.1925" quat="1.0 0.0 0.0 0.0">
                 <joint name="left_arm_A2" type="hinge" ref="0.0" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
@@ -75,6 +76,7 @@
                   <inertial pos="0.0 0.034819 0.123299" quat="1.0 0.0 0.0 0.0" mass="3.394011" diaginertia="0.021383 0.020403 0.007563" />
                   <geom name="left_arm_link_3_collision" pos="0.0 0.0 -0.5475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_3.stl" class="collision" />
                   <geom name="left_arm_link_3_visual" pos="0.0 0.0 -0.5475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_3.stl" class="visual" />
+                  <site name="left_arm_A3_joint_sphere" pos="0 0 0" class="safety_sphere"/>
                   <site name="left_arm_link_3_sphere" pos="0 0.005 0.096" class="safety_sphere"/>
                   <body name="left_arm_link_4" pos="0.0 0.0105 0.1925" quat="1.0 0.0 0.0 0.0">
                     <joint name="left_arm_A4" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 -1.0 0.0" />
@@ -88,19 +90,20 @@
                       <inertial pos="0.0 -0.029824 0.076267" quat="1.0 0.0 0.0 0.0" mass="1.529239" diaginertia="0.008485 0.007136 0.003848" />
                       <geom name="left_arm_link_5_collision" pos="0.0 0.0 -0.9475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_5.stl" class="collision" />
                       <geom name="left_arm_link_5_visual" pos="0.0 0.0 -0.9475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_5.stl" class="visual" />
-                      <site name="left_arm_link_5_sphere" pos="0 -0.035 0.096" class="safety_sphere"/>
+                      <site name="left_arm_A5_joint_sphere" pos="0 0 0" class="safety_sphere"/>
+                      <site name="left_arm_link_5_sphere" pos="0 -0.035 0.096" class="safety_sphere" size="0.08"/>
                       <body name="left_arm_link_6" pos="0.0 -0.0707 0.1925" quat="1.0 0.0 0.0 0.0">
                         <joint name="left_arm_A6" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
                         <inertial pos="0.0 0.07102 0.00495" quat="1.0 0.0 0.0 0.0" mass="2.403626" diaginertia="0.007067 0.006804 0.004629" />
                         <geom name="left_arm_link_6_collision" pos="0.0 0.0707 -1.14" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_6.stl" class="collision" />
                         <geom name="left_arm_link_6_visual" pos="0.0 0.0707 -1.14" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_6.stl" class="visual" />
-                        <site name="left_arm_link_6_sphere" pos="0 0.035 0.046" class="safety_sphere"/>
+                        <site name="left_arm_A6_joint_sphere" pos="0 0 0" class="safety_sphere" size="0.08"/>
                         <body name="left_arm_link_7" pos="0.0 0.0707 0.091" quat="1.0 0.0 0.0 0.0">
                           <joint name="left_arm_A7" type="hinge" ref="0.0" class="robot" range="-2.9146998508305306 2.9146998508305306" axis="0.0 0.0 1.0" />
                           <inertial pos="3.0000e-06 -2.0000e-06 1.3782e-02" quat="1.0 0.0 0.0 0.0" mass="0.259474" diaginertia="0.000171 0.000171 0.000299" />
                           <geom name="left_arm_link_7_collision" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_7.stl" class="collision" />
                           <geom name="left_arm_link_7_visual" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_7.stl" class="visual" />
-                          <site name="left_arm_link_7_sphere" pos="0 0 0.018" class="safety_sphere" size="0.001"/>
+                          <site name="left_arm_link_7_sphere" pos="0 0 -0.07" class="safety_sphere" size="0.11"/>
                           <body name="left_arm_link_ee" pos="0 0 0.035" quat="1.0 0.0 0.0 0.0">
                             <body name="left_hande_robotiq_hande_coupler" pos="0 0 0" quat="1.0 0.0 0.0 0.0">
                               <inertial pos="0 0 0.005449999999999999" quat="1.0 0.0 0.0 0.0" mass="0.119" diaginertia="4.4668218799372e-05 4.4668218799372e-05 8.367187499999999e-05" />
@@ -147,6 +150,7 @@
               <inertial pos="0.0 -0.034819 0.123299" quat="1.0 0.0 0.0 0.0" mass="3.394011" diaginertia="0.021383 0.020403 0.007563" />
               <geom name="right_arm_link_1_collision" pos="0.0 0.0 -0.1475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_1.stl" class="collision" />
               <geom name="right_arm_link_1_visual" pos="0.0 0.0 -0.1475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_1.stl" class="visual" />
+              <site name="right_arm_A1_joint_sphere" pos="0 0 0" class="safety_sphere"/>
               <site name="right_arm_link_1_sphere" pos="0 -0.005 0.096" class="safety_sphere"/>
               <body name="right_arm_link_2" pos="0.0 -0.0105 0.1925" quat="1.0 0.0 0.0 0.0">
                 <joint name="right_arm_A2" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
@@ -160,6 +164,7 @@
                   <inertial pos="0.0 0.034819 0.123299" quat="1.0 0.0 0.0 0.0" mass="3.394011" diaginertia="0.021383 0.020403 0.007563" />
                   <geom name="right_arm_link_3_collision" pos="0.0 0.0 -0.5475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_3.stl" class="collision" />
                   <geom name="right_arm_link_3_visual" pos="0.0 0.0 -0.5475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_3.stl" class="visual" />
+                  <site name="right_arm_A3_joint_sphere" pos="0 0 0" class="safety_sphere"/>
                   <site name="right_arm_link_3_sphere" pos="0 0.005 0.096" class="safety_sphere"/>
                   <body name="right_arm_link_4" pos="0.0 0.0105 0.1925" quat="1.0 0.0 0.0 0.0">
                     <joint name="right_arm_A4" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 -1.0 0.0" />
@@ -173,19 +178,20 @@
                       <inertial pos="0.0 -0.029824 0.076267" quat="1.0 0.0 0.0 0.0" mass="1.529239" diaginertia="0.008485 0.007136 0.003848" />
                       <geom name="right_arm_link_5_collision" pos="0.0 0.0 -0.9475" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_5.stl" class="collision" />
                       <geom name="right_arm_link_5_visual" pos="0.0 0.0 -0.9475" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_5.stl" class="visual" />
-                      <site name="right_arm_link_5_sphere" pos="0 -0.035 0.096" class="safety_sphere"/>
+                      <site name="right_arm_A5_joint_sphere" pos="0 0 0" class="safety_sphere"/>
+                      <site name="right_arm_link_5_sphere" pos="0 -0.035 0.096" class="safety_sphere" size="0.08"/>
                       <body name="right_arm_link_6" pos="0.0 -0.0707 0.1925" quat="1.0 0.0 0.0 0.0">
                         <joint name="right_arm_A6" type="hinge" ref="0.0" class="robot" range="-2.007128639793479 2.007128639793479" axis="0.0 1.0 0.0" />
                         <inertial pos="0.0 0.07102 0.00495" quat="1.0 0.0 0.0 0.0" mass="2.403626" diaginertia="0.007067 0.006804 0.004629" />
                         <geom name="right_arm_link_6_collision" pos="0.0 0.0707 -1.14" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_6.stl" class="collision" />
                         <geom name="right_arm_link_6_visual" pos="0.0 0.0707 -1.14" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_6.stl" class="visual" />
-                        <site name="right_arm_link_6_sphere" pos="0 0.035 0.046" class="safety_sphere"/>
+                        <site name="right_arm_A6_joint_sphere" pos="0 0 0" class="safety_sphere" size="0.08"/>
                         <body name="right_arm_link_7" pos="0.0 0.0707 0.091" quat="1.0 0.0 0.0 0.0">
                           <joint name="right_arm_A7" type="hinge" ref="0.0" class="robot" range="-2.9146998508305306 2.9146998508305306" axis="0.0 0.0 1.0" />
                           <inertial pos="3.0000e-06 -2.0000e-06 1.3782e-02" quat="1.0 0.0 0.0 0.0" mass="0.259474" diaginertia="0.000171 0.000171 0.000299" />
                           <geom name="right_arm_link_7_collision" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" type="mesh" mesh="link_7.stl" class="collision" />
                           <geom name="right_arm_link_7_visual" pos="0.0 0.0 -1.231" quat="1.0 0.0 0.0 0.0" material="default_material" type="mesh" mesh="link_7.stl" class="visual" />
-                          <site name="right_arm_link_7_sphere" pos="0 0 0.018" class="safety_sphere" size="0.04"/>
+                          <site name="right_arm_link_7_sphere" pos="0 0 -0.07" class="safety_sphere" size="0.11"/>
                           <body name="right_arm_link_ee" pos="0 0 0.035" quat="1.0 0.0 0.0 0.0">
                             <body name="right_hande_robotiq_hande_coupler" pos="0 0 0" quat="1.0 0.0 0.0 0.0">
                               <inertial pos="0 0 0.005449999999999999" quat="1.0 0.0 0.0 0.0" mass="0.119" diaginertia="4.4668218799372e-05 4.4668218799372e-05 8.367187499999999e-05" />
