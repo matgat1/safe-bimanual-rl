@@ -84,7 +84,10 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             "grasp_reached": 0,
         }
         self.init_states_path = os.path.join(
-            os.path.dirname(__file__), "data", "initial_states", "grasp_init_states_0.npz"
+            os.path.dirname(__file__),
+            "data",
+            "initial_states",
+            "grasp_init_states_0.npz",
         )
         data = np.load(self.init_states_path)
         self._init_states = list(zip(data["qpos"], data["qvel"], data["act"]))

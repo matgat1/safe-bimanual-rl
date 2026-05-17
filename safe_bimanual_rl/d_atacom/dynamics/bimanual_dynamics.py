@@ -38,9 +38,9 @@ class BimanualArmDynamics(ControlAffineSystem):
     """
 
     _N_ARM_JOINTS = 14
-    _N_FINGER_JOINTS = 4   # 2 per gripper × 2 grippers
+    _N_FINGER_JOINTS = 4  # 2 per gripper × 2 grippers
     _EE_INDEX_START = 36
-    _EE_DIM = 6            # right (3) + left (3)
+    _EE_DIM = 6  # right (3) + left (3)
 
     def __init__(self, vel_limit: float = 1.0):
         if np.isscalar(vel_limit):
@@ -51,7 +51,7 @@ class BimanualArmDynamics(ControlAffineSystem):
         self._add_save_attr(vel_limit="primitive")
 
         n_arm = self._N_ARM_JOINTS
-        n_total = n_arm + self._N_FINGER_JOINTS   # 18 = full action space
+        n_total = n_arm + self._N_FINGER_JOINTS  # 18 = full action space
 
         index_q = list(range(n_arm))
         index_x = list(range(self._EE_INDEX_START, self._EE_INDEX_START + self._EE_DIM))

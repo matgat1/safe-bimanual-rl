@@ -72,7 +72,9 @@ class SafeBimanualTableEnv(BimanualTableEnv):
             raise ValueError(f"Table geom '{_TABLE_GEOM_NAME}' not found in model.")
         # geom_xpos is the world-frame centre position (valid after mj_forward in __init__)
         # geom_size[2] is the half-height for a box geom
-        return float(self._data.geom_xpos[geom_id, 2] + self._model.geom_size[geom_id, 2])
+        return float(
+            self._data.geom_xpos[geom_id, 2] + self._model.geom_size[geom_id, 2]
+        )
 
     def _get_self_collision_cost(self):
         """Maximum penetration depth across all left-right arm sphere pairs."""

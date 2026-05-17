@@ -308,7 +308,7 @@ class DatacomSACPolicy(Policy):
         J, cons = torch.vmap(get_vjp)(state)
 
         J_q = J[:, :, : self._control_system.dim_q].detach()
-        J_x = J[:, :, self._control_system.dim_q:].detach()
+        J_x = J[:, :, self._control_system.dim_q :].detach()
 
         return (
             cons.double().cpu().numpy(),
@@ -418,7 +418,7 @@ class DatacomSACPolicy(Policy):
 
         """
         mu_weights = weights[: self._mu_approximator.weights_size]
-        sigma_weights = weights[self._mu_approximator.weights_size:]
+        sigma_weights = weights[self._mu_approximator.weights_size :]
 
         self._mu_approximator.set_weights(mu_weights)
         self._sigma_approximator.set_weights(sigma_weights)
