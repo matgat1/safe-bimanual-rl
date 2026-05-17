@@ -18,7 +18,7 @@ class TrayPickUpBaseEnv(BimanualTableEnv):
         self,
         gamma: float = 0.99,
         horizon: int = 1000,
-        n_substeps: int = 5,
+        n_substeps: int = 4,
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
         handle_distance_weight: float = 1.0,
