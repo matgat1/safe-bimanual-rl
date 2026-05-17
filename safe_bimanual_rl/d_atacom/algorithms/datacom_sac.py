@@ -18,14 +18,18 @@ from scipy.stats import norm
 
 from safe_bimanual_rl.d_atacom.utils.null_space import batch_smooth_basis
 
-from safe_bimanual_rl.d_atacom.utils.constraint_replay_memory import SafeReplayMemory, ViolationReplayMemory
+from safe_bimanual_rl.d_atacom.utils.constraint_replay_memory import (
+    SafeReplayMemory,
+    ViolationReplayMemory,
+)
 
 
 class DatacomSACPolicy(Policy):
     """
     Class used to implement the policy used by the Soft Actor-Critic algorithm.
-    The policy is a Gaussian policy squashed by a tanh. This class implements the compute_action_and_log_prob and the
-    compute_action_and_log_prob_t methods, that are fundamental for the internals calculations of the SAC algorithm.
+    The policy is a Gaussian policy squashed by a tanh. This class implements the
+    compute_action_and_log_prob and the compute_action_and_log_prob_t methods, that are
+    fundamental for the internals calculations of the SAC algorithm.
 
     """
 
@@ -66,8 +70,12 @@ class DatacomSACPolicy(Policy):
         self._mu_approximator = mu_approximator
         self._sigma_approximator = sigma_approximator
 
-        self._delta_a = TorchUtils.to_float_tensor(0.5 * (max_a - min_a)).to(self.device)
-        self._central_a = TorchUtils.to_float_tensor(0.5 * (max_a + min_a)).to(self.device)
+        self._delta_a = TorchUtils.to_float_tensor(0.5 * (max_a - min_a)).to(
+            self.device
+        )
+        self._central_a = TorchUtils.to_float_tensor(0.5 * (max_a + min_a)).to(
+            self.device
+        )
 
         self._log_std_min = to_parameter(log_std_min)
         self._log_std_max = to_parameter(log_std_max)
@@ -190,7 +198,8 @@ class DatacomSACPolicy(Policy):
             # Need to apply viability constraints to the analytical part
             state_dim = anal_J_k.shape[2] // 2
 
-            # Move q jacobian to q_dot because we assume second order dynamics for viability constraints
+            # Move q jacobian to q_dot because we assume second order dynamics
+            # for viability constraints
             anal_J_k_q = anal_J_k[:, :, :state_dim]
 
             anal_J_k_new = np.zeros_like(anal_J_k)
@@ -262,7 +271,8 @@ class DatacomSACPolicy(Policy):
         contraction_term = lam * J_u_inv @ c[:, :, None]
 
         # if len(contraction_term) == 1:
-        #     self._debug_auxiliary_action.append([contraction_term[:, :self._control_system.dim_u].norm().cpu().numpy(),
+        #     self._debug_auxiliary_action.append([
+        #         contraction_term[:, :self._control_system.dim_u].norm().cpu().numpy(),
         #                                          drift_compensation[:,
         #                                          :self._control_system.dim_u].norm().cpu().numpy()])
 
@@ -298,7 +308,7 @@ class DatacomSACPolicy(Policy):
         J, cons = torch.vmap(get_vjp)(state)
 
         J_q = J[:, :, : self._control_system.dim_q].detach()
-        J_x = J[:, :, self._control_system.dim_q :].detach()
+        J_x = J[:, :, self._control_system.dim_q:].detach()
 
         return (
             cons.double().cpu().numpy(),
@@ -317,7 +327,8 @@ class DatacomSACPolicy(Policy):
 
     def compute_action_and_log_prob(self, state):
         """
-        Function that samples actions using the reparametrization trick and the log probability for such actions.
+        Function that samples actions using the reparametrization trick and the log
+        probability for such actions.
 
         Args:
             state (np.ndarray): the state in which the action is sampled.
@@ -331,8 +342,8 @@ class DatacomSACPolicy(Policy):
 
     def compute_action_and_log_prob_t(self, state, return_log_prob=True):
         """
-        Function that samples actions using the reparametrization trick and, optionally, the log probability for such
-        actions.
+        Function that samples actions using the reparametrization trick and, optionally,
+        the log probability for such actions.
 
         Args:
             state (np.ndarray): the state in which the action is sampled;
@@ -407,7 +418,7 @@ class DatacomSACPolicy(Policy):
 
         """
         mu_weights = weights[: self._mu_approximator.weights_size]
-        sigma_weights = weights[self._mu_approximator.weights_size :]
+        sigma_weights = weights[self._mu_approximator.weights_size:]
 
         self._mu_approximator.set_weights(mu_weights)
         self._sigma_approximator.set_weights(sigma_weights)
@@ -489,18 +500,21 @@ class DatacomSAC(DeepAC):
             actor_optimizer (dict): parameters to specify the actor optimizer algorithm;
             critic_params (dict): parameters of the critic approximator to build;
             batch_size ((int, Parameter)): the number of samples in a batch;
-            initial_replay_size (int): the number of samples to collect before starting the learning;
+            initial_replay_size (int): the number of samples to collect before starting
+                the learning;
             max_replay_size (int): the maximum number of samples in the replay memory;
-            warmup_transitions ([int, Parameter]): number of samples to accumulate in the replay memory to start the
-                policy fitting;
+            warmup_transitions ([int, Parameter]): number of samples to accumulate in
+                the replay memory to start the policy fitting;
             tau ([float, Parameter]): value of coefficient for soft updates;
             lr_alpha ([float, Parameter]): Learning rate for the entropy coefficient;
-            use_log_alpha_loss (bool, False): whether to use the original implementation loss or the one from the
-                paper;
+            use_log_alpha_loss (bool, False): whether to use the original implementation
+                loss or the one from the paper;
             log_std_min ([float, Parameter]): Min value for the policy log std;
             log_std_max ([float, Parameter]): Max value for the policy log std;
-            target_entropy (float, None): target entropy for the policy, if None a default value is computed;
-            critic_fit_params (dict, None): parameters of the fitting algorithm of the critic approximator.
+            target_entropy (float, None): target entropy for the policy, if None a
+                default value is computed;
+            critic_fit_params (dict, None): parameters of the fitting algorithm of the
+                critic approximator.
 
         """
         self._critic_fit_params = (
@@ -561,7 +575,8 @@ class DatacomSAC(DeepAC):
             TorchApproximator, **target_constraint_params
         )
 
-        # self.lr_schedueler = optim.lr_scheduler.LambdaLR(self._constraint_approximator.model._optimizer,
+        # self.lr_schedueler = optim.lr_scheduler.LambdaLR(
+        #     self._constraint_approximator.model._optimizer,
         #                                                  lambda step: 0.97 ** (step // 10000))
         actor_mu_approximator = Regressor(TorchApproximator, **actor_mu_params)
         actor_sigma_approximator = Regressor(TorchApproximator, **actor_sigma_params)
@@ -702,9 +717,7 @@ class DatacomSAC(DeepAC):
 
             self._constraint_approximator.model._optimizer.zero_grad()
 
-            pred = self._constraint_approximator.predict(
-                state_tensor
-            )
+            pred = self._constraint_approximator.predict(state_tensor)
 
             loss = self.gaussian_wasserstein_dist(
                 pred,
@@ -818,13 +831,16 @@ class DatacomSAC(DeepAC):
             absorbing (np.ndarray): the absorbing flag for the states in ``next_state``.
 
         Returns:
-            Action-values returned by the critic for ``next_state`` and the action returned by the actor.
+            Action-values returned by the critic for ``next_state`` and the action
+            returned by the actor.
 
         """
         a, log_prob_next = self.policy.compute_action_and_log_prob(next_state)
 
         with torch.no_grad():
-            q = self._target_critic_approximator.predict(next_state, a, prediction="min")
+            q = self._target_critic_approximator.predict(
+                next_state, a, prediction="min"
+            )
         if isinstance(q, torch.Tensor):
             q = q.cpu().numpy()
 
