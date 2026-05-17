@@ -18,7 +18,7 @@ class TrayPickUpBaseEnv(BimanualTableEnv):
         self,
         gamma: float = 0.99,
         horizon: int = 1000,
-        n_substeps: int = 5,
+        n_substeps: int = 4,
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
         handle_distance_weight: float = 1.0,
@@ -144,9 +144,9 @@ class TrayPickUpBaseEnv(BimanualTableEnv):
         contact_force = self._get_contact_force(
             "robot", "table", self._contact_force_range
         ) + self._get_contact_force("hand", "table", self._contact_force_range)
-        tray_contact_force = self._get_contact_force(
-            "tray", "table", self._contact_force_range
-        ) - 0.9  # subtract gravity baseline so the observation is ~0 at rest
+        tray_contact_force = (
+            self._get_contact_force("tray", "table", self._contact_force_range) - 0.9
+        )  # subtract gravity baseline so the observation is ~0 at rest
         cube_pos = self._read_data("cube_pos")
         right_handle_rot = self._read_data("right_handle_rot")
         left_handle_rot = self._read_data("left_handle_rot")

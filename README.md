@@ -10,7 +10,7 @@ We use **MuJoCo-based environments** and the **MushroomRL** library to design ta
 ***Reach Cube experiment*** trained for 250 epochs
 
 
-<img src="figs/reach_cube_agent_2026-04-19_20-21-46_52.gif" width="48%"/> <img src="figs/reach_cube_agent_2026-04-19_20-21-46_44.gif" width="48%"/> 
+<img src="figs/reach_cube_agent_2026-04-19_20-21-46_52.gif" width="48%"/> <img src="figs/state_machine.gif" width="48%"/> 
 
 
 
@@ -23,9 +23,13 @@ We use **MuJoCo-based environments** and the **MushroomRL** library to design ta
 │   ├── environments/             # MuJoCo environments (bimanual, reach, tray pickup)
 │   ├── rl_utils/                 # SAC networks and plotting helpers
 │   ├── utils/                    # Evaluation, controller, and data collection utilities
-│   ├── reach_point_experiment_sac.py      # Training: reach task
-│   ├── tray_pickup_reach_train_sac.py     # Training: tray pickup — reach phase
-│   └── tray_pickup_grasp_train_sac.py     # Training: tray pickup — grasp phase
+│   ├── train/                    # Training and experiment entry points
+│   │   ├── reach_point_experiment_sac.py       # Experiment: reach task (SAC)
+│   │   ├── reach_point_experiment_datacom.py   # Experiment: reach task (D-ATACOM)
+│   │   ├── tray_pickup_experiment_sac.py       # Experiment: tray pickup (SAC)
+│   │   ├── tray_pickup_reach_train_sac.py      # Training: tray pickup — reach phase (SAC)
+│   │   ├── tray_pickup_reach_train_datacom.py  # Training: tray pickup — reach phase (D-ATACOM)
+│   │   └── tray_pickup_grasp_train_sac.py      # Training: tray pickup — grasp phase (SAC)
 ├── tests/                        # Unit and integration tests
 ├── environment.yml               # Conda environment definition
 ├── Makefile                      # Shortcuts for common commands
@@ -86,13 +90,13 @@ python3 safe_bimanual_rl/utils/sinusoidal_controller.py
 To train the RL agent on the reach task:
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment_sac
+python -m safe_bimanual_rl.train.reach_point_experiment_sac
 ```
 
 The default configuration is in `configs/reach_cube_sac.yaml`. You can override any parameter directly from the command line:
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment_sac \
+python -m safe_bimanual_rl.train.reach_point_experiment_sac \
     n_epochs=100 \
     model_name="test" \
     contact_threshold=1.0
@@ -101,14 +105,14 @@ python -m safe_bimanual_rl.reach_point_experiment_sac \
 To run multiple experiments with different parameters:
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment_sac --multirun \
+python -m safe_bimanual_rl.train.reach_point_experiment_sac --multirun \
     contact_threshold=1.0,5.0,20.0
 ```
 
 To use on the cluster:
 
 ```bash
-python -m safe_bimanual_rl.reach_point_experiment_sac --multirun \
+python -m safe_bimanual_rl.train.reach_point_experiment_sac --multirun \
   hydra/launcher=cosmos \
   contact_threshold=1.0,2.0,3.0
 ```
@@ -118,13 +122,13 @@ python -m safe_bimanual_rl.reach_point_experiment_sac --multirun \
 Train the agent to move the end-effectors to the tray handle positions with the correct orientation:
 
 ```bash
-python -m safe_bimanual_rl.tray_pickup_reach_train_sac
+python -m safe_bimanual_rl.train.tray_pickup_reach_train_sac
 ```
 
 Override key parameters:
 
 ```bash
-python -m safe_bimanual_rl.tray_pickup_reach_train_sac \
+python -m safe_bimanual_rl.train.tray_pickup_reach_train_sac \
     n_epochs=130 \
     model_name="reach_test" \
     reach_sharpness=0.4 \
@@ -136,7 +140,7 @@ python -m safe_bimanual_rl.tray_pickup_reach_train_sac \
 Sweep on the cluster:
 
 ```bash
-python -m safe_bimanual_rl.tray_pickup_reach_train_sac --multirun \
+python -m safe_bimanual_rl.train.tray_pickup_reach_train_sac --multirun \
   hydra/launcher=cosmos \
   reach_sharpness=0.3,0.4,0.5 \
   success_position_reward=100.0,500.0
@@ -147,13 +151,13 @@ python -m safe_bimanual_rl.tray_pickup_reach_train_sac --multirun \
 Train the agent to apply the correct contact forces on the tray handles:
 
 ```bash
-python -m safe_bimanual_rl.tray_pickup_grasp_train_sac
+python -m safe_bimanual_rl.train.tray_pickup_grasp_train_sac
 ```
 
 Override key parameters:
 
 ```bash
-python -m safe_bimanual_rl.tray_pickup_grasp_train_sac \
+python -m safe_bimanual_rl.train.tray_pickup_grasp_train_sac \
     n_epochs=150 \
     model_name="grasp_test" \
     success_grasp_reward=30.0 \
@@ -166,7 +170,7 @@ python -m safe_bimanual_rl.tray_pickup_grasp_train_sac \
 Sweep on the cluster:
 
 ```bash
-python -m safe_bimanual_rl.tray_pickup_grasp_train_sac --multirun \
+python -m safe_bimanual_rl.train.tray_pickup_grasp_train_sac --multirun \
   hydra/launcher=cosmos \
   success_grasp_reward=15.0,30.0 \
   grasp_force_threshold=0.2,0.3,0.5

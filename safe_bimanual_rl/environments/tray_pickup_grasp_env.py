@@ -40,13 +40,18 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             reach_sharpness (float): Controls how sharply the tanh reward drops off with distance.
             grasp_force_threshold (float): Contact force threshold for grasp quality gate.
             success_grasp_reward (float): Bonus reward when both grippers first grasp the handles.
-            contact_threshold (float): Robot/hand-table contact force magnitude above which the episode terminates.
-            contact_cost_weight (float): Weight applied to the robot/hand-table contact force cost (negative).
-            tray_contact_threshold (float): Tray-table contact force (baseline-subtracted) above which the episode terminates.
-            tray_contact_cost_weight (float): Weight applied to the tray-table contact force cost (negative).
+            contact_threshold (float): Robot/hand-table contact force magnitude above
+                which the episode terminates.
+            contact_cost_weight (float): Weight applied to the robot/hand-table contact
+                force cost (negative).
+            tray_contact_threshold (float): Tray-table contact force (baseline-subtracted)
+                above which the episode terminates.
+            tray_contact_cost_weight (float): Weight applied to the tray-table contact
+                force cost (negative).
             lift_height_weight (float): Weight for the continuous tray height reward.
             lift_sharpness (float): Tanh sharpness for the height reward (meters).
-            lift_target_height (float): Height above initial position (m) that triggers lift success.
+            lift_target_height (float): Height above initial position (m) that triggers
+                lift success.
             success_lift_reward (float): Bonus reward when the tray is lifted to target height.
         """
         super().__init__(
@@ -79,7 +84,10 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             "grasp_reached": 0,
         }
         self.init_states_path = os.path.join(
-            os.path.dirname(__file__), "data", "initial_states", "grasp_init_states.npz"
+            os.path.dirname(__file__),
+            "data",
+            "initial_states",
+            "grasp_init_states_0.npz",
         )
         data = np.load(self.init_states_path)
         self._init_states = list(zip(data["qpos"], data["qvel"], data["act"]))
@@ -111,8 +119,8 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         left_grasp = np.minimum(np.tanh(left_finger_right), np.tanh(left_finger_left))
 
         # Track the weaker finger on each hand: both fingers must contact for success.
-        self._last_right_grasp_force = np.minimum(right_finger_right, right_finger_left)
-        self._last_left_grasp_force = np.minimum(left_finger_right, left_finger_left)
+        self._last_right_grasp_force = np.maximum(right_finger_right, right_finger_left)
+        self._last_left_grasp_force = np.maximum(left_finger_right, left_finger_left)
 
         return (2 * np.minimum(right_grasp, left_grasp)).item()
 
@@ -144,6 +152,8 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
 
     def reward(self, obs, action, next_obs, absorbing):
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
+        # Always call to update internal grasp force state, but only reward
+        # before the grasp bonus is given — after that the agent must lift.
         grasp_contact_reward = self._get_grasp_contact_reward()
         lift_reward = self._get_lift_reward()
         lift_bonus = self._success_lift_reward if self._lift_reached() else 0.0
@@ -156,6 +166,10 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             grasp_bonus = self._success_grasp_reward
             self._grasp_bonus_given = True
             self._absorbing_counts["grasp_reached"] += 1
+
+        # Drop grasp contact reward once grasp is confirmed to push agent to lift.
+        if self._grasp_bonus_given:
+            grasp_contact_reward = 0.0
 
         reward = (
             handle_distance_reward
@@ -178,8 +192,12 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             self._absorbing_counts["contact_force"] += 1
             print("Contact force exceeded threshold")
             return True
+        # Skip tray contact termination while the tray is actively being lifted
+        # to avoid false terminations from simulation force artifacts mid-air.
+        cube_z = self._read_data("cube_pos")[2]
+        tray_is_grounded = (cube_z - self._initial_cube_height) < 0.05
         tray_contact_force = self.obs_helper.get_from_obs(obs, "tray_contact_force")[0]
-        if tray_contact_force > self._tray_contact_threshold:
+        if tray_is_grounded and tray_contact_force > self._tray_contact_threshold:
             self._absorbing_counts["tray_contact_force"] += 1
             print("Tray contact force exceeded threshold")
             return True

@@ -1,9 +1,9 @@
-# Usage: python -m safe_bimanual_rl.reach_point_experiment_sac --multirun hydra/launcher=cosmos ...
+# Usage: python -m safe_bimanual_rl.train.reach_point_experiment_sac --multirun hydra/launcher=cosmos ...
 
 _target_: hydra_plugins.hydra_submitit_launcher.submitit_launcher.SlurmLauncher
 
 # --- Time (#SBATCH -t) ---
-timeout_min: 350
+timeout_min: 500
 
 # --- Job name (#SBATCH -J) ---
 name: reachCube

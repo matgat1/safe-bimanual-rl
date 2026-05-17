@@ -13,7 +13,7 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
         self,
         gamma: float = 0.99,
         horizon: int = 1000,
-        n_substeps: int = 5,
+        n_substeps: int = 4,
         contact_force_range: tuple[float, float] = (-1.0, 1.0),
         contact_cost_weight: float = -1e-4,
         handle_distance_weight: float = 1.0,
@@ -41,11 +41,16 @@ class TrayPickUpReachEnv(TrayPickUpBaseEnv):
             control_cost_weight (float): Weight penalizing large actions (negative).
             reach_sharpness (float): Controls how sharply the tanh reward drops off with distance.
             rotation_reward_weight (float): Weight for the gripper orientation reward.
-            orientation_sharpness (float): Controls how sharply the tanh orientation reward drops off.
-            success_position_reward (float): Bonus reward when both end-effectors reach their targets.
-            success_orientation_reward (float): Bonus reward when both grippers reach target orientation.
-            success_position_threshold (float): Distance threshold (metres) for position success.
-            success_orientation_threshold (float): Angle threshold (radians) for orientation success.
+            orientation_sharpness (float): Controls how sharply the tanh orientation
+                reward drops off.
+            success_position_reward (float): Bonus reward when both end-effectors reach
+                their targets.
+            success_orientation_reward (float): Bonus reward when both grippers reach
+                target orientation.
+            success_position_threshold (float): Distance threshold (metres) for position
+                success.
+            success_orientation_threshold (float): Angle threshold (radians) for
+                orientation success.
             success_steps (int): Number of consecutive steps required for success.
         """
         super().__init__(

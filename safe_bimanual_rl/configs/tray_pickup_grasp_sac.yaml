@@ -26,12 +26,12 @@ grasp_force_threshold: 0.3
 success_grasp_reward: 30.0
 contact_threshold: 3.0
 contact_cost_weight: -1e-4
-tray_contact_threshold: 1.5
+tray_contact_threshold: 2.0
 tray_contact_cost_weight: -1e-4
 lift_height_weight: 2.0
 lift_sharpness: 0.1
 lift_target_height: 0.5
 success_lift_reward: 100.0
-action_space_limit: 0.4
+action_space_limit: 0.2
 target_entropy: null
 seed: 0

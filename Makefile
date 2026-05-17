@@ -28,6 +28,9 @@ tray_pickup_env:
 reach_env:
 	python -m safe_bimanual_rl.environments.reach_env
 
+tray_pickup_reach_env:
+	python -m safe_bimanual_rl.environments.tray_pickup_reach_env
+
 tray_pickup_grasp_env:
 	python -m safe_bimanual_rl.environments.tray_pickup_grasp_env
 
