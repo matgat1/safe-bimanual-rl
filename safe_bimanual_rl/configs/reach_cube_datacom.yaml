@@ -28,7 +28,7 @@ cost_budget: 1.0
 lr_delta: 0.05
 init_delta: 3.0
 delta_warmup_transitions: 50000
-acc_limit: 1.0
+vel_limit: 1.0
 
 # Reward / environment parameters
 contact_cost_weight: -1e-4
