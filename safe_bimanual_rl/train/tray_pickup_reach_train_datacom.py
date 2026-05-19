@@ -196,6 +196,7 @@ def experiment(
 
     # Initial evaluation
     _cf_before = mdp._absorbing_counts["contact_force"]
+    _pr_before = mdp._absorbing_counts["position_reached"]
     eval_data = core.evaluate(n_episodes=n_episodes_test, render=False)
     logger.epoch_info(
         0,
@@ -210,7 +211,8 @@ def experiment(
             "Undiscounted Return (R)": eval_data["R"],
             "Entropy (H)": eval_data["H"],
             "mean_cost": eval_data["mean_cost"],
-            "Unsafe Terminations": mdp._absorbing_counts["contact_force"] - _cf_before,
+            "Unsafe Termination Rate (%)": (mdp._absorbing_counts["contact_force"] - _cf_before) / n_episodes_test * 100,
+            "Position Reached Rate (%)": (mdp._absorbing_counts["position_reached"] - _pr_before) / n_episodes_test * 100,
             "epoch": 0,
         }
     )
@@ -228,6 +230,7 @@ def experiment(
     for n in trange(n_epochs, leave=False):
         core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit, quiet=use_cluster)
         _cf_before = mdp._absorbing_counts["contact_force"]
+        _pr_before = mdp._absorbing_counts["position_reached"]
         eval_data = core.evaluate(n_episodes=n_episodes_test, render=False)
 
         logger.epoch_info(
@@ -243,7 +246,8 @@ def experiment(
                 "Undiscounted Return (R)": eval_data["R"],
                 "Entropy (H)": eval_data["H"],
                 "mean_cost": eval_data["mean_cost"],
-                "Unsafe Terminations": mdp._absorbing_counts["contact_force"] - _cf_before,
+                "Unsafe Termination Rate (%)": (mdp._absorbing_counts["contact_force"] - _cf_before) / n_episodes_test * 100,
+                "Position Reached Rate (%)": (mdp._absorbing_counts["position_reached"] - _pr_before) / n_episodes_test * 100,
                 "epoch": n + 1,
             }
         )

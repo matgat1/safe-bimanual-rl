@@ -178,6 +178,7 @@ def experiment(
 
     # Evaluation before training
     _cf_before = mdp._absorbing_counts["contact_force"]
+    _pr_before = mdp._absorbing_counts["position_reached"]
     dataset = core.evaluate(n_episodes=n_episodes_test, render=False)
     J = np.mean(dataset.discounted_return)
     R = np.mean(dataset.undiscounted_return)
@@ -189,7 +190,8 @@ def experiment(
             "Discounted Return (J)": J,
             "Undiscounted Return (R)": R,
             "Entropy (H)": H,
-            "Unsafe Terminations": mdp._absorbing_counts["contact_force"] - _cf_before,
+            "Unsafe Termination Rate (%)": (mdp._absorbing_counts["contact_force"] - _cf_before) / n_episodes_test * 100,
+            "Position Reached Rate (%)": (mdp._absorbing_counts["position_reached"] - _pr_before) / n_episodes_test * 100,
             "epoch": 0,
         }
     )
@@ -208,7 +210,8 @@ def experiment(
     for n in trange(n_epochs, leave=False):
         core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit, quiet=use_cluster)
         _cf_before = mdp._absorbing_counts["contact_force"]
-        dataset = core.evaluate(n_episodes=5, render=False, quiet=use_cluster)
+        _pr_before = mdp._absorbing_counts["position_reached"]
+        dataset = core.evaluate(n_episodes=n_episodes_test, render=False, quiet=use_cluster)
 
         J = np.mean(dataset.discounted_return)
         R = np.mean(dataset.undiscounted_return)
@@ -220,7 +223,8 @@ def experiment(
                 "Discounted Return (J)": J,
                 "Undiscounted Return (R)": R,
                 "Entropy (H)": H,
-                "Unsafe Terminations": mdp._absorbing_counts["contact_force"] - _cf_before,
+                "Unsafe Termination Rate (%)": (mdp._absorbing_counts["contact_force"] - _cf_before) / n_episodes_test * 100,
+                "Position Reached Rate (%)": (mdp._absorbing_counts["position_reached"] - _pr_before) / n_episodes_test * 100,
                 "epoch": n + 1,
             }
         )
