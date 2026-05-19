@@ -28,6 +28,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         lift_sharpness: float = 0.1,
         lift_target_height: float = 0.5,
         success_lift_reward: float = 100.0,
+        success_lift_steps: int = 10,
         **viewer_params,
     ):
         """
@@ -53,6 +54,8 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             lift_target_height (float): Height above initial position (m) that triggers
                 lift success.
             success_lift_reward (float): Bonus reward when the tray is lifted to target height.
+            success_lift_steps (int): Number of consecutive steps the tray must remain above
+                lift_target_height before the episode ends with success.
         """
         super().__init__(
             gamma=gamma,
@@ -73,6 +76,8 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         self._lift_sharpness = lift_sharpness
         self._lift_target_height = lift_target_height
         self._success_lift_reward = success_lift_reward
+        self._success_lift_steps = success_lift_steps
+        self._consecutive_lift_steps = 0
         self._last_right_grasp_force = np.zeros(1)
         self._last_left_grasp_force = np.zeros(1)
         self._initial_cube_height = None
@@ -147,6 +152,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         self._last_right_grasp_force = np.zeros(1)
         self._last_left_grasp_force = np.zeros(1)
         self._grasp_bonus_given = False
+        self._consecutive_lift_steps = 0
         mujoco.mj_forward(self._model, self._data)
         self._initial_cube_height = self._read_data("cube_pos")[2]
 
@@ -158,7 +164,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         lift_reward = self._get_lift_reward()
         lift_bonus = self._success_lift_reward if self._lift_reached() else 0.0
         contact_table_cost = self._get_contact_cost(next_obs)
-        tray_contact_cost = self._get_tray_contact_cost(next_obs)
+        # tray_contact_cost = self._get_tray_contact_cost(next_obs)
 
         # One-time bonus the first time both arms achieve a solid grasp.
         grasp_bonus = 0.0
@@ -178,15 +184,19 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             + lift_reward
             + lift_bonus
             + contact_table_cost
-            + tray_contact_cost
+            # + tray_contact_cost
         )
         return reward
 
     def is_absorbing(self, obs):
         if self._lift_reached():
-            self._absorbing_counts["lift_reached"] += 1
-            print("Lift success")
-            return True
+            self._consecutive_lift_steps += 1
+            if self._consecutive_lift_steps >= self._success_lift_steps:
+                self._absorbing_counts["lift_reached"] += 1
+                print("Lift success")
+                return True
+        else:
+            self._consecutive_lift_steps = 0
         contact_force = self.obs_helper.get_from_obs(obs, "contact_force")[0]
         if contact_force > self._contact_threshold:
             self._absorbing_counts["contact_force"] += 1
