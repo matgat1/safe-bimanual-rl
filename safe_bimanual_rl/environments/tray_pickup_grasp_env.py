@@ -158,8 +158,6 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
 
     def reward(self, obs, action, next_obs, absorbing):
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
-        # Always call to update internal grasp force state, but only reward
-        # before the grasp bonus is given — after that the agent must lift.
         grasp_contact_reward = self._get_grasp_contact_reward()
         lift_reward = self._get_lift_reward()
         lift_bonus = self._success_lift_reward if self._lift_reached() else 0.0
