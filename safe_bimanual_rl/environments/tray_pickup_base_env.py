@@ -48,6 +48,7 @@ class TrayPickUpBaseEnv(BimanualTableEnv):
             ("left_handle_pos", "left_handle", ObservationType.BODY_POS),
             ("right_handle_rot", "right_handle", ObservationType.BODY_ROT),
             ("left_handle_rot", "left_handle", ObservationType.BODY_ROT),
+            ("tray_rot", "tray", ObservationType.BODY_ROT),
             (
                 "right_hande_robotiq_hande_end_pos",
                 "right_hande_robotiq_hande_end",

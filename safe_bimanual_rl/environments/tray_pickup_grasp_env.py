@@ -2,6 +2,7 @@ import os
 import mujoco
 import numpy as np
 from safe_bimanual_rl.environments.tray_pickup_base_env import TrayPickUpBaseEnv
+from safe_bimanual_rl.utils.quaternions import quat_to_mat
 
 
 class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
@@ -29,6 +30,9 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         lift_target_height: float = 0.5,
         success_lift_reward: float = 100.0,
         success_lift_steps: int = 10,
+        tray_orientation_weight: float = 1.0,
+        tray_orientation_sharpness: float = 0.3,
+        tray_orientation_threshold: float = 0.4,
         **viewer_params,
     ):
         """
@@ -56,6 +60,11 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             success_lift_reward (float): Bonus reward when the tray is lifted to target height.
             success_lift_steps (int): Number of consecutive steps the tray must remain above
                 lift_target_height before the episode ends with success.
+            tray_orientation_weight (float): Weight for the continuous tray orientation reward.
+            tray_orientation_sharpness (float): Controls how sharply the tanh orientation
+                reward drops off (radians).
+            tray_orientation_threshold (float): Angle threshold (radians) between tray z-axis
+                and world z-axis required for lift success.
         """
         super().__init__(
             gamma=gamma,
@@ -77,6 +86,9 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         self._lift_target_height = lift_target_height
         self._success_lift_reward = success_lift_reward
         self._success_lift_steps = success_lift_steps
+        self._tray_orientation_weight = tray_orientation_weight
+        self._tray_orientation_sharpness = tray_orientation_sharpness
+        self._tray_orientation_threshold = tray_orientation_threshold
         self._consecutive_lift_steps = 0
         self._last_right_grasp_force = np.zeros(1)
         self._last_left_grasp_force = np.zeros(1)
@@ -129,9 +141,28 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
 
         return (2 * np.minimum(right_grasp, left_grasp)).item()
 
+    def _tray_orientation_reached(self) -> bool:
+        tray_mat = quat_to_mat(self._read_data("tray_rot"))
+        tray_z = tray_mat[:, 2]
+        angle = np.arccos(
+            np.clip(abs(np.dot(tray_z, np.array([0.0, 0.0, 1.0]))), -1.0, 1.0)
+        )
+        return bool(angle < self._tray_orientation_threshold)
+
+    def _get_tray_orientation_reward(self):
+        tray_mat = quat_to_mat(self._read_data("tray_rot"))
+        tray_z = tray_mat[:, 2]
+        angle = np.arccos(
+            np.clip(abs(np.dot(tray_z, np.array([0.0, 0.0, 1.0]))), -1.0, 1.0)
+        )
+        return self._tray_orientation_weight * (
+            1 - np.tanh(angle / self._tray_orientation_sharpness)
+        )
+
     def _lift_reached(self) -> bool:
         cube_z = self._read_data("cube_pos")[2]
-        return bool(cube_z - self._initial_cube_height > self._lift_target_height)
+        height_ok = cube_z - self._initial_cube_height > self._lift_target_height
+        return bool(height_ok and self._tray_orientation_reached())
 
     def _get_lift_reward(self):
         cube_z = self._read_data("cube_pos")[2]
@@ -160,6 +191,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         handle_distance_reward = self._get_handle_distance_reward(next_obs)
         grasp_contact_reward = self._get_grasp_contact_reward()
         lift_reward = self._get_lift_reward()
+        tray_orientation_reward = self._get_tray_orientation_reward()
         lift_bonus = self._success_lift_reward if self._lift_reached() else 0.0
         contact_table_cost = self._get_contact_cost(next_obs)
         # tray_contact_cost = self._get_tray_contact_cost(next_obs)
@@ -180,6 +212,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             + grasp_contact_reward
             + grasp_bonus
             + lift_reward
+            + tray_orientation_reward
             + lift_bonus
             + contact_table_cost
             # + tray_contact_cost
@@ -217,8 +250,10 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         info["grasp_contact_reward"] = self._get_grasp_contact_reward()
         info["distance_reward"] = self._get_handle_distance_reward(obs)
         info["lift_reward"] = self._get_lift_reward()
+        info["tray_orientation_reward"] = self._get_tray_orientation_reward()
         info["cube_height"] = cube_z - self._initial_cube_height
         info["grasp_reached"] = self._grasp_reached()
+        info["tray_orientation_reached"] = self._tray_orientation_reached()
         info["lift_reached"] = self._lift_reached()
         return info
 
@@ -361,8 +396,10 @@ if __name__ == "__main__":
             f"  dist={info['distance_reward']:+.3f}"
             f"  contact={info['grasp_contact_reward']:+.3f}"
             f"  lift={info['lift_reward']:+.3f}"
+            f"  orient={info['tray_orientation_reward']:+.3f}"
             f"  cube_h={info['cube_height']:+.3f}"
             f"  grasp={'Y' if grasping else 'N'}"
+            f"  orient_ok={'Y' if info['tray_orientation_reached'] else 'N'}"
             f"  lift_ok={'Y' if info['lift_reached'] else 'N'}",
             end="",
             flush=True,
