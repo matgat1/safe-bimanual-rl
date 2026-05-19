@@ -23,7 +23,7 @@ seed: 0
 
 # D-ATACOM / safety parameters
 accepted_risk: 0.9
-atacom_lam: 25.0
+atacom_lam: 5.0
 atacom_beta: 3.0
 cost_budget: 1.0
 lr_delta: 0.05
@@ -39,8 +39,8 @@ contact_threshold: 3.0
 reach_sharpness: 0.4
 rotation_reward_weight: 2.0
 orientation_sharpness: 0.3
-success_position_reward: 500.0
-success_orientation_reward: 2500.0
+success_position_reward: 10.0
+success_orientation_reward: 50.0
 success_position_threshold: 0.02
 success_orientation_threshold: 0.2
 action_space_limit: 0.4
