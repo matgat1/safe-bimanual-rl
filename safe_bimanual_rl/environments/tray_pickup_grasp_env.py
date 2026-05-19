@@ -194,7 +194,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         tray_orientation_reward = self._get_tray_orientation_reward()
         lift_bonus = self._success_lift_reward if self._lift_reached() else 0.0
         contact_table_cost = self._get_contact_cost(next_obs)
-        # tray_contact_cost = self._get_tray_contact_cost(next_obs)
+        tray_contact_cost = self._get_tray_contact_cost(next_obs)
 
         # One-time bonus the first time both arms achieve a solid grasp.
         grasp_bonus = 0.0
@@ -215,7 +215,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
             + tray_orientation_reward
             + lift_bonus
             + contact_table_cost
-            # + tray_contact_cost
+            + tray_contact_cost
         )
         return reward
 
