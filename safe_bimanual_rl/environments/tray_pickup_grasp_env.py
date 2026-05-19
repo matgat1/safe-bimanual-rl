@@ -29,7 +29,7 @@ class TrayPickUpGraspEnv(TrayPickUpBaseEnv):
         lift_sharpness: float = 0.1,
         lift_target_height: float = 0.5,
         success_lift_reward: float = 100.0,
-        success_lift_steps: int = 10,
+        success_lift_steps: int = 1,
         tray_orientation_weight: float = 1.0,
         tray_orientation_sharpness: float = 0.3,
         tray_orientation_threshold: float = 0.4,
