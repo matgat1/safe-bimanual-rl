@@ -195,6 +195,7 @@ def experiment(
     J_values, cost_values = [], []
 
     # Initial evaluation
+    _cf_before = mdp._absorbing_counts["contact_force"]
     eval_data = core.evaluate(n_episodes=n_episodes_test, render=False)
     logger.epoch_info(
         0,
@@ -209,6 +210,7 @@ def experiment(
             "Undiscounted Return (R)": eval_data["R"],
             "Entropy (H)": eval_data["H"],
             "mean_cost": eval_data["mean_cost"],
+            "Unsafe Terminations": mdp._absorbing_counts["contact_force"] - _cf_before,
             "epoch": 0,
         }
     )
@@ -225,6 +227,7 @@ def experiment(
     # Training loop
     for n in trange(n_epochs, leave=False):
         core.learn(n_steps=n_steps, n_steps_per_fit=n_steps_per_fit, quiet=use_cluster)
+        _cf_before = mdp._absorbing_counts["contact_force"]
         eval_data = core.evaluate(n_episodes=n_episodes_test, render=False)
 
         logger.epoch_info(
@@ -240,6 +243,7 @@ def experiment(
                 "Undiscounted Return (R)": eval_data["R"],
                 "Entropy (H)": eval_data["H"],
                 "mean_cost": eval_data["mean_cost"],
+                "Unsafe Terminations": mdp._absorbing_counts["contact_force"] - _cf_before,
                 "epoch": n + 1,
             }
         )
