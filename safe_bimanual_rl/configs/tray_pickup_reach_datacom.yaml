@@ -24,7 +24,7 @@ seed: 0
 # D-ATACOM / safety parameters
 accepted_risk: 0.9
 atacom_lam: 5.0
-atacom_beta: 3.0
+atacom_beta: 5.0
 cost_budget: 1.0
 lr_delta: 0.05
 init_delta: 3.0
