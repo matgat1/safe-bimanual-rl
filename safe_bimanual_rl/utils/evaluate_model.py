@@ -2,11 +2,12 @@ from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core
 from safe_bimanual_rl.environments import (
     TrayPickUpGraspEnv,
-    TrayPickUpLiftEnv,
     TrayPickUpReachEnv,
     ReachEnv,
     BimanualTableEnv,
+    SafeTrayPickUpReachEnv,
 )
+from safe_bimanual_rl.d_atacom.algorithms.datacom_sac import DatacomSAC
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (  # noqa: F401
     ActorNetwork,
     CriticNetwork,
@@ -18,7 +19,14 @@ ENV_REGISTRY = {
     "reach_cube": ReachEnv,
     "grasping_position": TrayPickUpReachEnv,
     "grasp_sac": TrayPickUpGraspEnv,
-    "lift_sac": TrayPickUpLiftEnv,
+    "reach_datacom": SafeTrayPickUpReachEnv,
+}
+
+AGENT_REGISTRY = {
+    "reach_cube": SAC,
+    "grasping_position": SAC,
+    "grasp_sac": SAC,
+    "reach_datacom": DatacomSAC,
 }
 
 
@@ -73,7 +81,8 @@ if __name__ == "__main__":
     env_key = args.env if args.env is not None else _detect_env(args.model_path)
     print(f"Using environment: {env_key}")
     env = ENV_REGISTRY[env_key](gamma=0.99, horizon=200, n_substeps=4)
-    agent = SAC.load(args.model_path)
+    agent_cls = AGENT_REGISTRY[env_key]
+    agent = agent_cls.load(args.model_path)
     evaluate(
         environment=env, agent=agent, n_episodes=args.n_episodes, record=args.record
     )
