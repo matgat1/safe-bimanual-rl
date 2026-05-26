@@ -13,7 +13,7 @@ from mushroom_rl.algorithms.actor_critic import SAC
 from mushroom_rl.core import Core, Logger
 from tqdm import trange
 
-from safe_bimanual_rl.environments import TrayPickUpReachEnv
+from safe_bimanual_rl.environments import SafeTrayPickUpReachEnv
 from safe_bimanual_rl.rl_utils.actor_critic_sac_networks import (
     ActorNetwork,
     CriticNetwork,
@@ -67,9 +67,9 @@ def experiment(
     logger.strong_line()
     logger.info("Experiment Algorithm: SAC - TrayPickUpReachEnv")
 
-    mdp = TrayPickUpReachEnv(
+    mdp = SafeTrayPickUpReachEnv(
         gamma=0.99,
-        horizon=120,
+        horizon=200,
         n_substeps=4,
         contact_cost_weight=contact_cost_weight,
         handle_distance_weight=handle_distance_weight,
@@ -173,8 +173,19 @@ def experiment(
         },
     )
 
-    J_values, R_values, H_values = [], [], []
+    J_values, R_values, H_values, cost_values = [], [], [], []
     best_J = -np.inf
+
+    def compute_mean_cost(dataset):
+        costs = dataset.info.data.get("cost", [])
+        lasts = dataset.last
+        episode_costs, current = [], 0.0
+        for c, l in zip(costs, lasts):
+            current += float(c)
+            if l:
+                episode_costs.append(current)
+                current = 0.0
+        return float(np.mean(episode_costs)) if episode_costs else 0.0
 
     # Evaluation before training
     _cf_before = mdp._absorbing_counts["contact_force"]
@@ -183,13 +194,15 @@ def experiment(
     J = np.mean(dataset.discounted_return)
     R = np.mean(dataset.undiscounted_return)
     H = agent.policy.entropy(dataset.state).item()
+    mean_cost = compute_mean_cost(dataset)
 
-    logger.epoch_info(0, J=J, R=R, entropy=H)
+    logger.epoch_info(0, J=J, R=R, entropy=H, mean_cost=mean_cost)
     run.log(
         {
             "Discounted Return (J)": J,
             "Undiscounted Return (R)": R,
             "Entropy (H)": H,
+            "mean_cost": mean_cost,
             "Unsafe Termination Rate (%)": (mdp._absorbing_counts["contact_force"] - _cf_before) / n_episodes_test * 100,
             "Position Reached Rate (%)": (mdp._absorbing_counts["position_reached"] - _pr_before) / n_episodes_test * 100,
             "epoch": 0,
@@ -198,6 +211,7 @@ def experiment(
     J_values.append(J)
     R_values.append(R)
     H_values.append(H)
+    cost_values.append(mean_cost)
 
     # Replay initialisation
     core.learn(
@@ -216,13 +230,15 @@ def experiment(
         J = np.mean(dataset.discounted_return)
         R = np.mean(dataset.undiscounted_return)
         H = agent.policy.entropy(dataset.state).item()
-        logger.epoch_info(n + 1, J=J, R=R, entropy=H)
+        mean_cost = compute_mean_cost(dataset)
+        logger.epoch_info(n + 1, J=J, R=R, entropy=H, mean_cost=mean_cost)
 
         run.log(
             {
                 "Discounted Return (J)": J,
                 "Undiscounted Return (R)": R,
                 "Entropy (H)": H,
+                "mean_cost": mean_cost,
                 "Unsafe Termination Rate (%)": (mdp._absorbing_counts["contact_force"] - _cf_before) / n_episodes_test * 100,
                 "Position Reached Rate (%)": (mdp._absorbing_counts["position_reached"] - _pr_before) / n_episodes_test * 100,
                 "epoch": n + 1,
@@ -231,6 +247,7 @@ def experiment(
         J_values.append(J)
         R_values.append(R)
         H_values.append(H)
+        cost_values.append(mean_cost)
 
         if save_model and J > best_J:
             best_J = J
@@ -249,6 +266,7 @@ def experiment(
             "Discounted Return (J)": J_values,
             "Undiscounted Return (R)": R_values,
             "Entropy (H)": H_values,
+            "Mean Cost": cost_values,
         },
         save_dir=save_dir,
         run_name=run_name,
