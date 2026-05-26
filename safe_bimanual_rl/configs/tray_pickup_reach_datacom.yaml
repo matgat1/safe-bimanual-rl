@@ -35,12 +35,12 @@ vel_limit: 1.0
 contact_cost_weight: -1e-4
 control_cost_weight: -1e-4
 handle_distance_weight: 2.0
-contact_threshold: 3.0
-reach_sharpness: 0.4
-rotation_reward_weight: 2.0
+contact_threshold: 2.0
+reach_sharpness: 0.3
+rotation_reward_weight: 1.0
 orientation_sharpness: 0.3
 success_position_reward: 10.0
 success_orientation_reward: 50.0
-success_position_threshold: 0.02
-success_orientation_threshold: 0.2
+success_position_threshold: 0.06
+success_orientation_threshold: 0.4
 action_space_limit: 0.4
