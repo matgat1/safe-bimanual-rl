@@ -176,6 +176,35 @@ python -m safe_bimanual_rl.train.tray_pickup_grasp_train_sac --multirun \
   grasp_force_threshold=0.2,0.3,0.5
 ```
 
+### Tray pickup — single policy on GPU (MuJoCo Warp)
+
+A single SAC policy learns the full task (reach, grasp, lift) in `TrayPickUpWarpEnv`, which simulates `n_envs` worlds in parallel on the GPU with [MuJoCo Warp](https://github.com/google-deepmind/mujoco_warp) through MushroomRL's `MuJoCoWarp`. Requires a CUDA GPU and `mujoco-warp` (see `environment.yml`).
+
+The reward is staged (reach → grasp both handles → lift → keep the tray level), normalized to at most 1 per step, and the episode ends with a reward of `1 / (1 - gamma)` once the tray has been held lifted and level for `success_hold_steps` steps.
+
+```bash
+python -m safe_bimanual_rl.train.tray_pickup_train_sac_warp --multirun \
+    n_envs=128 n_steps_per_fit=128 n_updates_per_fit=32 \
+    reward.grasp_start_prob=0.25
+```
+
+`n_steps_per_fit` must be at least `n_envs`; `n_updates_per_fit / n_steps_per_fit` is the update-to-data ratio.
+
+PPO uses many more env steps but makes better use of a large number of parallel envs:
+
+```bash
+python -m safe_bimanual_rl.train.tray_pickup_train_ppo_warp --multirun \
+    n_envs=256 n_steps_per_fit=8192 batch_size=2048
+```
+
+`n_steps_per_fit / n_envs` is the rollout length per env (32 by default). The environment parameters of both algorithms are in `configs/reward/tray_pickup_warp.yaml` and are overridden with `reward.<name>=<value>`.
+
+Quick throughput check:
+
+```bash
+python -m safe_bimanual_rl.environments.tray_pickup_warp_env 64 128 256 512
+```
+
 ## Utilities
 
 ### Collect absorbing positions

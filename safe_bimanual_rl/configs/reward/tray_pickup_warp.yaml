@@ -1,0 +1,25 @@
+# TrayPickUpWarpEnv parameters, shared by the SAC and PPO GPU configs (under the 'reward' key)
+
+# Staged task reward, normalized so the per-step reward is at most 1
+reach_weight: 1.0
+reach_sharpness: 0.3
+grasp_weight: 1.0
+grasp_force_threshold: 10.0
+grasp_distance: 0.03
+lift_weight: 2.0
+lift_sharpness: 0.1
+lift_target_height: 0.35
+tray_orientation_weight: 1.0
+tray_orientation_sharpness: 0.3
+tray_orientation_threshold: 0.4
+success_hold_steps: 20
+# Costs and terminations
+contact_threshold: 3.0
+contact_cost_weight: -0.05
+tray_contact_threshold: 2.0
+tray_contact_cost_weight: -0.05
+action_cost_weight: -0.01
+# Initial states
+joint_noise: 0.05
+tray_pos_noise: 0.02
+grasp_start_prob: 0.25    # fraction of episodes starting near the handles (exploration aid)

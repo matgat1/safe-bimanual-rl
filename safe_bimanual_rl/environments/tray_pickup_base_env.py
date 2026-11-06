@@ -1,8 +1,8 @@
 import os
 import numpy as np
-from mushroom_rl.rl_utils.spaces import Box
+from mushroom_rl.core.spaces import Box
 from safe_bimanual_rl.environments.bimanual_table_env import BimanualTableEnv
-from mushroom_rl.environments.mujoco import ObservationType
+from mushroom_rl.utils.mujoco import ObservationType
 
 
 class TrayPickUpBaseEnv(BimanualTableEnv):

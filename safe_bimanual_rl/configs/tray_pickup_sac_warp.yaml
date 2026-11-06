@@ -1,0 +1,37 @@
+# SAC configuration for the full tray pick-up (single policy: reach, grasp, lift) on GPU (MuJoCo Warp)
+# Usage: python -m safe_bimanual_rl.train.tray_pickup_train_sac_warp --multirun
+
+defaults:
+  - reward: tray_pickup_warp   # env parameters in reward/tray_pickup_warp.yaml
+  - _self_
+
+# Simulation
+device: "cuda:0"
+n_envs: 128
+horizon: 600
+use_graph_capture: true
+nconmax: 64
+njmax: 256
+
+# Training parameters (all step counts are summed over the parallel envs)
+n_epochs: 300
+n_steps: 25600
+n_steps_per_fit: 128        # must be >= n_envs
+n_updates_per_fit: 32       # update-to-data ratio = 32 / 128 = 1/4, as in the CPU configs
+n_episodes_test: 32
+initial_replay_size: 12800
+max_replay_size: 300000     # fits the 4 GB of an RTX A400
+batch_size: 512
+n_features: 256
+warmup_transitions: 12800
+tau: 0.005
+lr_alpha: 1e-3
+lr_actor: 3e-4
+lr_critic: 3e-4
+action_space_limit: 0.2
+target_entropy: null
+use_cluster: true
+save_model: true
+use_wandb: true
+model_name: "tray_pickup_sac_warp"
+seed: 0

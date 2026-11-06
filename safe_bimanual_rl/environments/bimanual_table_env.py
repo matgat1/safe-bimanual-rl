@@ -1,4 +1,5 @@
-from mushroom_rl.environments.mujoco import MuJoCo, ObservationType, MujocoViewer
+from mushroom_rl.environments.mujoco import MuJoCo
+from mushroom_rl.utils.mujoco import ObservationType, MujocoViewer
 
 import numpy as np
 import mujoco

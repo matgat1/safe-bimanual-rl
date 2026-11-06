@@ -1,0 +1,38 @@
+# PPO configuration for the full tray pick-up (single policy: reach, grasp, lift) on GPU (MuJoCo Warp)
+# Usage: python -m safe_bimanual_rl.train.tray_pickup_train_ppo_warp --multirun
+
+defaults:
+  - reward: tray_pickup_warp   # env parameters in reward/tray_pickup_warp.yaml
+  - _self_
+
+# Simulation
+device: "cuda:0"
+n_envs: 256
+gamma: 0.99
+horizon: 600
+use_graph_capture: true
+nconmax: 64
+njmax: 256
+
+# Training parameters (all step counts are summed over the parallel envs)
+n_epochs: 300
+n_steps_per_fit: 8192       # rollout of 32 steps per env with 256 envs, must be >= n_envs
+n_steps: 81920              # 10 PPO updates per epoch
+n_episodes_test: 32
+n_epochs_policy: 5          # passes over each rollout for the actor
+n_epochs_critic: 5          # passes over each rollout for the critic
+batch_size: 2048            # minibatch size (4 minibatches per rollout)
+eps_ppo: 0.2
+lam: 0.95
+ent_coeff: 0.001
+lr_actor: 3e-4
+lr_critic: 3e-4
+n_features: 256
+n_layers: 3
+std_0: 0.1                  # initial policy std, half of action_space_limit
+action_space_limit: 0.2
+use_cluster: true
+save_model: true
+use_wandb: true
+model_name: "tray_pickup_ppo_warp"
+seed: 0
