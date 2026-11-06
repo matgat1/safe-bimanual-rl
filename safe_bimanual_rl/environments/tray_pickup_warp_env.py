@@ -149,6 +149,7 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         joint_noise: float = 0.05,
         tray_pos_noise: float = 0.02,
         grasp_start_prob: float = 0.0,
+        max_joint_velocity: float = 100.0,
         grasp_init_states_file: str = "grasp_init_states_0.npz",
         nconmax: int = 64,
         njmax: int = 256,
@@ -187,6 +188,8 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
             action_cost_weight (float): Weight of the squared action cost.
             joint_noise (float): Uniform noise (rad) added to the home arm configuration.
             tray_pos_noise (float): Uniform noise (m) added to the tray x/y position.
+            max_joint_velocity (float): A world whose state is not finite or has a joint
+                velocity above this value is considered unstable, and its episode ends.
             grasp_start_prob (float): Probability of starting an episode from a saved
                 state with the grippers already near the handles instead of the home pose.
             grasp_init_states_file (str): File in data/initial_states/ with those states.
@@ -216,6 +219,7 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         self._joint_noise = joint_noise
         self._tray_pos_noise = tray_pos_noise
         self._grasp_start_prob = grasp_start_prob
+        self._max_joint_velocity = max_joint_velocity
         self._max_stage_reward = (
             reach_weight + grasp_weight + lift_weight + tray_orientation_weight
         )
@@ -296,7 +300,7 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         self._success = torch.zeros(num_envs, dtype=torch.bool, device=dev)
         self._absorbing_counts = {
             key: torch.zeros((), dtype=torch.long, device=dev)
-            for key in ("success", "contact_force", "tray_contact_force")
+            for key in ("success", "contact_force", "tray_contact_force", "unstable")
         }
 
     def get_absorbing_counts(self) -> dict:
@@ -408,7 +412,7 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
             ],
             dim=1,
         )
-        return torch.cat(
+        obs = torch.cat(
             [
                 obs,
                 rel_right.to(obs.dtype),
@@ -423,6 +427,16 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
             ],
             dim=1,
         )
+
+        # A diverged world would put NaNs in the dataset and the networks: flag it,
+        # end its episode and hand out a zero observation instead.
+        qvel = wp.to_torch(self._data_wp.qvel)
+        self._unstable = (
+            ~torch.isfinite(obs).all(dim=1)
+            | ~torch.isfinite(qvel).all(dim=1)
+            | (qvel.abs().amax(dim=1) > self._max_joint_velocity)
+        )
+        return torch.where(self._unstable.unsqueeze(1), torch.zeros_like(obs), obs)
 
     # ------------------------------------------------------------------
     # Task quantities
@@ -557,6 +571,7 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         reward = torch.where(
             self._success, torch.full_like(reward, 1 / (1 - self.info.gamma)), reward
         )
+        reward = torch.where(self._unstable, torch.zeros_like(reward), reward)
         return reward.to(obs.dtype)
 
     def is_absorbing(self, obs):
@@ -581,12 +596,13 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         )
 
         self._absorbing_counts["success"] += (self._success & self._env_mask).sum()
+        self._absorbing_counts["unstable"] += (self._unstable & self._env_mask).sum()
         self._absorbing_counts["contact_force"] += (contact_exceeded & self._env_mask).sum()
         self._absorbing_counts["tray_contact_force"] += (
             tray_contact_exceeded & self._env_mask
         ).sum()
 
-        return self._success | contact_exceeded | tray_contact_exceeded
+        return self._success | contact_exceeded | tray_contact_exceeded | self._unstable
 
     def _create_info_dictionary(self, obs):
         right_grasp, left_grasp = self._hands_grasping(obs)

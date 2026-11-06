@@ -194,10 +194,10 @@ PPO uses many more env steps but makes better use of a large number of parallel 
 
 ```bash
 python -m safe_bimanual_rl.train.tray_pickup_train_ppo_warp --multirun \
-    n_envs=256 n_steps_per_fit=8192 batch_size=2048
+    n_envs=512 n_steps_per_fit=8192 batch_size=2048
 ```
 
-`n_steps_per_fit / n_envs` is the rollout length per env (32 by default). The environment parameters of both algorithms are in `configs/reward/tray_pickup_warp.yaml` and are overridden with `reward.<name>=<value>`.
+`n_steps_per_fit / n_envs` is the rollout length per env (16 by default). The environment parameters of both algorithms are in `configs/reward/tray_pickup_warp.yaml` and are overridden with `reward.<name>=<value>`.
 
 Quick throughput check:
 

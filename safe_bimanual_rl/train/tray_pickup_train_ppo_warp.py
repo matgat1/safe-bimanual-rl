@@ -1,4 +1,5 @@
 import os
+from time import perf_counter
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -133,10 +134,20 @@ def experiment(cfg: DictConfig):
 
     # Training loop
     for n in trange(cfg.n_epochs, leave=False):
+        start = perf_counter()
         core.learn(
             n_steps=cfg.n_steps, n_steps_per_fit=cfg.n_steps_per_fit, quiet=cfg.use_cluster
         )
+        learn_time = perf_counter() - start
+        logger.info(f"Learn: {learn_time:.1f}s ({cfg.n_steps / learn_time:.0f} env steps/s)")
+        run.log({"time/learn": learn_time, "epoch": n + 1})
+
+        # Evaluation simulates every world, so it costs as much as n_envs episodes
+        if (n + 1) % cfg.eval_every != 0 and n + 1 != cfg.n_epochs:
+            continue
+        start = perf_counter()
         J, R, H = evaluate(core, agent, cfg.n_episodes_test, cfg.use_cluster)
+        logger.info(f"Evaluation: {perf_counter() - start:.1f}s")
         log_epoch(n + 1, J, R, H)
 
         if cfg.save_model and J > best_J:

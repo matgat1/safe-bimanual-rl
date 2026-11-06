@@ -7,7 +7,7 @@ defaults:
 
 # Simulation
 device: "cuda:0"
-n_envs: 256
+n_envs: 512
 gamma: 0.99
 horizon: 600
 use_graph_capture: true
@@ -16,9 +16,10 @@ njmax: 256
 
 # Training parameters (all step counts are summed over the parallel envs)
 n_epochs: 300
-n_steps_per_fit: 8192       # rollout of 32 steps per env with 256 envs, must be >= n_envs
+n_steps_per_fit: 8192       # rollout of 16 steps per env with 512 envs, must be >= n_envs
 n_steps: 81920              # 10 PPO updates per epoch
-n_episodes_test: 32
+n_episodes_test: ${n_envs}    # one episode per world: costs the same as fewer episodes
+eval_every: 5               # evaluate every eval_every epochs
 n_epochs_policy: 5          # passes over each rollout for the actor
 n_epochs_critic: 5          # passes over each rollout for the critic
 batch_size: 2048            # minibatch size (4 minibatches per rollout)
