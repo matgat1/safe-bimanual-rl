@@ -608,7 +608,11 @@ if __name__ == "__main__":
         print(f"GPU: {torch.cuda.get_device_name(0)}")
 
     for n_envs in n_envs_list:
-        env = TrayPickUpWarpEnv(num_envs=n_envs, use_graph_capture=use_cuda)
+        env = TrayPickUpWarpEnv(
+            num_envs=n_envs,
+            use_graph_capture=use_cuda,
+            device="cuda:0" if use_cuda else "cpu",
+        )
         mask = torch.ones(n_envs, dtype=torch.bool, device=env.info.device)
         env.reset_all(mask)
         low, high = (
