@@ -199,6 +199,8 @@ python -m safe_bimanual_rl.train.tray_pickup_train_ppo_warp --multirun \
 
 `n_steps_per_fit / n_envs` is the rollout length per env (16 by default). The environment parameters of both algorithms are in `configs/reward/tray_pickup_warp.yaml` and are overridden with `reward.<name>=<value>`.
 
+A hand grasps its handle when both of its fingers squeeze it with more than `grasp_force_threshold` N. Besides the returns, the PPO script logs to WandB how far the policy gets in the task: `eval/*` (fraction of evaluation episodes reaching each stage, closest handle distance, highest tray, termination causes), `train/*` (termination causes and time spent in each stage during the rollouts) and `policy/*` (policy std of the arm and finger actions).
+
 Quick throughput check:
 
 ```bash

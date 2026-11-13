@@ -70,20 +70,11 @@ COLLISION_GROUPS = [
     ("table", ["table_base_link_collision"]),
     ("right_handle", ["right_handle_bar"]),
     ("left_handle", ["left_handle_bar"]),
-    (
-        "right_hand",
-        [
-            f"right_hande_robotiq_hande_{part}_collision"
-            for part in ("link", "left_finger", "right_finger")
-        ],
-    ),
-    (
-        "left_hand",
-        [
-            f"left_hande_robotiq_hande_{part}_collision"
-            for part in ("link", "left_finger", "right_finger")
-        ],
-    ),
+    *[
+        (f"{side}_hand_{finger}", [f"{side}_hande_robotiq_hande_{finger}_collision"])
+        for side in ("right", "left")
+        for finger in ("left_finger", "right_finger")
+    ],
     (
         "robot",
         [f"{side}_arm_link_{i}_collision" for side in ("left", "right") for i in range(8)]
@@ -131,7 +122,7 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         reach_weight: float = 1.0,
         reach_sharpness: float = 0.3,
         grasp_weight: float = 1.0,
-        grasp_force_threshold: float = 10.0,
+        grasp_force_threshold: float = 1.0,
         grasp_distance: float = 0.03,
         lift_weight: float = 2.0,
         lift_sharpness: float = 0.1,
@@ -166,8 +157,8 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
             reach_weight (float): Weight of the gripper-to-handle distance stage.
             reach_sharpness (float): Distance (m) scale of the tanh reach reward.
             grasp_weight (float): Weight of the grasp stage (fraction of hands grasping).
-            grasp_force_threshold (float): Normal force (N) the hand (palm and fingers)
-                must apply on its handle to count as grasping.
+            grasp_force_threshold (float): Normal force (N) each of the two fingers of a
+                hand must apply on its handle to count as grasping (the palm is ignored).
             grasp_distance (float): Max distance (m) between grip point and handle to
                 count as grasping.
             lift_weight (float): Weight of the lift stage, paid only while both hands grasp.
@@ -302,9 +293,17 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
             key: torch.zeros((), dtype=torch.long, device=dev)
             for key in ("success", "contact_force", "tray_contact_force", "unstable")
         }
+        # Number of active steps (and started episodes) in each stage, to monitor training
+        self._step_counts = {
+            key: torch.zeros((), dtype=torch.long, device=dev)
+            for key in ("episodes", "steps", "right_grasp", "left_grasp", "both_grasp", "lifted")
+        }
 
     def get_absorbing_counts(self) -> dict:
         return {key: int(value.item()) for key, value in self._absorbing_counts.items()}
+
+    def get_step_counts(self) -> dict:
+        return {key: int(value.item()) for key, value in self._step_counts.items()}
 
     # ------------------------------------------------------------------
     # Contacts
@@ -391,7 +390,7 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         self.obs_helper.add_obs("cube_pos", 3)
         self.obs_helper.add_obs("right_handle_rot", 4)
         self.obs_helper.add_obs("left_handle_rot", 4)
-        self.obs_helper.add_obs("handle_forces", 2)
+        self.obs_helper.add_obs("finger_forces", 4)
         self.obs_helper.add_obs("tray_height", 1)
         mdp_info.observation_space = Box(*self.obs_helper.get_obs_limits())
         return mdp_info
@@ -405,10 +404,12 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         )
         # subtract gravity baseline so the observation is ~0 at rest
         tray_contact_force = self._get_contact_force("tray", "table") - 0.9
-        handle_forces = torch.stack(
+        # Normal force of each finger on its handle: (right hand: left, right, left hand: left, right)
+        finger_forces = torch.stack(
             [
-                self._get_normal_force("right_hand", "right_handle"),
-                self._get_normal_force("left_hand", "left_handle"),
+                self._get_normal_force(f"{side}_hand_{finger}", f"{side}_handle")
+                for side in ("right", "left")
+                for finger in ("left_finger", "right_finger")
             ],
             dim=1,
         )
@@ -422,7 +423,7 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
                 self._read_data("cube_pos").to(obs.dtype),
                 self._read_data("right_handle_rot").to(obs.dtype),
                 self._read_data("left_handle_rot").to(obs.dtype),
-                handle_forces.to(obs.dtype),
+                finger_forces.to(obs.dtype),
                 self._cube_height().unsqueeze(1).to(obs.dtype),
             ],
             dim=1,
@@ -445,17 +446,24 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
     def _cube_height(self):
         return self._read_data("cube_pos")[:, 2] - self._initial_cube_height
 
+    def _grip_forces(self, obs):
+        """
+        Per hand, the force of its weaker finger on the handle: the handle is only
+        held when it is squeezed between both fingers. Two (num_envs,) tensors.
+        """
+        forces = self.obs_helper.get_from_obs(obs, "finger_forces")
+        return forces[:, :2].amin(dim=1), forces[:, 2:].amin(dim=1)
+
     def _hands_grasping(self, obs):
         """
         Per hand, whether it holds its handle: handle close to the grip point and
-        pressed by the hand. The palm carries most of the load with this gripper,
-        so the force of the palm and both fingers is used. Two (num_envs,) masks.
+        squeezed by both fingers. Two (num_envs,) masks.
         """
-        forces = self.obs_helper.get_from_obs(obs, "handle_forces")
+        right_force, left_force = self._grip_forces(obs)
         rel_right = self.obs_helper.get_from_obs(obs, "rel_right_handle_pos").norm(dim=-1)
         rel_left = self.obs_helper.get_from_obs(obs, "rel_left_handle_pos").norm(dim=-1)
-        right = (forces[:, 0] > self._grasp_force_threshold) & (rel_right < self._grasp_distance)
-        left = (forces[:, 1] > self._grasp_force_threshold) & (rel_left < self._grasp_distance)
+        right = (right_force > self._grasp_force_threshold) & (rel_right < self._grasp_distance)
+        left = (left_force > self._grasp_force_threshold) & (rel_left < self._grasp_distance)
         return right, left
 
     def _tray_angle(self):
@@ -526,6 +534,7 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         )
         self._success_steps[idx] = 0
         self._success[idx] = False
+        self._step_counts["episodes"] += n
 
     def _stage_reward(self, obs):
         """Staged task reward in [0, max_stage_reward]."""
@@ -602,14 +611,34 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
             tray_contact_exceeded & self._env_mask
         ).sum()
 
+        right_grasp, left_grasp = self._hands_grasping(obs)
+        self._step_counts["steps"] += self._env_mask.sum()
+        self._step_counts["right_grasp"] += (right_grasp & self._env_mask).sum()
+        self._step_counts["left_grasp"] += (left_grasp & self._env_mask).sum()
+        self._step_counts["both_grasp"] += (right_grasp & left_grasp & self._env_mask).sum()
+        self._step_counts["lifted"] += (lifted & self._env_mask).sum()
+
         return self._success | contact_exceeded | tray_contact_exceeded | self._unstable
 
     def _create_info_dictionary(self, obs):
         right_grasp, left_grasp = self._hands_grasping(obs)
+        right_force, left_force = self._grip_forces(obs)
         return {
             "tray_height": self.obs_helper.get_from_obs(obs, "tray_height")[:, 0],
+            "tray_angle": self._tray_angle(),
+            "right_handle_dist": self.obs_helper.get_from_obs(obs, "rel_right_handle_pos").norm(
+                dim=-1
+            ),
+            "left_handle_dist": self.obs_helper.get_from_obs(obs, "rel_left_handle_pos").norm(
+                dim=-1
+            ),
+            "right_grip_force": right_force,
+            "left_grip_force": left_force,
+            "right_grasp": right_grasp,
+            "left_grasp": left_grasp,
             "both_grasp": right_grasp & left_grasp,
             "lifted": self._lifted(obs),
+            "success": self._success,
         }
 
 

@@ -4,7 +4,7 @@
 reach_weight: 1.0
 reach_sharpness: 0.3
 grasp_weight: 1.0
-grasp_force_threshold: 10.0
+grasp_force_threshold: 1.0      # per finger: the handle must be squeezed by both fingers
 grasp_distance: 0.03
 lift_weight: 2.0
 lift_sharpness: 0.1

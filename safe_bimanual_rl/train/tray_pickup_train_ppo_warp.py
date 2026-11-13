@@ -21,14 +21,44 @@ from tqdm import trange
 
 from safe_bimanual_rl.environments.tray_pickup_warp_env import TrayPickUpWarpEnv
 from safe_bimanual_rl.rl_utils.plotting import save_plots
+from safe_bimanual_rl.rl_utils.warp_metrics import (
+    counts_delta,
+    episode_metrics,
+    stage_step_rates,
+    termination_rates,
+)
 
 
-def evaluate(core, agent, n_episodes, quiet):
+def evaluate(core, agent, mdp, n_episodes, quiet):
+    """Evaluate the policy, with the task-stage and termination statistics of the episodes."""
+    absorbing_before, steps_before = mdp.get_absorbing_counts(), mdp.get_step_counts()
     dataset = core.evaluate(n_episodes=n_episodes, render=False, quiet=quiet)
     J = dataset.discounted_return.mean().item()
     R = dataset.undiscounted_return.mean().item()
     H = agent.policy.entropy().item()
-    return J, R, H
+
+    absorbing_delta = counts_delta(absorbing_before, mdp.get_absorbing_counts())
+    step_delta = counts_delta(steps_before, mdp.get_step_counts())
+    metrics = {
+        **{f"eval/{k}": v for k, v in episode_metrics(dataset).items()},
+        **{
+            f"eval/termination/{k}": v
+            for k, v in termination_rates(absorbing_delta, step_delta).items()
+        },
+    }
+    return J, R, H, metrics
+
+
+def policy_std_metrics(agent, action_dim):
+    """Std of the Gaussian policy (state independent), overall and for the arm/finger actions."""
+    std = agent.policy.get_weights()[-action_dim:].exp()
+    # Action layout: 14 arm joints then 4 fingers
+    return {
+        "policy/std_mean": std.mean().item(),
+        "policy/std_min": std.min().item(),
+        "policy/std_arm": std[:14].mean().item(),
+        "policy/std_fingers": std[14:].mean().item(),
+    }
 
 
 def experiment(cfg: DictConfig):
@@ -112,10 +142,22 @@ def experiment(cfg: DictConfig):
     )
 
     J_values, R_values, H_values = [], [], []
+    grasp_values, success_values = [], []
     best_J = -np.inf
+    action_dim = mdp.info.action_space.shape[0]
 
-    def log_epoch(epoch, J, R, H):
-        logger.epoch_info(epoch, J=J, R=R, entropy=H)
+    def log_epoch(epoch, J, R, H, metrics):
+        logger.epoch_info(
+            epoch,
+            J=J,
+            R=R,
+            entropy=H,
+            right_grasp=metrics["eval/right_grasp_rate"],
+            left_grasp=metrics["eval/left_grasp_rate"],
+            both_grasp=metrics["eval/both_grasp_rate"],
+            max_height=metrics["eval/max_tray_height"],
+            success=metrics["eval/success_rate"],
+        )
         run.log(
             {
                 "Discounted Return (J)": J,
@@ -123,32 +165,53 @@ def experiment(cfg: DictConfig):
                 "Entropy (H)": H,
                 "epoch": epoch,
                 **{f"absorbing/{k}": v for k, v in mdp.get_absorbing_counts().items()},
+                **metrics,
+                **policy_std_metrics(agent, action_dim),
             }
         )
         J_values.append(J)
         R_values.append(R)
         H_values.append(H)
+        grasp_values.append(metrics["eval/both_grasp_rate"])
+        success_values.append(metrics["eval/success_rate"])
 
     # Evaluation before training
-    log_epoch(0, *evaluate(core, agent, cfg.n_episodes_test, cfg.use_cluster))
+    log_epoch(0, *evaluate(core, agent, mdp, cfg.n_episodes_test, cfg.use_cluster))
 
     # Training loop
     for n in trange(cfg.n_epochs, leave=False):
+        absorbing_before, steps_before = mdp.get_absorbing_counts(), mdp.get_step_counts()
         start = perf_counter()
         core.learn(
             n_steps=cfg.n_steps, n_steps_per_fit=cfg.n_steps_per_fit, quiet=cfg.use_cluster
         )
         learn_time = perf_counter() - start
         logger.info(f"Learn: {learn_time:.1f}s ({cfg.n_steps / learn_time:.0f} env steps/s)")
-        run.log({"time/learn": learn_time, "epoch": n + 1})
+
+        # Statistics of the training rollouts of this epoch
+        absorbing_delta = counts_delta(absorbing_before, mdp.get_absorbing_counts())
+        step_delta = counts_delta(steps_before, mdp.get_step_counts())
+        run.log(
+            {
+                "time/learn": learn_time,
+                "epoch": n + 1,
+                "train/episodes": step_delta["episodes"],
+                **{
+                    f"train/termination/{k}": v
+                    for k, v in termination_rates(absorbing_delta, step_delta).items()
+                },
+                **{f"train/{k}_steps": v for k, v in stage_step_rates(step_delta).items()},
+                **policy_std_metrics(agent, action_dim),
+            }
+        )
 
         # Evaluation simulates every world, so it costs as much as n_envs episodes
         if (n + 1) % cfg.eval_every != 0 and n + 1 != cfg.n_epochs:
             continue
         start = perf_counter()
-        J, R, H = evaluate(core, agent, cfg.n_episodes_test, cfg.use_cluster)
+        J, R, H, metrics = evaluate(core, agent, mdp, cfg.n_episodes_test, cfg.use_cluster)
         logger.info(f"Evaluation: {perf_counter() - start:.1f}s")
-        log_epoch(n + 1, J, R, H)
+        log_epoch(n + 1, J, R, H, metrics)
 
         if cfg.save_model and J > best_J:
             best_J = J
@@ -158,6 +221,8 @@ def experiment(cfg: DictConfig):
 
     for key, value in mdp.get_absorbing_counts().items():
         run.summary[f"absorbing/{key}"] = value
+    for key, value in mdp.get_step_counts().items():
+        run.summary[f"steps/{key}"] = value
     run.finish()
 
     save_plots(
@@ -165,6 +230,8 @@ def experiment(cfg: DictConfig):
             "Discounted Return (J)": J_values,
             "Undiscounted Return (R)": R_values,
             "Entropy (H)": H_values,
+            "Both-hands grasp rate": grasp_values,
+            "Success rate": success_values,
         },
         save_dir=save_dir,
         run_name=run_name,
