@@ -20,9 +20,16 @@ LEFT_FINGERS = [
     "left_hande_robotiq_hande_right_finger_joint",
 ]
 
-# Same action/observation layout as BimanualTableEnv so that agents and
-# controllers are interchangeable between the CPU and GPU environments.
+# Same actuator layout as BimanualTableEnv so that agents and controllers are
+# interchangeable between the CPU and GPU environments (gripper_mode="independent").
 ACTION_SPEC = [f"{j}_ctrl" for j in ARM_JOINTS + LEFT_FINGERS + RIGHT_FINGERS]
+N_ARM_ACTIONS = len(ARM_JOINTS)
+GRIPPER_MODES = ("binary", "continuous", "independent")
+
+# Stages of the scripted demonstration states (utils/generate_pickup_start_states.py)
+START_STAGES = ("near", "pregrasp", "grasped", "lifting")
+# Start of an episode: the home pose or a stage of the demonstration
+START_GROUPS = ("home",) + START_STAGES
 
 OBSERVATION_SPEC = (
     [(f"{j}_pos", j, ObservationType.JOINT_POS) for j in ARM_JOINTS]
@@ -105,12 +112,20 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
     Simulates ``num_envs`` worlds in parallel. Observations, rewards and absorbing
     flags are batched torch tensors of shape (num_envs, ...).
 
-    The reward is staged (reach -> grasp -> lift -> level), each stage only paying
-    once the previous one is achieved, and normalized so that the per-step reward
-    is at most 1. Once the tray is held lifted and level the per-step reward is
-    maxed out, and after ``success_hold_steps`` such steps the episode terminates
-    with a reward of 1 / (1 - gamma), i.e. the value of staying at the maximum
-    forever, so terminating on success is never worse than continuing.
+    The reward is staged (reach -> grasp -> lift -> level) and normalized so that
+    the per-step reward is at most 1. The lift and level stages are weighted by the
+    fraction of hands grasping their handle (0, 1/2 or 1), so that lifting with one
+    hand already pays, but pushing the tray without holding it does not. Once the
+    tray is held lifted and level the per-step reward is maxed out, and after
+    ``success_hold_steps`` such steps the episode terminates with a reward of
+    1 / (1 - gamma), i.e. the value of staying at the maximum forever, so
+    terminating on success is never worse than continuing.
+
+    With ``gripper_mode`` "binary" or "continuous", the policy has one gripper action
+    per hand (14 arm + 2 gripper actions), copied to both fingers of the hand: in
+    "binary" mode a positive action closes the gripper and a non-positive one opens
+    it, at ``gripper_speed``; in "continuous" mode the action is the finger velocity.
+    "independent" keeps one action per finger (18 actions).
     """
 
     def __init__(
@@ -120,7 +135,9 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         horizon: int = 600,
         n_substeps: int = 5,
         reach_weight: float = 1.0,
-        reach_sharpness: float = 0.3,
+        reach_sharpness: float = 0.1,
+        reach_fine_sharpness: float = 0.02,
+        reach_fine_fraction: float = 0.5,
         grasp_weight: float = 1.0,
         grasp_force_threshold: float = 1.0,
         grasp_distance: float = 0.03,
@@ -136,12 +153,17 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         contact_cost_weight: float = -0.05,
         tray_contact_threshold: float = 2.0,
         tray_contact_cost_weight: float = -0.05,
+        tray_contact_patience: int = 1,
         action_cost_weight: float = -0.01,
         joint_noise: float = 0.05,
         tray_pos_noise: float = 0.02,
-        grasp_start_prob: float = 0.0,
+        gripper_mode: str = "binary",
+        gripper_speed: float = 0.2,
+        open_gripper_at_start: bool = True,
+        start_state_prob: float = 0.0,
+        start_stage_weights: tuple = (1.0, 1.0, 1.0, 1.0),
+        start_states_file: str = "pickup_start_states.npz",
         max_joint_velocity: float = 100.0,
-        grasp_init_states_file: str = "grasp_init_states_0.npz",
         nconmax: int = 64,
         njmax: int = 256,
         use_graph_capture: bool = False,
@@ -155,7 +177,10 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
             horizon (int): Maximum number of steps per episode.
             n_substeps (int): Number of simulation steps per environment step.
             reach_weight (float): Weight of the gripper-to-handle distance stage.
-            reach_sharpness (float): Distance (m) scale of the tanh reach reward.
+            reach_sharpness (float): Distance (m) scale of the coarse tanh reach reward.
+            reach_fine_sharpness (float): Distance (m) scale of the fine tanh reach reward,
+                which gives a gradient in the last centimeters.
+            reach_fine_fraction (float): Share of the fine term in the reach reward.
             grasp_weight (float): Weight of the grasp stage (fraction of hands grasping).
             grasp_force_threshold (float): Normal force (N) each of the two fingers of a
                 hand must apply on its handle to count as grasping (the palm is ignored).
@@ -176,14 +201,26 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
             tray_contact_threshold (float): Tray-table contact (baseline subtracted) above
                 which the episode terminates while the tray is on the table.
             tray_contact_cost_weight (float): Weight of the tray-table contact cost.
+            tray_contact_patience (int): Consecutive steps above ``tray_contact_threshold``
+                before the episode terminates (the signal flickers when a gripper closes
+                on its handle, 1 terminates at the first step above the threshold).
             action_cost_weight (float): Weight of the squared action cost.
             joint_noise (float): Uniform noise (rad) added to the home arm configuration.
             tray_pos_noise (float): Uniform noise (m) added to the tray x/y position.
             max_joint_velocity (float): A world whose state is not finite or has a joint
                 velocity above this value is considered unstable, and its episode ends.
-            grasp_start_prob (float): Probability of starting an episode from a saved
-                state with the grippers already near the handles instead of the home pose.
-            grasp_init_states_file (str): File in data/initial_states/ with those states.
+            gripper_mode (str): "binary", "continuous" (one action per gripper) or
+                "independent" (one action per finger).
+            gripper_speed (float): Finger velocity (m/s) of the binary gripper action.
+            open_gripper_at_start (bool): Start the episodes from the home pose with the
+                grippers open (the home keyframe has them closed).
+            start_state_prob (float): Probability of starting an episode from a state of
+                ``start_states_file`` instead of the home pose (reset to demonstration
+                states). Can be changed during training with ``set_start_state_prob``.
+            start_stage_weights (tuple): Relative probability of each stage (near,
+                pregrasp, grasped, lifting) when starting from a demonstration state.
+            start_states_file (str): File in data/initial_states/ with the demonstration
+                states (see utils/generate_pickup_start_states.py).
             nconmax (int): Contacts allocated per world (CPU peak is ~24).
             njmax (int): Constraints allocated per world (CPU peak is ~80).
             use_graph_capture (bool): Replay the simulation step as a CUDA graph.
@@ -191,6 +228,8 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         """
         self._reach_weight = reach_weight
         self._reach_sharpness = reach_sharpness
+        self._reach_fine_sharpness = reach_fine_sharpness
+        self._reach_fine_fraction = reach_fine_fraction
         self._grasp_weight = grasp_weight
         self._grasp_force_threshold = grasp_force_threshold
         self._grasp_distance = grasp_distance
@@ -206,10 +245,15 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         self._contact_cost_weight = contact_cost_weight
         self._tray_contact_threshold = tray_contact_threshold
         self._tray_contact_cost_weight = tray_contact_cost_weight
+        self._tray_contact_patience = tray_contact_patience
         self._action_cost_weight = action_cost_weight
         self._joint_noise = joint_noise
         self._tray_pos_noise = tray_pos_noise
-        self._grasp_start_prob = grasp_start_prob
+        assert gripper_mode in GRIPPER_MODES, f"gripper_mode must be one of {GRIPPER_MODES}"
+        self._gripper_mode = gripper_mode
+        self._gripper_speed = gripper_speed
+        self._open_gripper_at_start = open_gripper_at_start
+        self._start_state_prob = start_state_prob
         self._max_joint_velocity = max_joint_velocity
         self._max_stage_reward = (
             reach_weight + grasp_weight + lift_weight + tray_orientation_weight
@@ -276,19 +320,50 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
             [[adr, adr + 1] for adr in free_qpos_adr], device=dev
         )
 
-        grasp_states = np.load(
-            os.path.join(
-                os.path.dirname(__file__), "data", "initial_states", grasp_init_states_file
-            )
+        # Fingers: qpos/act addresses and fully open position (closed at q=0)
+        finger_qpos_adr, finger_act_adr, finger_open = [], [], []
+        for joint in RIGHT_FINGERS + LEFT_FINGERS:
+            joint_id = self._model.joint(joint).id
+            actuator_id = int(np.flatnonzero(self._model.actuator_trnid[:, 0] == joint_id)[0])
+            finger_qpos_adr.append(self._model.jnt_qposadr[joint_id])
+            finger_act_adr.append(self._model.actuator_actadr[actuator_id])
+            finger_open.append(self._model.jnt_range[joint_id, 1])
+        self._finger_qpos_adr = torch.as_tensor(finger_qpos_adr, device=dev)
+        self._finger_act_adr = torch.as_tensor(finger_act_adr, device=dev)
+        self._finger_open = torch.as_tensor(finger_open, dtype=dtype, device=dev)
+
+        # Demonstration start states, grouped by stage
+        start_states = np.load(
+            os.path.join(os.path.dirname(__file__), "data", "initial_states", start_states_file)
         )
-        self._grasp_qpos = torch.as_tensor(grasp_states["qpos"], dtype=dtype, device=dev)
-        self._grasp_qvel = torch.as_tensor(grasp_states["qvel"], dtype=dtype, device=dev)
-        self._grasp_act = torch.as_tensor(grasp_states["act"], dtype=dtype, device=dev)
+        self._start_qpos = torch.as_tensor(start_states["qpos"], dtype=dtype, device=dev)
+        self._start_qvel = torch.as_tensor(start_states["qvel"], dtype=dtype, device=dev)
+        self._start_act = torch.as_tensor(start_states["act"], dtype=dtype, device=dev)
+        self._start_cube_rest_z = torch.as_tensor(start_states["cube_rest_z"], device=dev)
+        stages = torch.as_tensor(start_states["stage"], device=dev)
+        # Sampling weight of every state: its stage weight, shared among the states of the stage
+        stage_weights = torch.as_tensor(start_stage_weights, dtype=torch.float, device=dev)
+        assert len(stage_weights) == len(START_STAGES)
+        stage_counts = torch.bincount(stages, minlength=len(START_STAGES)).float()
+        state_weights = stage_weights[stages] / stage_counts[stages]
+        assert state_weights.sum() > 0, "no start state with a positive stage weight"
+        self._start_state_weights = state_weights / state_weights.sum()
 
         # Per-world episode state
         self._initial_cube_height = torch.zeros(num_envs, device=dev)
         self._success_steps = torch.zeros(num_envs, dtype=torch.long, device=dev)
+        self._tray_contact_steps = torch.zeros(num_envs, dtype=torch.long, device=dev)
         self._success = torch.zeros(num_envs, dtype=torch.bool, device=dev)
+        self._start_stages = stages
+        # Index in START_GROUPS of the start of the running episode of every world
+        self._start_group = torch.zeros(num_envs, dtype=torch.long, device=dev)
+        # Per start group: steps, steps with both hands grasping, sum of the tray height
+        # and steps with the tray above 5 cm, to see how far each kind of start gets
+        self._group_counts = {
+            key: torch.zeros(len(START_GROUPS), dtype=torch.float64, device=dev)
+            for key in ("steps", "both_grasp", "height_sum", "height_5cm")
+        }
+        self._forward_graph = None
         self._absorbing_counts = {
             key: torch.zeros((), dtype=torch.long, device=dev)
             for key in ("success", "contact_force", "tray_contact_force", "unstable")
@@ -296,14 +371,30 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         # Number of active steps (and started episodes) in each stage, to monitor training
         self._step_counts = {
             key: torch.zeros((), dtype=torch.long, device=dev)
-            for key in ("episodes", "steps", "right_grasp", "left_grasp", "both_grasp", "lifted")
+            for key in (
+                "episodes",
+                "demo_episodes",
+                "steps",
+                "right_grasp",
+                "left_grasp",
+                "both_grasp",
+                "lifted",
+            )
         }
+
+    def set_start_state_prob(self, prob: float):
+        """Probability of starting the next episodes from a demonstration state (curriculum)."""
+        self._start_state_prob = prob
 
     def get_absorbing_counts(self) -> dict:
         return {key: int(value.item()) for key, value in self._absorbing_counts.items()}
 
     def get_step_counts(self) -> dict:
         return {key: int(value.item()) for key, value in self._step_counts.items()}
+
+    def get_group_counts(self) -> dict:
+        """Per start group (START_GROUPS) counters: {key: list of floats}."""
+        return {key: value.tolist() for key, value in self._group_counts.items()}
 
     # ------------------------------------------------------------------
     # Contacts
@@ -383,6 +474,17 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
 
     def _modify_mdp_info(self, mdp_info):
         mdp_info = super()._modify_mdp_info(mdp_info)
+        if self._gripper_mode != "independent":
+            # 14 arm actions then one action per gripper (left, right), as in ACTION_SPEC
+            low, high = mdp_info.action_space.low, mdp_info.action_space.high
+            n = N_ARM_ACTIONS
+            gripper_low = [low[n], low[n + 2]]
+            gripper_high = [high[n], high[n + 2]]
+            if self._gripper_mode == "binary":
+                gripper_low, gripper_high = [-1.0, -1.0], [1.0, 1.0]
+            mdp_info.action_space = Box(
+                np.concatenate([low[:n], gripper_low]), np.concatenate([high[:n], gripper_high])
+            )
         self.obs_helper.add_obs("rel_right_handle_pos", 3)
         self.obs_helper.add_obs("rel_left_handle_pos", 3)
         self.obs_helper.add_obs("contact_force", 1)
@@ -491,7 +593,17 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         # Unbounded policies (e.g. PPO's Gaussian) can exceed the action space
         low = torch.as_tensor(self.info.action_space.low, dtype=action.dtype, device=action.device)
         high = torch.as_tensor(self.info.action_space.high, dtype=action.dtype, device=action.device)
-        return torch.clamp(action, low, high)
+        action = torch.clamp(action, low, high)
+        if self._gripper_mode == "independent":
+            return action
+
+        # One action per gripper -> velocity of both of its fingers (ACTION_SPEC layout)
+        arm, gripper = action[:, :N_ARM_ACTIONS], action[:, N_ARM_ACTIONS:]
+        if self._gripper_mode == "binary":
+            # Positive closes the gripper (fingers closed at q=0), otherwise it opens
+            gripper = torch.where(gripper > 0, -self._gripper_speed, self._gripper_speed)
+        left, right = gripper[:, :1], gripper[:, 1:]
+        return torch.cat([arm, left, left, right, right], dim=1)
 
     def step_all(self, env_mask, action):
         # All worlds are simulated, keep the mask to only count active episodes
@@ -514,47 +626,81 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         home_act[:, self._arm_act_adr] += joint_noise
         tray_noise = (torch.rand(n, 1, 2, device=dev) * 2 - 1) * self._tray_pos_noise
         home_qpos[:, self._free_xy_adr] += tray_noise
+        if self._open_gripper_at_start:
+            home_qpos[:, self._finger_qpos_adr] = self._finger_open
+            home_act[:, self._finger_act_adr] = self._finger_open
         qpos[idx] = home_qpos
         qvel[idx] = self._home_qvel
         act[idx] = home_act
 
-        # Some episodes start with the grippers already near the handles
-        from_grasp = torch.rand(n, device=dev) < self._grasp_start_prob
-        if from_grasp.any():
-            grasp_idx = idx[from_grasp]
-            sample = torch.randint(len(self._grasp_qpos), (len(grasp_idx),), device=dev)
-            qpos[grasp_idx] = self._grasp_qpos[sample]
-            qvel[grasp_idx] = self._grasp_qvel[sample]
-            act[grasp_idx] = self._grasp_act[sample]
+        # Some episodes start from a state of the scripted demonstration
+        from_demo = torch.rand(n, device=dev) < self._start_state_prob
+        demo_idx = idx[from_demo]
+        if len(demo_idx) > 0:
+            sample = torch.multinomial(self._start_state_weights, len(demo_idx), replacement=True)
+            qpos[demo_idx] = self._start_qpos[sample]
+            qvel[demo_idx] = self._start_qvel[sample]
+            act[demo_idx] = self._start_act[sample]
+        self._start_group[idx] = 0
+        if len(demo_idx) > 0:
+            self._start_group[demo_idx] = 1 + self._start_stages[sample]
 
-        self._mj_warp.forward(self._model_wp, self._data_wp)
+        self._forward()
 
         self._initial_cube_height[idx] = self._read_data("cube_pos")[idx, 2].to(
             self._initial_cube_height.dtype
         )
+        if len(demo_idx) > 0:
+            # The tray of a lifting state is not at its rest height
+            self._initial_cube_height[demo_idx] = self._start_cube_rest_z[sample].to(
+                self._initial_cube_height.dtype
+            )
+        self._step_counts["demo_episodes"] += len(demo_idx)
         self._success_steps[idx] = 0
+        self._tray_contact_steps[idx] = 0
         self._success[idx] = False
         self._step_counts["episodes"] += n
+
+    def _forward(self):
+        """
+        mj_forward on every world after a reset. Launched without a CUDA graph it costs
+        ~110 ms with 4096 worlds (7 times a whole env step), and with episodes ending at
+        almost every step it dominated the training time: it is captured as a graph too.
+        """
+        if not self._use_graph_capture:
+            self._mj_warp.forward(self._model_wp, self._data_wp)
+            return
+        if self._forward_graph is None:
+            with wp.ScopedCapture() as capture:
+                self._mj_warp.forward(self._model_wp, self._data_wp)
+            self._forward_graph = capture.graph
+        wp.capture_launch(self._forward_graph)
+
+    def _reach_reward(self, dist):
+        """Reach reward in [0, 1]: coarse tanh plus a fine tanh for the last centimeters."""
+        coarse = 1 - torch.tanh(dist / self._reach_sharpness)
+        fine = 1 - torch.tanh(dist / self._reach_fine_sharpness)
+        return (1 - self._reach_fine_fraction) * coarse + self._reach_fine_fraction * fine
 
     def _stage_reward(self, obs):
         """Staged task reward in [0, max_stage_reward]."""
         rel_right = self.obs_helper.get_from_obs(obs, "rel_right_handle_pos").norm(dim=-1)
         rel_left = self.obs_helper.get_from_obs(obs, "rel_left_handle_pos").norm(dim=-1)
         right_grasp, left_grasp = self._hands_grasping(obs)
-        both_grasp = (right_grasp & left_grasp).float()
+        # Fraction of the hands grasping their handle: 0, 1/2 or 1
+        grasp_fraction = (right_grasp.float() + left_grasp.float()) / 2
 
         # A grasping hand gets the full reach reward, so reach never fights lift
-        reach_right = torch.where(
-            right_grasp, 1.0, 1 - torch.tanh(rel_right / self._reach_sharpness)
-        )
-        reach_left = torch.where(left_grasp, 1.0, 1 - torch.tanh(rel_left / self._reach_sharpness))
+        reach_right = torch.where(right_grasp, 1.0, self._reach_reward(rel_right))
+        reach_left = torch.where(left_grasp, 1.0, self._reach_reward(rel_left))
         reach = self._reach_weight * (reach_right + reach_left) / 2
-        grasp = self._grasp_weight * (right_grasp.float() + left_grasp.float()) / 2
+        grasp = self._grasp_weight * grasp_fraction
 
+        # Lift and level pay in proportion to the hands holding the tray
         height = self.obs_helper.get_from_obs(obs, "tray_height")[:, 0].clamp(min=0.0)
-        lift = both_grasp * self._lift_weight * torch.tanh(height / self._lift_sharpness)
+        lift = grasp_fraction * self._lift_weight * torch.tanh(height / self._lift_sharpness)
         level = (
-            both_grasp
+            grasp_fraction
             * self._tray_orientation_weight
             * (1 - torch.tanh(self._tray_angle() / self._tray_orientation_sharpness))
         )
@@ -573,6 +719,9 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         tray_contact_force = self.obs_helper.get_from_obs(next_obs, "tray_contact_force")[:, 0]
         tray_contact_cost = self._tray_contact_cost_weight * tray_contact_force.clamp(min=0.0)
         action_t = torch.as_tensor(action, dtype=task_reward.dtype, device=task_reward.device)
+        if self._gripper_mode == "binary":
+            # The binary gripper always commands +-gripper_speed: only the arm actions cost
+            action_t = action_t[:, :N_ARM_ACTIONS]
         action_cost = self._action_cost_weight * action_t.square().sum(dim=-1)
 
         reward = task_reward + contact_cost + tray_contact_cost + action_cost
@@ -597,11 +746,14 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         # to avoid false terminations from simulation force artifacts mid-air.
         height = self.obs_helper.get_from_obs(obs, "tray_height")[:, 0]
         tray_contact_force = self.obs_helper.get_from_obs(obs, "tray_contact_force")[:, 0]
+        above = (height < 0.05) & (tray_contact_force > self._tray_contact_threshold)
+        self._tray_contact_steps = torch.where(
+            above, self._tray_contact_steps + 1, torch.zeros_like(self._tray_contact_steps)
+        )
         tray_contact_exceeded = (
             ~self._success
             & ~contact_exceeded
-            & (height < 0.05)
-            & (tray_contact_force > self._tray_contact_threshold)
+            & (self._tray_contact_steps >= self._tray_contact_patience)
         )
 
         self._absorbing_counts["success"] += (self._success & self._env_mask).sum()
@@ -617,6 +769,17 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         self._step_counts["left_grasp"] += (left_grasp & self._env_mask).sum()
         self._step_counts["both_grasp"] += (right_grasp & left_grasp & self._env_mask).sum()
         self._step_counts["lifted"] += (lifted & self._env_mask).sum()
+
+        active = self._env_mask.float()
+        group = self._start_group
+        height = height.clamp(min=0.0)
+        for key, value in (
+            ("steps", active),
+            ("both_grasp", (right_grasp & left_grasp).float() * active),
+            ("height_sum", height * active),
+            ("height_5cm", (height > 0.05).float() * active),
+        ):
+            self._group_counts[key].index_add_(0, group, value.to(torch.float64))
 
         return self._success | contact_exceeded | tray_contact_exceeded | self._unstable
 

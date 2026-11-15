@@ -2,12 +2,14 @@
 
 # Staged task reward, normalized so the per-step reward is at most 1
 reach_weight: 1.0
-reach_sharpness: 0.3
+reach_sharpness: 0.3            # coarse tanh scale (m): the hands start 0.3-0.6 m from the handles
+reach_fine_sharpness: 0.02      # fine tanh scale (m): gradient in the last centimeters
+reach_fine_fraction: 0.5        # share of the fine term in the reach reward
 grasp_weight: 1.0
 grasp_force_threshold: 1.0      # per finger: the handle must be squeezed by both fingers
 grasp_distance: 0.03
-lift_weight: 2.0
-lift_sharpness: 0.1
+lift_weight: 2.0                # lift and level are weighted by the fraction of grasping hands
+lift_sharpness: 0.2             # tanh scale (m): keeps paying up to lift_target_height
 lift_target_height: 0.35
 tray_orientation_weight: 1.0
 tray_orientation_sharpness: 0.3
@@ -18,8 +20,18 @@ contact_threshold: 3.0
 contact_cost_weight: -0.05
 tray_contact_threshold: 2.0
 tray_contact_cost_weight: -0.05
+tray_contact_patience: 3        # consecutive steps above tray_contact_threshold before terminating
 action_cost_weight: -0.01
+# Grippers
+gripper_mode: binary            # binary (open/close per hand), continuous (velocity per hand) or independent (per finger)
+gripper_speed: 0.2              # finger velocity (m/s) of the binary action
+open_gripper_at_start: true
 # Initial states
 joint_noise: 0.05
 tray_pos_noise: 0.02
-grasp_start_prob: 0.25    # fraction of episodes starting near the handles (exploration aid)
+# Reset to demonstration states (utils/generate_pickup_start_states.py): fraction of the
+# episodes starting from a state of the scripted pick-up instead of the home pose.
+# The PPO script decays it to start_state_prob_final (curriculum).
+start_state_prob: 0.5
+start_stage_weights: [1.0, 1.0, 1.0, 1.0]   # near, pregrasp, grasped, lifting
+start_states_file: pickup_start_states.npz

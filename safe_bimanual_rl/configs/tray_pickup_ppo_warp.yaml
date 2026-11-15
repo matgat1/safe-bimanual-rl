@@ -18,7 +18,8 @@ njmax: 256
 n_epochs: 300
 n_steps_per_fit: 8192       # rollout of 16 steps per env with 512 envs, must be >= n_envs
 n_steps: 81920              # 10 PPO updates per epoch
-n_episodes_test: ${n_envs}    # one episode per world: costs the same as fewer episodes
+n_envs_eval: 512            # separate evaluation worlds (training episodes are never cut)
+n_episodes_test: ${n_envs_eval}  # one episode per evaluation world
 eval_every: 5               # evaluate every eval_every epochs
 n_epochs_policy: 5          # passes over each rollout for the actor
 n_epochs_critic: 5          # passes over each rollout for the critic
@@ -31,7 +32,12 @@ lr_critic: 3e-4
 n_features: 256
 n_layers: 3
 std_0: 0.1                  # initial policy std, half of action_space_limit
+std_min: 0.05               # the policy std is kept in [std_min, std_max] after every fit:
+std_max: 0.15               # floor to keep exploring, cap below action_space_limit (clipping)
 action_space_limit: 0.2
+# Curriculum: reward.start_state_prob decays linearly to start_state_prob_final
+start_state_prob_final: 0.1
+start_state_decay_epochs: 100
 use_cluster: true
 save_model: true
 use_wandb: true

@@ -71,5 +71,5 @@ def stage_step_rates(step_delta: dict) -> dict:
     return {
         key: value / n_steps
         for key, value in step_delta.items()
-        if key not in ("episodes", "steps")
+        if key not in ("episodes", "demo_episodes", "steps")
     }

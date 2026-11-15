@@ -185,7 +185,7 @@ The reward is staged (reach → grasp both handles → lift → keep the tray le
 ```bash
 python -m safe_bimanual_rl.train.tray_pickup_train_sac_warp --multirun \
     n_envs=128 n_steps_per_fit=128 n_updates_per_fit=32 \
-    reward.grasp_start_prob=0.25
+    reward.start_state_prob=0.5
 ```
 
 `n_steps_per_fit` must be at least `n_envs`; `n_updates_per_fit / n_steps_per_fit` is the update-to-data ratio.
@@ -200,6 +200,16 @@ python -m safe_bimanual_rl.train.tray_pickup_train_ppo_warp --multirun \
 `n_steps_per_fit / n_envs` is the rollout length per env (16 by default). The environment parameters of both algorithms are in `configs/reward/tray_pickup_warp.yaml` and are overridden with `reward.<name>=<value>`.
 
 A hand grasps its handle when both of its fingers squeeze it with more than `grasp_force_threshold` N. Besides the returns, the PPO script logs to WandB how far the policy gets in the task: `eval/*` (fraction of evaluation episodes reaching each stage, closest handle distance, highest tray, termination causes), `train/*` (termination causes and time spent in each stage during the rollouts) and `policy/*` (policy std of the arm and finger actions).
+
+PPO training details:
+
+- Training episodes continue from one epoch to the next (`rl_utils/persistent_core.py`): MushroomRL's `Core.learn` resets every env at each call, which cut the episodes at `n_steps / n_envs` steps. Evaluation runs on a separate env of `n_envs_eval` worlds, always starting from the home pose.
+- Each gripper is driven by one action (`reward.gripper_mode=binary`: positive closes, otherwise opens), and the episodes start with the grippers open.
+- A fraction `reward.start_state_prob` of the training episodes starts from a state of a scripted pick-up (near the handles, on the handles, grasped, lifting), decayed linearly to `start_state_prob_final` over `start_state_decay_epochs` epochs. The states are generated with differential IK:
+
+```bash
+python -m safe_bimanual_rl.utils.generate_pickup_start_states   # -> data/initial_states/pickup_start_states.npz
+```
 
 Quick throughput check:
 
