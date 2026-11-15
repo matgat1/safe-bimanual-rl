@@ -10,7 +10,7 @@ We use **MuJoCo-based environments** and the **MushroomRL** library to design ta
 ***Touch Cube experiment*** | ***Tray pick-up experiment***
 
 
-<img src="figs/reach_cube_agent_2026-04-19_20-21-46_52.gif" width="48%"/> <img src="figs/state_machine.gif" width="48%"/> 
+<img src="figs/reach_cube_agent_2026-04-19_20-21-46_52.gif" width="48%"/> <img src="figs/tray_pickup_ppo.gif" width="48%"/> 
 
 
 

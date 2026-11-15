@@ -594,6 +594,8 @@ class TrayPickUpWarpEnv(MuJoCoWarp):
         low = torch.as_tensor(self.info.action_space.low, dtype=action.dtype, device=action.device)
         high = torch.as_tensor(self.info.action_space.high, dtype=action.dtype, device=action.device)
         action = torch.clamp(action, low, high)
+        if action.dim() == 1:  # a single world
+            action = action.unsqueeze(0)
         if self._gripper_mode == "independent":
             return action
 
