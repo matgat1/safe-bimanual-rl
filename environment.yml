@@ -115,7 +115,9 @@ dependencies:
       - labmaze==1.0.6
       - lxml==6.0.4
       - matplotlib==3.10.8
-      - mujoco==3.6.0
+      - mujoco==3.14.0
+      - mujoco-warp==3.14.0  # GPU simulation (MuJoCoWarp), pulls warp-lang
+      - av  # required by mushroom-rl dev (video logger)
       - git+https://github.com/MushroomRL/mushroom-rl.git@dev
       - opencv-python==4.13.0.92
       - pillow==12.2.0
